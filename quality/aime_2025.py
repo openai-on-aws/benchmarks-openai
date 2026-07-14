@@ -17,7 +17,7 @@ import argparse
 from datetime import datetime, timezone
 
 from openai import OpenAI
-from eval_utils import capture_error
+from eval_utils import capture_error, supports_temperature
 from datasets import load_dataset
 
 N_REPEATS   = 5
@@ -110,7 +110,7 @@ def main():
                     instructions=SYSTEM_PROMPT,
                     input=[{"role": "user", "content": problem}],
                     max_output_tokens=4096,
-                    **({} if "5.5" in model else {"temperature": TEMPERATURE}),
+                    **({"temperature": TEMPERATURE} if supports_temperature(model) else {}),
                 )
                 response_text = r.output_text
                 predicted = extract_answer(response_text)

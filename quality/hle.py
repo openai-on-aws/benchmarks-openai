@@ -12,7 +12,7 @@ import os, sys, re, json, random, argparse
 from datetime import datetime, timezone
 
 from openai import OpenAI
-from eval_utils import capture_error
+from eval_utils import capture_error, supports_temperature
 from datasets import load_dataset
 
 RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
@@ -64,7 +64,7 @@ def run_single(client, model, question_text, max_retries=5):
                 instructions=SYSTEM_PROMPT,
                 input=[{"role": "user", "content": question_text}],
                 max_output_tokens=1024,
-                **({} if "5.5" in model else {"temperature": TEMPERATURE}),
+                **({"temperature": TEMPERATURE} if supports_temperature(model) else {}),
             )
             return r.output_text, None
         except Exception as e:

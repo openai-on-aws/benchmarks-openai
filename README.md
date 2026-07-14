@@ -106,7 +106,7 @@ Note: `rescore_hle.py` picks the lexicographically last non-`_rescored` `hle_man
 python parity/run_parity.py
 ```
 
-Runs 34 live checks against the Bedrock Responses endpoint and writes `parity/results.txt`. The model and endpoint are hardcoded constants at the top of the script (currently `openai.gpt-5.4`) — edit them there to test a different model.
+Runs 34 live checks against the Bedrock Responses endpoint and writes `parity/results_<model>_<region>.txt`. Configure with env vars: `MANTLE_MODEL` (default `openai.gpt-5.4`), `AWS_REGION` (default `us-west-2`), `MANTLE_BASE_URL` (defaults to the region's `bedrock-mantle` endpoint). `parity/results.txt` is the original gpt-5.4 us-west-2 reference run.
 
 ## Choosing models
 
@@ -126,7 +126,7 @@ Current OpenAI model IDs on Bedrock, newest first:
 - `openai.gpt-5.4`
 - `openai.gpt-oss-120b` / `openai.gpt-oss-20b`
 
-Evaluation work currently targets the latest arrivals (the gpt-5.6 family); the results checked into this repo were produced against gpt-5.4 and gpt-5.5. One caveat when pointing the quality scripts at new models: they skip the `temperature` parameter only when the model ID contains `"5.5"` (those reasoning models reject it) — verify whether your target model accepts temperature before trusting a run.
+Evaluation work currently targets the latest arrivals (the gpt-5.6 family); the results checked into this repo were produced against gpt-5.4 and gpt-5.5. The quality scripts drop the `temperature` parameter for reasoning-model families that reject it (`5.5` and `5.6` — see `supports_temperature` in `quality/eval_utils.py`); extend that list when newer families arrive.
 
 ## What's measured
 

@@ -1,5 +1,13 @@
 """Shared utilities for eval scripts."""
 
+# Reasoning-model families that reject the temperature parameter.
+_NO_TEMPERATURE_MARKERS = ("5.5", "5.6")
+
+
+def supports_temperature(model):
+    """Whether the model accepts the temperature parameter."""
+    return not any(m in model for m in _NO_TEMPERATURE_MARKERS)
+
 
 def capture_error(e):
     """Extract all available fields from an API exception."""

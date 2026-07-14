@@ -19,7 +19,7 @@ import argparse
 from datetime import datetime, timezone
 
 from openai import OpenAI
-from eval_utils import capture_error
+from eval_utils import capture_error, supports_temperature
 from datasets import load_dataset
 
 N_REPEATS   = 5
@@ -116,8 +116,7 @@ def run_question(client, model, question_data, repeat_idx):
                 input=[{"role": "user", "content": prompt}],
                 max_output_tokens=2048,
             )
-            # gpt-5.5 reasoning models don't support temperature
-            if "5.5" not in model:
+            if supports_temperature(model):
                 kwargs["temperature"] = TEMPERATURE
             r = client.responses.create(**kwargs)
             response_text = r.output_text

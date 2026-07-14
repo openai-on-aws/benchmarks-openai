@@ -1,7 +1,14 @@
 """
-Parity test suite: openai.gpt-5.4 on Bedrock Mantle vs OpenAI Responses API spec.
+Parity test suite: OpenAI models on Bedrock Mantle vs OpenAI Responses API spec.
 Each test makes a single small call and checks that the feature works.
-Results saved to results.txt in this directory.
+
+Configuration (env vars):
+  MANTLE_MODEL    model to test          (default: openai.gpt-5.4)
+  AWS_REGION      region for token+URL   (default: us-west-2)
+  MANTLE_BASE_URL endpoint override      (default: https://bedrock-mantle.<region>.api.aws/openai/v1)
+
+Results saved to results_<model>_<region>.txt in this directory
+(results.txt is the original openai.gpt-5.4 us-west-2 reference run).
 
 Known Mantle constraints vs OAI SaaS:
   - max_output_tokens minimum is 16
@@ -18,9 +25,10 @@ from datetime import datetime, timezone
 from aws_bedrock_token_generator import provide_token
 from openai import OpenAI
 
-BASE_URL = "https://bedrock-mantle.us-west-2.api.aws/openai/v1"
-MODEL = "openai.gpt-5.4"
-RESULTS_FILE = os.path.join(os.path.dirname(__file__), "results.txt")
+REGION = os.environ.get("AWS_REGION", "us-west-2")
+BASE_URL = os.environ.get("MANTLE_BASE_URL", f"https://bedrock-mantle.{REGION}.api.aws/openai/v1")
+MODEL = os.environ.get("MANTLE_MODEL", "openai.gpt-5.4")
+RESULTS_FILE = os.path.join(os.path.dirname(__file__), f"results_{MODEL}_{REGION}.txt")
 
 results = []
 
@@ -29,7 +37,7 @@ PLOT_PNG = os.path.join(os.path.dirname(os.path.dirname(__file__)), "performance
 
 
 def make_client():
-    token = provide_token()
+    token = provide_token(region=REGION)
     return OpenAI(api_key=token, base_url=BASE_URL)
 
 
