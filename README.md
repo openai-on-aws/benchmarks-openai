@@ -134,7 +134,7 @@ Evaluation work currently targets the latest arrivals (the gpt-5.6 family); the 
 
 **Quality** — GPQA Diamond (198 questions, 5 repeats, mean pass@1), AIME competition math, and HLE text-only (exact match plus LLM-judge rescoring), run identically against both backends. Methodology and completed-run results live in [`quality/RESULTS.md`](quality/RESULTS.md); raw outputs are in [`quality/results/`](quality/results/). Per team policy, accuracy numbers are not quoted here — consult the results files.
 
-**Parity** — 34 feature checks of the Responses API surface on Bedrock: streaming, instructions, multi-turn, structured output (JSON schema), function calling (single/parallel/forced/round-trip), image inputs (URL / base64 / S3), tool types (web search, file search, MCP, custom, namespace, tool search), background mode, `store`/retrieval, and usage reporting. See the latest run in [`parity/results.txt`](parity/results.txt).
+**Parity** — 34 feature checks of the Responses API surface on Bedrock: streaming, instructions, multi-turn, structured output (JSON schema), function calling (single/parallel/forced/round-trip), image inputs (URL / base64 / S3), tool types (web search, file search, MCP, custom, namespace, tool search), background mode, `store`/retrieval, and usage reporting. Recorded runs: [`parity/results.txt`](parity/results.txt) (gpt-5.4 reference) plus per-model/region files, e.g. [`parity/results_openai.gpt-5.6-luna_us-west-2.txt`](parity/results_openai.gpt-5.6-luna_us-west-2.txt) and [`parity/results_openai.gpt-5.6-terra_us-west-2.txt`](parity/results_openai.gpt-5.6-terra_us-west-2.txt).
 
 ## Migration workload pack
 

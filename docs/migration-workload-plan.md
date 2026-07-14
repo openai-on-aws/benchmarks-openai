@@ -21,7 +21,9 @@ This repo (`benchmarks-openai`) is the **validated, shareable source of record**
 
 Selected for coverage of the mini/nano customer base and of the Bedrock endpoint's real feature constraints. Two strong candidates were deliberately deferred: **Codex CLI coding-agent migration** (already covered feature-by-feature by the `bedrock-feature-parity` Codex panel and the codex-on-bedrock guidance repo; its baseline is not mini/nano-class) and **reasoning-heavy research assistant** (already covered by `quality/` AIME/GPQA/HLE evals; also not a mini/nano workload). Both can be added as archetypes 6–7 later without changing the pack's structure.
 
-Every archetype design below is shaped by confirmed endpoint constraints (`parity/results.txt`, `bedrock-feature-parity/docs/DESIGN.md`): **no server-side web_search/file_search/image_generation/computer_use/shell tools; no `previous_response_id` statefulness (client-managed history, `store: false`); remote MCP must be a same-region Lambda connector; image input via `data:`/`s3://` only; `max_output_tokens` minimum of 16; caching needs `prompt_cache_key`.**
+Every archetype design below is shaped by confirmed endpoint constraints (`parity/results.txt` for gpt-5.4; `parity/results_openai.gpt-5.6-{luna,terra}_us-west-2.txt` from the 2026-07-14 Phase 0 run; `bedrock-feature-parity/docs/DESIGN.md`): **no server-side web_search/file_search/image_generation/computer_use/shell tools; remote MCP must be a same-region Lambda connector; image input via `data:`/`s3://` only; `max_output_tokens` minimum of 16; caching needs `prompt_cache_key`; temperature/top_p rejected on the 5.6 family (reasoning models).**
+
+> **Phase 0 delta (2026-07-14):** `previous_response_id` stateful conversation **passes on gpt-5.6-luna and -terra** (it fails on gpt-5.4, which is what the original constraint was based on). Archetype C below still specifies client-managed history as the portable default, but server-side state is now a validated option on the 5.6 targets — worth a dedicated soak test before relying on it.
 
 ### A. High-volume classification & routing (nano-class)
 
@@ -90,7 +92,7 @@ Every archetype design below is shaped by confirmed endpoint constraints (`parit
 **Constraints to state up front in every customer conversation:**
 
 - **Only the latest arrivals are evaluable on the AWS side today**: the gpt-5.6 family (luna/terra/sol) plus full-size gpt-5.5/5.4. **gpt-5.4-mini/nano do not exist on Bedrock** — so this is a *migration* comparison across model generations and cost classes, not a same-model A/B (see Section 8 on fairness).
-- **Regional availability is asymmetric**: `/v1/models` is region-scoped and gpt-5.x was listed only in us-east-1 at discovery time. Every run must start with `client.models.list()` in the target region; do not assume.
+- **Regional availability is asymmetric** and `/v1/models` is region-scoped — every run must start with model discovery in the target region; do not assume. Snapshot from 2026-07-14 discovery: luna + terra in us-west-2 / us-east-1 / us-east-2; **sol and gpt-5.5 not in us-west-2** (us-east-1 / us-east-2 only); eu-west-1 has only gpt-oss.
 - API surface differs by family: gpt-5.x is **Responses API only** (Chat Completions/InvokeModel/Converse rejected), base path `/openai/v1`; gpt-oss supports Chat Completions/Converse, base path `/v1`.
 
 ---
@@ -158,8 +160,8 @@ General rule of thumb: **latency-sensitive / high-volume / simple-output → sta
 
 ## 7. Execution phases
 
-**Phase 0 — Parity gate on the 5.6 targets.**
-Parameterize `parity/run_parity.py` (model, region, base URL from env); run the 34-test suite against luna and terra in each candidate region (start with `client.models.list()` per region). Deliverable: updated `parity/results.txt` per (model × region), go/no-go per archetype feature dependency.
+**Phase 0 — Parity gate on the 5.6 targets.** *(started 2026-07-14)*
+`parity/run_parity.py` is parameterized (model, region, base URL from env) and has been run against luna and terra in us-west-2: **23/34 passed each** (`parity/results_openai.gpt-5.6-luna_us-west-2.txt`, `..._terra_...`). Key deltas vs the gpt-5.4 reference: `previous_response_id` statefulness now works; temperature/top_p rejected (reasoning models); the s3:// image check failed only because the test fixture bucket is a redacted placeholder — needs a real bucket to be conclusive. Remaining: repeat in us-east-1/us-east-2, provision a Lambda MCP connector to close the one SKIP, and re-check sol where available. Deliverable: go/no-go per archetype feature dependency.
 
 **Phase 1 — Harness composition (shared build).**
 Port the `bench` metric schema into this repo; wire llm-eval-kit graders; build the shared instrumentation from Section 5 (retry taxonomy, cache-session capture, per-task token/cost aggregation, SaaS mini/nano price table + runner). Deliverable: one runner that emits the full Section 4 metric row for any (archetype, model, endpoint) cell.
