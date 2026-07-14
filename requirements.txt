@@ -1,0 +1,5 @@
+aws-bedrock-token-generator
+boto3
+datasets
+openai
+python-docx
