@@ -160,8 +160,8 @@ General rule of thumb: **latency-sensitive / high-volume / simple-output → sta
 
 ## 7. Execution phases
 
-**Phase 0 — Parity gate on the 5.6 targets.** *(started 2026-07-14)*
-`parity/run_parity.py` is parameterized (model, region, base URL from env) and has been run against luna and terra in us-west-2: **23/34 passed each** (`parity/results_openai.gpt-5.6-luna_us-west-2.txt`, `..._terra_...`). Key deltas vs the gpt-5.4 reference: `previous_response_id` statefulness now works; temperature/top_p rejected (reasoning models); the s3:// image check failed only because the test fixture bucket is a redacted placeholder — needs a real bucket to be conclusive. Remaining: repeat in us-east-1/us-east-2, provision a Lambda MCP connector to close the one SKIP, and re-check sol where available. Deliverable: go/no-go per archetype feature dependency.
+**Phase 0 — Parity gate on the 5.6 targets.** *(run 2026-07-14)*
+`parity/run_parity.py` is parameterized (model, region, base URL from env) and has been run against luna and terra in **us-west-2, us-east-1, and us-east-2: 23/34 passed in all six runs, with check-level results identical across regions** (`parity/results_openai.gpt-5.6-{luna,terra}_{region}.txt`). Key deltas vs the gpt-5.4 reference: `previous_response_id` statefulness now works; temperature/top_p rejected (reasoning models); the s3:// image check failed only because the test fixture bucket is a redacted placeholder — needs a real bucket to be conclusive. Remaining: provision a Lambda MCP connector to close the one SKIP, and re-check sol (us-east-1/2 only). Deliverable: go/no-go per archetype feature dependency.
 
 **Phase 1 — Harness composition (shared build).**
 Port the `bench` metric schema into this repo; wire llm-eval-kit graders; build the shared instrumentation from Section 5 (retry taxonomy, cache-session capture, per-task token/cost aggregation, SaaS mini/nano price table + runner). Deliverable: one runner that emits the full Section 4 metric row for any (archetype, model, endpoint) cell.
