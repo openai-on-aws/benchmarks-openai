@@ -249,7 +249,7 @@ def main():
     print(f"Duration: {duration/60:.1f} min")
 
     ts = started_at.strftime("%Y%m%d_%H%M%S")
-    fname = os.path.join(RESULTS_DIR, f"gpqa_diamond_{args.backend}_{ts}.json")
+    fname = os.path.join(RESULTS_DIR, f"gpqa_diamond_{args.backend}_{model}_{ts}.json")
     payload = {
         "eval": "gpqa_diamond",
         "model": model,

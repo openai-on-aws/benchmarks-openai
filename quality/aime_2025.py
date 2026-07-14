@@ -154,7 +154,7 @@ def main():
     print(f"Duration: {duration/60:.1f} min")
 
     ts = started_at.strftime("%Y%m%d_%H%M%S")
-    fname = os.path.join(RESULTS_DIR, f"aime_2024_{args.backend}_{ts}.json")
+    fname = os.path.join(RESULTS_DIR, f"aime_2024_{args.backend}_{model}_{ts}.json")
     payload = {
         "eval": "aime_2024",
         "model": model,

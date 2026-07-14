@@ -1,0 +1,78 @@
+Parity Test Results
+Model:    openai.gpt-5.6-terra
+Endpoint: https://bedrock-mantle.us-east-1.api.aws/openai/v1
+Started:  2026-07-14T19:39:52.295193+00:00
+Ended:    2026-07-14T19:40:30.234987+00:00
+============================================================
+
+[PASS] Basic text generation
+       'hello world'
+[PASS] Streaming (response.output_text.delta)
+       5 chunks, text='1\n2\n3'
+[PASS] Instructions field (system prompt)
+       'la capitale de l’allemagne est berlin.'
+[PASS] Multi-role input (developer/user/assistant turns)
+       '8'
+[PASS] Multi-turn via full history (input array)
+       'your name is alex.'
+[PASS] Stateful conversation (previous_response_id)
+       'your name is alex.'
+[PASS] max_output_tokens enforced (min=16)
+       output_tokens=16
+[FAIL] Temperature
+       Error code: 400 - {'error': {'code': 'unsupported_parameter', 'message': "Unsupported parameter: 'temperature' is not supported with this model.", 'param': 'temperature', 'type': 'invalid_request_error'}}
+[FAIL] Top-p
+       Error code: 400 - {'error': {'code': 'unsupported_parameter', 'message': "Unsupported parameter: 'top_p' is not supported with this model.", 'param': 'top_p', 'type': 'invalid_request_error'}}
+[PASS] Structured output (json_schema)
+       {'age': 30, 'city': 'NYC', 'name': 'John'}
+[PASS] Function calling (single tool)
+       1 calls, name=get_weather
+[PASS] Parallel function calls
+       2 calls: ['get_weather', 'get_weather']
+[PASS] Tool result round-trip (function_call_output)
+       'boston is currently **55°f and cloudy**.'
+[PASS] tool_choice forced
+       1 calls
+[FAIL] Image input (HTTPS URL)
+       Error code: 400 - {'error': {'code': 'validation_error', 'message': 'unsupported image_url scheme: must be `data:` or `s3://`; got https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/GoldenGateB
+[PASS] Image input (data: base64)
+       'TTFT p50 (ms) and output throughput p50 (tok/s).'
+[FAIL] Image input (s3:// URI)
+       Error code: 400 - {'error': {'code': 'validation_error', 'message': 'PS convert/url returned 400 Bad Request: {"error":"could not fetch image from the provided URL (download returned 400 Bad Request)"
+[FAIL] Web search tool
+       NOT SUPPORTED — Error code: 400 - {'error': {'code': 'validation_error', 'message': 'Live web access is not yet available. Set `external_web_access: false` on the `we
+[FAIL] File search tool
+       NOT SUPPORTED — Error code: 400 - {'error': {'code': 'validation_error', 'message': "Tool type 'file_search' is not supported. Supported tool types are: function, mcp
+[PASS] Tool search (gpt-5.4+ feature)
+       output types: ['function_call']
+[FAIL] Remote MCP (server_url)
+       Error code: 400 - {'error': {'code': 'validation_error', 'message': "MCP tool 'dmcp': 'server_url' is not supported. Use a connector ARN instead.", 'param': None, 'type': 'invalid_request_error'}}
+[SKIP] Remote MCP (connector ARN)
+       UNTESTED — requires a provisioned AWS MCP connector ARN; none available in test account
+[PASS] Custom tool type
+       output types: ['reasoning', 'custom_tool_call'], text: ''
+[PASS] Namespace tool type
+       output types: ['function_call'], text: ''
+[FAIL] Image generation tool
+       NOT SUPPORTED — Error code: 400 - {'error': {'code': 'validation_error', 'message': "Tool type 'image_generation' is not supported. Supported tool types are: function
+[FAIL] Computer use tool
+       NOT SUPPORTED — Error code: 400 - {'error': {'code': 'validation_error', 'message': "Tool type 'computer_use_preview' is not supported. Supported tool types are: func
+[FAIL] Shell tool
+       NOT SUPPORTED — Error code: 400 - {'error': {'code': 'validation_error', 'message': "Tool type 'shell' is not supported. Supported tool types are: function, mcp, cust
+[PASS] store=False (stateless mode)
+       'stateless'
+[PASS] Usage object (input/output/total tokens)
+       in=8 out=11 total=19
+[PASS] Response retrieval (GET /responses/{id})
+       id=resp_yumkztvajgtbrfafjshaenlvr7w6s5qdhwivsmjtptdhfj5rmnva
+[PASS] Background mode (background=True accepted)
+       id=resp_h4fktr2l3li6yl76fai7f5pg37dz7cgs4jqzvv3v63ci3m5qj2da, status=in_progress
+[PASS] Background mode (retrieve until completed)
+       status=completed, text='background complete'
+[PASS] Background mode (cancel response)
+       status after cancel=cancelled
+[PASS] Background mode (stream retrieved response)
+       1 chunks, text='1\n2\n3\n4\n5'
+
+============================================================
+TOTAL: 23/34 passed | 10 failed | 1 skipped
