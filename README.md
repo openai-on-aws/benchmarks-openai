@@ -14,8 +14,12 @@ Three suites:
 
 ```
 performance/
-  benchmark_bedrock.py        # Perf benchmark vs Bedrock (Responses API, streaming)
-  benchmark_openai_saas.py    # Same prompt/output matrix vs OpenAI SaaS (Chat Completions, streaming)
+  benchmark.py                # Unified latency harness — one script, both backends
+                              #   (--backend bedrock | openai), Responses API, streaming
+  compare.py                  # Side-by-side Bedrock vs 1P report (COMPARISON.md) from result JSONs
+  run_all.sh                  # Runs the full matrix on both backends, then compare.py
+  benchmark_bedrock.py        # (legacy) Bedrock-only benchmark, superseded by benchmark.py
+  benchmark_openai_saas.py    # (legacy) SaaS-only benchmark via Chat Completions, superseded
   generate_report.py          # Builds a .docx report (numbers are a hardcoded snapshot of past runs)
   data/                       # Canonical prompts: ~1k / 5k / 10k / 20k input tokens
   results/                    # Timestamped result JSONs + TTFT/tok-s plot (plot_ttft_otps.png)
@@ -50,34 +54,68 @@ pip install -r requirements.txt
 
 Region comes from `AWS_REGION` (default `us-west-2`). The endpoint defaults to `https://bedrock-mantle.us-west-2.api.aws/openai/v1` and can be overridden with `MANTLE_BASE_URL` (performance and quality scripts).
 
-**OpenAI SaaS auth:**
+**OpenAI SaaS (1P) auth** — bring your own key:
 
-- `OPENAI_API_KEY` — used by `performance/benchmark_openai_saas.py`.
+- `OPENAI_API_KEY` — used by `performance/benchmark.py --backend openai` (and the legacy `benchmark_openai_saas.py`).
 - Quality scripts prefer `OPENAI_API_KEY_SAAS` and fall back to `OPENAI_API_KEY`, so you can keep a separate key for eval runs.
 
 **Hugging Face datasets:** the quality evals download `Idavidrein/gpqa`, `qq8933/AIME_1983_2024`, and `cais/hle` at runtime. GPQA and HLE are gated — accept the terms on Hugging Face and run `huggingface-cli login` first.
 
 ## Quick start
 
-### Performance benchmark
+### Performance benchmark — Bedrock vs your own OpenAI 1P key
 
-Against Bedrock (IAM credentials required):
+Everything runs through one harness, `performance/benchmark.py`, which uses the same
+Responses-API streaming code path against both backends so the numbers are directly
+comparable. Bring your own OpenAI API key for the 1P side.
 
-```bash
-export AWS_REGION=us-west-2
-python performance/benchmark_bedrock.py 1k --runs=5
-```
-
-Positional args pick input sizes (`1k`, `5k`, `10k`, `20k`; default `1k 10k 20k`), `--runs=N` sets runs per output config (default 25). Each input size sweeps three `max_output_tokens` configs.
-
-Against OpenAI SaaS (25 runs per config, fixed):
+**The one-command path** — full matrix on both backends, then a side-by-side report:
 
 ```bash
-export OPENAI_API_KEY=sk-...
-SAAS_MODEL=gpt-5.5 python performance/benchmark_openai_saas.py 1k
+export OPENAI_API_KEY=sk-...     # your OpenAI 1P key
+export AWS_REGION=us-west-2      # plus IAM credentials (profile/env/role)
+./performance/run_all.sh
 ```
 
-Both write timestamped JSONs (summary stats + raw per-call data) into `performance/results/`.
+Defaults compare `openai.gpt-5.6-luna` (Bedrock) against `gpt-5.6-luna` (1P) across
+1k/5k/10k/20k inputs × 3 output configs × 25 runs each. Override with env vars:
+
+```bash
+BEDROCK_MODEL=openai.gpt-5.6-terra OPENAI_MODEL=gpt-5.6-terra ./performance/run_all.sh
+RUNS=5 SIZES="1k 10k" ./performance/run_all.sh     # quicker pass
+SKIP_BEDROCK=1 ./performance/run_all.sh            # 1P side only
+```
+
+Budget roughly 30–60 min per input size per backend at 25 runs; a `RUNS=5` pass
+finishes in a fraction of that and is fine for a first look.
+
+**Running a single backend directly:**
+
+```bash
+# Bedrock (uses IAM creds, or AWS_BEARER_TOKEN_BEDROCK if set)
+python performance/benchmark.py --backend bedrock --model openai.gpt-5.6-luna 1k --runs=5
+
+# OpenAI 1P
+python performance/benchmark.py --backend openai --model gpt-5.6-luna 1k --runs=5
+```
+
+Useful flags: `--outputs 100,1000` overrides the per-size `max_output_tokens` sweep,
+`--effort low|medium|high` sets reasoning effort (accepted by gpt-5.6 on both backends),
+`--concurrency N` fires N parallel requests to probe throughput under load,
+`--list-models` prints the model ids the backend offers, and `--tag` labels the
+results file. Each run writes a timestamped JSON (summary stats + raw per-call data)
+into `performance/results/`.
+
+**Comparing results:**
+
+```bash
+python performance/compare.py --model-a openai.gpt-5.6-luna --model-b gpt-5.6-luna
+```
+
+Matches Bedrock and 1P runs on identical (input size, max output, concurrency, effort)
+configs, prints p50 TTFT / ITL / tok-s / E2E side by side with relative deltas, and
+writes `performance/results/COMPARISON.md`. Only results produced by `benchmark.py`
+(schema v2) are compared; the older single-backend scripts remain for provenance.
 
 ### Quality eval
 
@@ -110,14 +148,20 @@ Runs 34 live checks against the Bedrock Responses endpoint and writes `parity/re
 
 ## Choosing models
 
-| Env var | Used by | Default |
+| Env var / flag | Used by | Default |
 |---|---|---|
-| `MANTLE_MODEL` | `performance/benchmark_bedrock.py`, quality scripts with `--backend mantle` | `openai.gpt-5.4` |
-| `SAAS_MODEL` | `performance/benchmark_openai_saas.py` | `gpt-5.5` |
-| `SAAS_MODEL` | quality scripts with `--backend saas` | `gpt-5.4` |
-| `MANTLE_BASE_URL` | performance + quality Bedrock calls | `https://bedrock-mantle.us-west-2.api.aws/openai/v1` |
+| `--model` | `performance/benchmark.py` | `openai.gpt-5.6-luna` (bedrock) / `gpt-5.6-luna` (openai) |
+| `BEDROCK_MODEL` / `OPENAI_MODEL` | `performance/run_all.sh` | `openai.gpt-5.6-luna` / `gpt-5.6-luna` |
+| `MANTLE_MODEL` | quality scripts with `--backend mantle`, legacy `benchmark_bedrock.py` | `openai.gpt-5.4` |
+| `SAAS_MODEL` | quality scripts with `--backend saas`, legacy `benchmark_openai_saas.py` | `gpt-5.4` / `gpt-5.5` |
+| `MANTLE_BASE_URL` | performance + quality Bedrock calls | `https://bedrock-mantle.<AWS_REGION>.api.aws/openai/v1` |
 
-Current OpenAI model IDs on Bedrock, newest first:
+Run `python performance/benchmark.py --backend bedrock --list-models` (or `--backend openai`)
+to see what your credentials can reach before kicking off a long run.
+
+Current OpenAI model IDs on Bedrock, newest first (availability varies by region —
+`--list-models` is the source of truth for yours; as of 2026-07-18, us-west-2 serves
+luna/terra/5.4/oss but not sol or 5.5):
 
 - `openai.gpt-5.6-luna`
 - `openai.gpt-5.6-terra`
@@ -130,7 +174,7 @@ Evaluation work currently targets the latest arrivals (the gpt-5.6 family); the 
 
 ## What's measured
 
-**Performance** — for every (input size × max output tokens) config: TTFT (ms), output tokens/sec, and end-to-end latency (ms), each reported as mean / stddev / p50 / p95 / p99 / min / max across runs. Raw per-call measurements are kept in the result JSONs under [`performance/results/`](performance/results/).
+**Performance** — for every (input size × max output tokens) config: TTFT (ms), inter-token latency (ITL, ms between successive streamed chunks), output tokens/sec, and end-to-end latency (ms), each reported as mean / stddev / p50 / p95 / p99 / min / max across runs. Per-call reasoning-token and cached-token counts are also recorded, since reasoning models can spend a large share of latency before the first visible token. Raw per-call measurements are kept in the result JSONs under [`performance/results/`](performance/results/).
 
 **Quality** — GPQA Diamond (198 questions, 5 repeats, mean pass@1), AIME competition math, and HLE text-only (exact match plus LLM-judge rescoring), run identically against both backends. Methodology and completed-run results live in [`quality/RESULTS.md`](quality/RESULTS.md); raw outputs are in [`quality/results/`](quality/results/). Per team policy, accuracy numbers are not quoted here — consult the results files.
 
