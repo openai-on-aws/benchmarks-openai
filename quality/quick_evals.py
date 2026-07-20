@@ -118,12 +118,54 @@ def extract_letter(text):
 def norm_math(s):
     if s is None:
         return None
-    s = s.strip().strip("$").replace(" ", "")
-    s = re.sub(r"\\left|\\right", "", s)
-    s = re.sub(r"\\!|\\,", "", s)
-    s = re.sub(r"^\\text\{(.+?)\}$", r"\1", s)
-    s = re.sub(r"\\dfrac", r"\\frac", s)
+    s = s.strip().strip("$")
+    s = re.sub(r"\\left|\\right|\\!|\\,|\\;|~", "", s)
+    s = re.sub(r"\\text\s*\{[^{}]*\}", "", s)   # units like \text{ cm} anywhere
+    s = re.sub(r"\\mbox\s*\{[^{}]*\}", "", s)
+    s = re.sub(r"\\d?frac", r"\\frac", s)
+    # \frac14, \frac 59, \frac{1}4 → \frac{1}{4}
+    s = re.sub(r"\\frac\s*(\d|\{[^{}]+\})\s*(\d|\{[^{}]+\})",
+               lambda m: "\\frac{%s}{%s}" % (m.group(1).strip("{}"), m.group(2).strip("{}")), s)
+    s = re.sub(r"\\sqrt\s*(\d)", r"\\sqrt{\1}", s)  # \sqrt3 → \sqrt{3}
+    s = s.replace("\\ ", "").replace(" ", "")
+    # strip a simple lhs like x=, k=, f(2,3)=  (but keep multi-part answers intact)
+    m = re.match(r"^[a-zA-Z]\w*(\([^()]*\))?=([^=]+)$", s)
+    if m:
+        s = m.group(2)
+    s = re.sub(r"(?<![\d.])\.(\d)", r"0.\1", s)  # .35 → 0.35
+    s = s.rstrip(".").rstrip("\\")
     return s
+
+
+def math_equal(pred, gold):
+    a, b = norm_math(pred), norm_math(gold)
+    if a is None or b is None:
+        return False
+    if a == b:
+        return True
+    # multi-part answers ("3,5,7"): compare as sets of parts
+    if "," in a or "," in b:
+        pa = sorted(p for p in a.split(",") if p)
+        pb = sorted(p for p in b.split(",") if p)
+        return pa == pb
+    # numeric equivalence fallback (\frac{1}{2} vs 0.5 etc.)
+    va, vb = _latex_value(a), _latex_value(b)
+    return va is not None and vb is not None and abs(va - vb) < 1e-9
+
+
+def _latex_value(s):
+    """Numeric value of simple latex (plain numbers and \\frac{a}{b}); None if not simple."""
+    try:
+        return float(s)
+    except ValueError:
+        pass
+    m = re.fullmatch(r"\\frac\{(-?[\d.]+)\}\{(-?[\d.]+)\}", s)
+    if m:
+        try:
+            return float(m.group(1)) / float(m.group(2))
+        except (ValueError, ZeroDivisionError):
+            return None
+    return None
 
 
 def extract_boxed(text):
@@ -158,7 +200,7 @@ def score(task, gold, text):
         return pred, pred == gold
     if task == "math500":
         pred = extract_boxed(text)
-        return pred, norm_math(pred) == norm_math(gold)
+        return pred, math_equal(pred, gold)
     pred = extract_number(text)
     try:
         return pred, pred is not None and float(pred) == float(gold)
@@ -260,8 +302,39 @@ def run_task(backend, model, effort, task, n, concurrency):
     return summary
 
 
+def rescore_all():
+    """Re-grade every quickeval result file in place with the current scorers."""
+    import glob
+    for path in sorted(glob.glob(os.path.join(RESULTS_DIR, "quickeval_*.json"))):
+        with open(path) as f:
+            d = json.load(f)
+        changed = 0
+        for r in d["results"]:
+            if r["text"] is None:
+                continue
+            pred, correct = score(d["task"], r["gold"], r["text"])
+            if bool(correct) != r["correct"] or pred != r["pred"]:
+                changed += 1
+            r["pred"], r["correct"] = pred, bool(correct)
+        ok = [r for r in d["results"] if not r["error"]]
+        n_correct = sum(1 for r in ok if r["correct"])
+        old = d["summary"]["accuracy"]
+        d["summary"]["n_correct"] = n_correct
+        d["summary"]["accuracy"] = round(n_correct / len(ok), 4) if ok else None
+        with open(path, "w") as f:
+            json.dump(d, f, indent=2)
+        flag = f"  ({changed} grades changed, was {old})" if changed else ""
+        print(f"{d['model']:>28} {d['task']:>9}: {n_correct}/{len(ok)} = {d['summary']['accuracy']}{flag}")
+
+
 def main():
     p = argparse.ArgumentParser(description="Quick cross-backend quality evals")
+    p.add_argument("--rescore", action="store_true",
+                   help="re-grade existing result files with current scorers; no API calls")
+    args_pre, _ = p.parse_known_args()
+    if args_pre.rescore:
+        rescore_all()
+        return
     p.add_argument("--backend", choices=["mantle", "saas"], required=True)
     p.add_argument("--model", required=True)
     p.add_argument("--effort", help="reasoning effort (e.g. none, low); omit for model default")
