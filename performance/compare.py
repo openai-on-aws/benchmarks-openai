@@ -124,8 +124,12 @@ def main():
     lines.append("")
     lines.append("## Source files")
     lines.append("")
+    seen_pairs = []
     for key in common:
-        lines.append(f"- `{bedrock[key]['file']}` vs `{openai_1p[key]['file']}`")
+        pair = (bedrock[key]["file"], openai_1p[key]["file"])
+        if pair not in seen_pairs:
+            seen_pairs.append(pair)
+            lines.append(f"- `{pair[0]}` vs `{pair[1]}`")
     if only_br:
         lines.append("")
         lines.append(f"Configs with Bedrock results only (no 1P counterpart yet): {sorted(only_br)}")
