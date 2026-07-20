@@ -180,11 +180,11 @@ def pctile(vals, p):
 
 
 def raw_band(payload, max_out, field):
-    """(p5, p50, p95) of a per-call field, from raw data (outlier-robust)."""
+    """(p5, p50, p95, p99) of a per-call field, from raw data (outlier-robust)."""
     vals = [r[field] for r in payload["raw"][str(max_out)] if not r["error"] and r[field]]
     if not vals:
-        return None, None, None
-    return pctile(vals, 5), pctile(vals, 50), pctile(vals, 95)
+        return None, None, None, None
+    return pctile(vals, 5), pctile(vals, 50), pctile(vals, 95), pctile(vals, 99)
 
 
 def build_chart(results, family, outfile):
@@ -214,10 +214,17 @@ def build_chart(results, family, outfile):
                 lo = [b[0] for b in bands]
                 p50 = [b[1] for b in bands]
                 hi = [b[2] for b in bands]
+                p99 = [b[3] for b in bands]
                 ax.plot(xs, p50, marker="o", markersize=6, linewidth=2, color=color,
                         label=label, zorder=3)
                 if all(v is not None for v in lo + hi):
                     ax.fill_between(xs, lo, hi, color=color, alpha=0.13, linewidth=0, zorder=2)
+                # p99 as a dashed tail line on latency panels only; on tok/s it
+                # tracks the burst outliers and would wreck the axis.
+                if metric == "ttft_ms" and all(v is not None for v in p99):
+                    ax.plot(xs, p99, linestyle=(0, (3, 2)), linewidth=1.3, color=color,
+                            label=f"{label} p99", zorder=3)
+                    band_vals += p99
                 vals += [v for v in p50 if v is not None]
                 band_vals += [v for v in hi if v is not None]
                 ax.set_xticks(xs)
@@ -247,11 +254,14 @@ def build_chart(results, family, outfile):
                 axes[row][col].set_yticklabels([])
 
     handles, labels = axes[0][0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc="upper right", bbox_to_anchor=(0.995, 0.965),
+    order = [labels.index(x) for x in ["Bedrock", "OpenAI 1P", "Bedrock p99", "OpenAI 1P p99"] if x in labels]
+    fig.legend([handles[i] for i in order], [labels[i] for i in order],
+               loc="upper right", bbox_to_anchor=(0.995, 0.985), ncol=2,
                fontsize=9, frameon=False)
     fig.text(0.005, 0.005,
-             "Bands: p5→p95 of per-call values · y-scale shared within each row · "
-             "tok/s axis scaled to p50s; single-flush outlier calls at small outputs exceed it",
+             "Solid line: p50 per call · shaded band: p5→p95 (90% of calls fall inside) · "
+             "dashed: p99 (TTFT row only) · y-scale shared per row · "
+             "tok/s axis scaled to p50s; single-flush outliers at small outputs exceed it",
              fontsize=8, color=MUTED)
     fig.tight_layout(rect=[0, 0.02, 1, 0.95])
     # The metadata chunk also shifts the PNG byte stream if a chance base64
@@ -406,7 +416,9 @@ timestamped result JSONs in `performance/results/` at report build time.
 
 ### {section_no}.1 Benchmark chart
 
-Top row: TTFT p50 with p5→p95 band. Bottom row: output tok/s p50 with p5→p95 band.
+**How to read this chart:** the solid line is the median (p50) call. The shaded band spans
+p5→p95 — 90% of the 25 calls per config landed inside it, so a wide band means inconsistent
+latency, not measurement error. The dashed line (TTFT row only) is p99, the worst-case tail.
 One panel per input size; y-scale shared within each row.
 
 ![{family} benchmark chart]({charts[family]})
@@ -546,6 +558,70 @@ def md_to_html(md, charts):
 """
 
 
+# ----------------------------------------------------------------------- docx
+
+def md_to_docx(md, outfile):
+    from docx import Document
+    from docx.shared import Pt, Inches, RGBColor
+    from docx.enum.table import WD_TABLE_ALIGNMENT
+
+    doc = Document()
+    style = doc.styles["Normal"]
+    style.font.name = "Calibri"
+    style.font.size = Pt(10.5)
+
+    def add_runs(par, text):
+        # split on **bold** and `code`
+        for part in re.split(r"(\*\*.+?\*\*|`.+?`)", text):
+            if part.startswith("**") and part.endswith("**"):
+                r = par.add_run(part[2:-2]); r.bold = True
+            elif part.startswith("`") and part.endswith("`"):
+                r = par.add_run(part[1:-1]); r.font.name = "Courier New"; r.font.size = Pt(9.5)
+            elif part:
+                # strip markdown links down to their text
+                par.add_run(re.sub(r"\[(.+?)\]\(.+?\)", r"\1", part))
+
+    lines = md.splitlines()
+    i = 0
+    while i < len(lines):
+        l = lines[i]
+        img = re.match(r"!\[(.*?)\]\((.*?)\)", l.strip())
+        if img:
+            doc.add_picture(os.path.join(RESULTS_DIR, img.group(2)), width=Inches(6.8))
+        elif l.startswith("|"):
+            tbl = []
+            while i < len(lines) and lines[i].startswith("|"):
+                tbl.append(lines[i]); i += 1
+            rows = [[c.strip() for c in r.strip("|").split("|")] for r in tbl]
+            rows = [r for r in rows if not all(set(c) <= set("-: ") for c in r)]
+            t = doc.add_table(rows=len(rows), cols=len(rows[0]))
+            t.style = "Light Grid Accent 1"
+            t.alignment = WD_TABLE_ALIGNMENT.LEFT
+            for ri, row in enumerate(rows):
+                for ci, cell in enumerate(row):
+                    par = t.rows[ri].cells[ci].paragraphs[0]
+                    add_runs(par, cell)
+                    for r in par.runs:
+                        r.font.size = Pt(8.5)
+                        if ri == 0:
+                            r.bold = True
+            doc.add_paragraph()
+            continue
+        elif l.startswith("### "):
+            doc.add_heading(re.sub(r"[*`]", "", l[4:]), level=3)
+        elif l.startswith("## "):
+            doc.add_heading(re.sub(r"[*`]", "", l[3:]), level=2)
+        elif l.startswith("# "):
+            doc.add_heading(re.sub(r"[*`]", "", l[2:]), level=1)
+        elif l.startswith("- "):
+            add_runs(doc.add_paragraph(style="List Bullet"), l[2:])
+        elif l.strip():
+            add_runs(doc.add_paragraph(), l)
+        i += 1
+
+    doc.save(outfile)
+
+
 def main():
     results = load_results()
     md, charts = build_markdown(results)
@@ -555,8 +631,11 @@ def main():
     html_path = os.path.join(RESULTS_DIR, "REPORT.html")
     with open(html_path, "w") as f:
         f.write(md_to_html(md, charts))
+    docx_path = os.path.join(RESULTS_DIR, "REPORT.docx")
+    md_to_docx(md, docx_path)
     print(f"Wrote {md_path}")
     print(f"Wrote {html_path}")
+    print(f"Wrote {docx_path}")
     for family, png in charts.items():
         print(f"Wrote {os.path.join(RESULTS_DIR, png)}")
 

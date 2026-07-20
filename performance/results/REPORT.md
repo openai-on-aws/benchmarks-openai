@@ -1,6 +1,6 @@
 # GPT-5.6 on Amazon Bedrock vs OpenAI 1P — Latency Benchmark Report
 
-**Generated:** 2026-07-20 21:45 UTC · **Repo:** [openai-on-aws/benchmarks-openai](https://github.com/openai-on-aws/benchmarks-openai)
+**Generated:** 2026-07-20 21:55 UTC · **Repo:** [openai-on-aws/benchmarks-openai](https://github.com/openai-on-aws/benchmarks-openai)
 
 Both backends are exercised through an identical code path — the OpenAI Responses API with streaming
 (`performance/benchmark.py`). Metrics: **TTFT** (time to first output-text token), **Tok/s** (output tokens
@@ -53,7 +53,9 @@ timestamped result JSONs in `performance/results/` at report build time.
 
 ### 3.1 Benchmark chart
 
-Top row: TTFT p50 with p5→p95 band. Bottom row: output tok/s p50 with p5→p95 band.
+**How to read this chart:** the solid line is the median (p50) call. The shaded band spans
+p5→p95 — 90% of the 25 calls per config landed inside it, so a wide band means inconsistent
+latency, not measurement error. The dashed line (TTFT row only) is p99, the worst-case tail.
 One panel per input size; y-scale shared within each row.
 
 ![gpt-5.6-luna benchmark chart](chart_gpt-5.6-luna.png)
@@ -173,7 +175,9 @@ One panel per input size; y-scale shared within each row.
 
 ### 4.1 Benchmark chart
 
-Top row: TTFT p50 with p5→p95 band. Bottom row: output tok/s p50 with p5→p95 band.
+**How to read this chart:** the solid line is the median (p50) call. The shaded band spans
+p5→p95 — 90% of the 25 calls per config landed inside it, so a wide band means inconsistent
+latency, not measurement error. The dashed line (TTFT row only) is p99, the worst-case tail.
 One panel per input size; y-scale shared within each row.
 
 ![gpt-5.6-terra benchmark chart](chart_gpt-5.6-terra.png)
