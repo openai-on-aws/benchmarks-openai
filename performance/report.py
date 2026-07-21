@@ -23,6 +23,7 @@ import matplotlib.pyplot as plt
 
 RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
+QUALITY_RESULTS_DIR = os.path.join(os.path.dirname(__file__), "..", "quality", "results")
 
 SIZES = ["1k", "5k", "10k", "20k"]
 MODELS = [
@@ -380,6 +381,66 @@ def build_findings(results):
     return "\n".join(f"- {x}" for x in f)
 
 
+# -------------------------------------------------------------- quality evals
+
+EVAL_TASK_LABELS = {"mmlu_pro": "MMLU-Pro", "math500": "MATH-500", "gsm8k": "GSM8K"}
+EVAL_TASK_ORDER = ["mmlu_pro", "math500", "gsm8k"]
+
+
+def load_quickevals():
+    """latest[(model_label, task)] = summary; keeps the newest file per pair."""
+    latest = {}
+    for path in sorted(glob.glob(os.path.join(QUALITY_RESULTS_DIR, "quickeval_*.json"))):
+        with open(path) as f:
+            d = json.load(f)
+        backend = "Bedrock" if d["backend"] == "mantle" else "OpenAI 1P"
+        model = d["model"].replace("openai.", "")
+        label = f"{model} ({backend}" + (f", effort={d['reasoning_effort']}" if d["reasoning_effort"] else "") + ")"
+        key = (label, d["task"])
+        if key not in latest or d["timestamp"] > latest[key]["_ts"]:
+            latest[key] = {**d["summary"], "_ts": d["timestamp"], "n_asked": d["summary"]["n"]}
+    return latest
+
+
+def build_evals_section(section_no):
+    evals = load_quickevals()
+    if not evals:
+        return ""
+    models = sorted({k[0] for k in evals})
+    lines = [
+        f"## {section_no}. Task-quality evals — gpt-5.6 (reasoning off) vs gpt-5.4-mini/nano",
+        "",
+        "Accuracy on fixed-seed samples of community benchmarks (MMLU-Pro 140 stratified Qs, "
+        "MATH-500 100 Qs, GSM8K 100 Qs). Every model answered the **same questions** via the "
+        "same Responses-API path; exact-match scoring (MCQ letter / normalized boxed answer / "
+        "final number). Latency here is full-response wall time per question (not TTFT), "
+        "measured under 6-way concurrency — comparable across rows, not to the tables above. "
+        "At these sample sizes the 95% CI is roughly ±8–10 points: treat differences inside "
+        "that band as ties. Result files: `quality/results/quickeval_*.json`.",
+        "",
+        "| Model | Benchmark | Accuracy | Correct | Mean latency (ms) | Mean output tokens |",
+        "|---|---|---|---|---|---|",
+    ]
+    for model in models:
+        for task in EVAL_TASK_ORDER:
+            s = evals.get((model, task))
+            if not s:
+                continue
+            n_ok = s["n_asked"] - s["n_errors"]
+            lines.append(
+                f"| {model} | {EVAL_TASK_LABELS[task]} | {s['accuracy']:.0%} "
+                f"| {s['n_correct']}/{n_ok} | {fnum(s['mean_latency_ms'])} | {fnum(s['mean_output_tokens'])} |")
+    lines += [
+        "",
+        "Context for the matchup (an OpenAI-suggested comparison for migration planning): "
+        "gpt-5.6 luna/terra on Bedrock with `reasoning: {effort: none}` — i.e. thinking "
+        "disabled — against gpt-5.4-mini/nano on the OpenAI API at their defaults. "
+        "GSM8K is saturated for all four models (95–97%) and acts as a sanity control.",
+        "",
+    ]
+    return "\n".join(lines)
+
+
 # ------------------------------------------------------------------- markdown
 
 def build_markdown(results):
@@ -389,7 +450,7 @@ def build_markdown(results):
         build_chart(results, family, png)
         charts[family] = os.path.basename(png)
 
-    parts = [f"""# GPT-5.6 on Amazon Bedrock vs OpenAI 1P — Latency Benchmark Report
+    parts = [f"""# GPT-5.6 on Amazon Bedrock vs OpenAI 1P — Latency & Quality Benchmark Report
 
 **Generated:** {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')} · **Repo:** [openai-on-aws/benchmarks-openai](https://github.com/openai-on-aws/benchmarks-openai)
 
@@ -445,6 +506,11 @@ One panel per input size; y-scale shared within each row.
 
 {build_comparison_table(results, family)}
 """)
+        section_no += 1
+
+    evals_md = build_evals_section(section_no)
+    if evals_md:
+        parts.append(evals_md)
         section_no += 1
 
     parts.append("""## Source files
