@@ -1,6 +1,6 @@
 # GPT-5.6 on Amazon Bedrock vs OpenAI 1P — Latency Benchmark Report
 
-**Generated:** 2026-07-20 21:55 UTC · **Repo:** [openai-on-aws/benchmarks-openai](https://github.com/openai-on-aws/benchmarks-openai)
+**Generated:** 2026-07-21 09:54 UTC · **Repo:** [openai-on-aws/benchmarks-openai](https://github.com/openai-on-aws/benchmarks-openai)
 
 Both backends are exercised through an identical code path — the OpenAI Responses API with streaming
 (`performance/benchmark.py`). Metrics: **TTFT** (time to first output-text token), **Tok/s** (output tokens
@@ -11,8 +11,8 @@ timestamped result JSONs in `performance/results/` at report build time.
 
 | Parameter | Value |
 |---|---|
-| Models | `openai.gpt-5.6-luna`, `openai.gpt-5.6-terra` (Bedrock) vs `gpt-5.6-luna`, `gpt-5.6-terra` (1P) |
-| Bedrock endpoint | `https://bedrock-mantle.us-west-2.api.aws/openai/v1` |
+| Models | `openai.gpt-5.6-luna`, `-terra`, `-sol` (Bedrock) vs `gpt-5.6-luna`, `-terra`, `-sol` (1P) |
+| Bedrock endpoint | `https://bedrock-mantle.us-west-2.api.aws/openai/v1` (luna/terra) · `us-east-1` (sol — not served in us-west-2) |
 | OpenAI 1P endpoint | `https://api.openai.com/v1` |
 | API surface | Responses API, streaming — identical code path on both backends (`performance/benchmark.py`) |
 | Auth | Bedrock: IAM via `aws-bedrock-token-generator` · 1P: user-supplied `OPENAI_API_KEY` |
@@ -25,8 +25,8 @@ timestamped result JSONs in `performance/results/` at report build time.
 | 5k input prompt | 4,750 verified tokens (23,788 chars) |
 | 10k input prompt | 9,984 verified tokens (47,568 chars) |
 | 20k input prompt | 20,136 verified tokens (95,123 chars) |
-| Run dates | 2026-07-18, 2026-07-20 (Bedrock luna 07-18; all else 07-20) |
-| Total calls | 1,200 (1 errored) |
+| Run dates | 2026-07-18, 2026-07-20, 2026-07-21 (Bedrock luna 07-18; sol overnight 07-20→21; rest 07-20) |
+| Total calls | 1,800 (3 errored) |
 
 ## 2. Key performance findings
 
@@ -34,19 +34,26 @@ timestamped result JSONs in `performance/results/` at report build time.
 - **TTFT is roughly flat across input sizes on Bedrock (gpt-5.6-terra):** at 1,000 max output tokens, p50 TTFT stays within 1,343–1,664 ms from 1K to 20K input tokens — a 20× larger prompt does not meaningfully move time-to-first-token.
 - **gpt-5.6-luna TTFT:** averaged across all 12 configs, Bedrock p50 TTFT is 21% lower than 1P (1,345 vs 1,709 ms).
 - **gpt-5.6-terra TTFT:** averaged across all 12 configs, Bedrock p50 TTFT is 5% lower than 1P (1,475 vs 1,556 ms).
+- **gpt-5.6-sol TTFT:** averaged across all 12 configs, Bedrock p50 TTFT is 37% lower than 1P (5,364 vs 8,457 ms).
 - **Throughput (≥500-token outputs):** luna averages 209.5 tok/s on Bedrock vs 146.3 on 1P (+43%); terra averages 89.2 vs 85.9 tok/s (+4%).
 - **Luna streams ~2.0× faster than terra on both backends** (~178 vs ~88 tok/s at ≥500-token outputs) — a model characteristic, not a platform one.
 - **gpt-5.6-luna TTFT tail:** worst p99/p50 ratio is 2.1× on Bedrock (10K/500 out) vs 4.6× on 1P (20K/1,000 out).
 - **gpt-5.6-terra TTFT tail:** worst p99/p50 ratio is 2.5× on Bedrock (5K/1,000 out) vs 6.6× on 1P (10K/1,000 out).
-- **At 100-token output budgets, gpt-5.6 often spends the whole budget on reasoning and emits no visible text** (15/25 on Bedrock gpt-5.6-luna; 20/25 on OpenAI 1P gpt-5.6-luna; 5/25 on Bedrock gpt-5.6-terra). Null-TTFT calls are excluded from latency stats; budget well above 100 output tokens for latency-sensitive use.
-- **Responses often stop well before large `max_output_tokens` limits** (model finishes naturally rather than truncating): Bedrock gpt-5.6-luna 5K/5,000: mean 3,628 tokens; Bedrock gpt-5.6-luna 10K/5,000: mean 3,524 tokens; Bedrock gpt-5.6-luna 20K/5,000: mean 3,179 tokens; Bedrock gpt-5.6-luna 20K/10,000: mean 3,149 tokens; and 12 more configs.
+- **gpt-5.6-sol TTFT tail:** worst p99/p50 ratio is 38.3× on Bedrock (20K/5,000 out) vs 3.5× on 1P (5K/5,000 out).
+- **At 100-token output budgets, gpt-5.6 often spends the whole budget on reasoning and emits no visible text** (15/25 on Bedrock gpt-5.6-luna; 20/25 on OpenAI 1P gpt-5.6-luna; 5/25 on Bedrock gpt-5.6-terra; 25/25 on Bedrock gpt-5.6-sol; 24/25 on OpenAI 1P gpt-5.6-sol). Null-TTFT calls are excluded from latency stats; budget well above 100 output tokens for latency-sensitive use.
+- **Responses often stop well before large `max_output_tokens` limits** (model finishes naturally rather than truncating): Bedrock gpt-5.6-luna 5K/5,000: mean 3,628 tokens; Bedrock gpt-5.6-luna 10K/5,000: mean 3,524 tokens; Bedrock gpt-5.6-luna 20K/5,000: mean 3,179 tokens; Bedrock gpt-5.6-luna 20K/10,000: mean 3,149 tokens; and 20 more configs.
 
 ### Caveats
 
-- Bedrock **luna** ran 2026-07-18; all other matrices ran 2026-07-20, so the luna comparison includes
-  day-to-day variance. The **terra** comparison is same-day on both backends.
-- Sequential, single-region (us-west-2), default reasoning effort. Concurrency and effort sweeps are
-  supported by the harness but not yet run.
+- Bedrock **luna** ran 2026-07-18; all other matrices ran 2026-07-20 (sol overnight into 07-21), so the
+  luna comparison includes day-to-day variance. The **terra** and **sol** comparisons are same-session
+  on both backends.
+- **Sol's Bedrock runs used us-east-1** (sol is not served in us-west-2), so its Bedrock-vs-1P deltas
+  include a region difference; luna/terra used us-west-2.
+- Sol is a deep-reasoning model: it spends heavily on reasoning tokens before the first visible token,
+  so its TTFT is inherently higher and more variable than luna/terra on both backends.
+- Sequential, default reasoning effort. Concurrency and effort sweeps are supported by the harness but
+  not yet run.
 - Delta convention: **positive = Bedrock better** (lower latency or higher throughput).
 
 ## 3. gpt-5.6-luna
@@ -292,6 +299,128 @@ One panel per input size; y-scale shared within each row.
 | 20K | 10,000 | Tok/s p50 | 83.3 | 79.9 | +4% |
 | 20K | 10,000 | E2E p50 (ms) | 39,446.1 | 40,770.7 | +3% |
 | 20K | 10,000 | E2E p95 (ms) | 48,804.3 | 67,593.1 | +28% |
+
+## 5. gpt-5.6-sol
+
+### 5.1 Benchmark chart
+
+**How to read this chart:** the solid line is the median (p50) call. The shaded band spans
+p5→p95 — 90% of the 25 calls per config landed inside it, so a wide band means inconsistent
+latency, not measurement error. The dashed line (TTFT row only) is p99, the worst-case tail.
+One panel per input size; y-scale shared within each row.
+
+![gpt-5.6-sol benchmark chart](chart_gpt-5.6-sol.png)
+
+### 5.2 Bedrock detail (all timings ms)
+
+| Input | Max out | TTFT p50 | TTFT p95 | TTFT p99 | Tok/s p50 | E2E p50 | E2E p95 |
+|---|---|---|---|---|---|---|---|
+| 1K | 100 | n/a | n/a | n/a | n/a | 1,824 | 2,900 |
+| 1K | 500 | 3,698 | 7,393 | 7,513 | 120.0 | 7,644 | 8,668 |
+| 1K | 1,000 | 4,010 | 11,620 | 12,430 | 93.0 | 14,711 | 16,426 |
+| 5K | 500 | 2,801 | 4,619 | 4,719 | 119.7 | 7,285 | 8,424 |
+| 5K | 1,000 | 3,366 | 12,811 | 14,252 | 94.0 | 14,446 | 15,832 |
+| 5K | 5,000 | 4,642 | 15,504 | 16,138 | 81.1 | 59,491 | 69,453 |
+| 10K | 500 | 4,770 | 7,005 | 7,706 | 198.4 | 6,859 | 8,121 |
+| 10K | 1,000 | 7,714 | 10,195 | 11,142 | 170.9 | 13,446 | 15,374 |
+| 10K | 5,000 | 4,804 | 15,616 | 15,837 | 85.4 | 48,838 | 63,951 |
+| 20K | 1,000 | 7,318 | 9,874 | 10,862 | 131.7 | 14,642 | 16,805 |
+| 20K | 5,000 | 6,239 | 15,632 | 238,776 | 82.7 | 47,918 | 81,118 |
+| 20K | 10,000 | 9,638 | 18,197 | 19,932 | 87.5 | 51,080 | 64,265 |
+
+### 5.3 OpenAI 1P detail (all timings ms)
+
+| Input | Max out | TTFT p50 | TTFT p95 | TTFT p99 | Tok/s p50 | E2E p50 | E2E p95 |
+|---|---|---|---|---|---|---|---|
+| 1K | 100 | 3,452 | 3,452 | 3,452 | 277.6 | 4,038 | 7,304 |
+| 1K | 500 | 7,050 | 16,325 | 19,133 | 69.8 | 15,974 | 21,124 |
+| 1K | 1,000 | 8,957 | 30,291 | 31,085 | 43.8 | 31,654 | 34,684 |
+| 5K | 500 | 5,710 | 11,499 | 13,422 | 54.6 | 15,764 | 19,141 |
+| 5K | 1,000 | 10,323 | 31,187 | 31,771 | 50.9 | 31,702 | 37,027 |
+| 5K | 5,000 | 7,018 | 19,657 | 24,798 | 38.5 | 127,664 | 152,521 |
+| 10K | 500 | 7,847 | 14,251 | 14,428 | 172.2 | 11,548 | 16,419 |
+| 10K | 1,000 | 12,772 | 24,874 | 25,446 | 73.9 | 26,892 | 33,173 |
+| 10K | 5,000 | 9,869 | 25,367 | 27,641 | 51.4 | 78,596 | 121,496 |
+| 20K | 1,000 | 10,886 | 23,204 | 31,088 | 69.2 | 23,194 | 30,468 |
+| 20K | 5,000 | 7,770 | 20,352 | 22,188 | 51.8 | 81,982 | 95,518 |
+| 20K | 10,000 | 9,829 | 20,618 | 23,119 | 51.3 | 74,112 | 89,194 |
+
+### 5.4 Side-by-side comparison
+
+| Input | Max out | Metric | Bedrock | OpenAI 1P | Delta |
+|---|---|---|---|---|---|
+| 1K | 100 | TTFT p50 (ms) | n/a | 3,452.0 | n/a |
+| 1K | 100 | TTFT p95 (ms) | n/a | 3,452.0 | n/a |
+| 1K | 100 | TTFT p99 (ms) | n/a | 3,452.0 | n/a |
+| 1K | 100 | Tok/s p50 | n/a | 277.6 | n/a |
+| 1K | 100 | E2E p50 (ms) | 1,823.9 | 4,037.6 | +55% |
+| 1K | 100 | E2E p95 (ms) | 2,900.1 | 7,303.6 | +60% |
+| 1K | 500 | TTFT p50 (ms) | 3,698.0 | 7,049.7 | +48% |
+| 1K | 500 | TTFT p95 (ms) | 7,393.0 | 16,325.2 | +55% |
+| 1K | 500 | TTFT p99 (ms) | 7,512.8 | 19,132.7 | +61% |
+| 1K | 500 | Tok/s p50 | 120.0 | 69.8 | +72% |
+| 1K | 500 | E2E p50 (ms) | 7,644.5 | 15,974.1 | +52% |
+| 1K | 500 | E2E p95 (ms) | 8,668.3 | 21,124.0 | +59% |
+| 1K | 1,000 | TTFT p50 (ms) | 4,009.9 | 8,956.7 | +55% |
+| 1K | 1,000 | TTFT p95 (ms) | 11,619.8 | 30,291.0 | +62% |
+| 1K | 1,000 | TTFT p99 (ms) | 12,430.5 | 31,084.9 | +60% |
+| 1K | 1,000 | Tok/s p50 | 93.0 | 43.8 | +112% |
+| 1K | 1,000 | E2E p50 (ms) | 14,711.3 | 31,654.1 | +54% |
+| 1K | 1,000 | E2E p95 (ms) | 16,426.0 | 34,684.1 | +53% |
+| 5K | 500 | TTFT p50 (ms) | 2,801.4 | 5,709.8 | +51% |
+| 5K | 500 | TTFT p95 (ms) | 4,619.2 | 11,499.2 | +60% |
+| 5K | 500 | TTFT p99 (ms) | 4,718.9 | 13,421.6 | +65% |
+| 5K | 500 | Tok/s p50 | 119.7 | 54.6 | +119% |
+| 5K | 500 | E2E p50 (ms) | 7,285.2 | 15,763.6 | +54% |
+| 5K | 500 | E2E p95 (ms) | 8,424.3 | 19,141.2 | +56% |
+| 5K | 1,000 | TTFT p50 (ms) | 3,366.1 | 10,323.2 | +67% |
+| 5K | 1,000 | TTFT p95 (ms) | 12,811.4 | 31,186.6 | +59% |
+| 5K | 1,000 | TTFT p99 (ms) | 14,251.5 | 31,771.3 | +55% |
+| 5K | 1,000 | Tok/s p50 | 94.0 | 50.9 | +85% |
+| 5K | 1,000 | E2E p50 (ms) | 14,446.4 | 31,702.3 | +54% |
+| 5K | 1,000 | E2E p95 (ms) | 15,831.6 | 37,026.6 | +57% |
+| 5K | 5,000 | TTFT p50 (ms) | 4,641.9 | 7,018.1 | +34% |
+| 5K | 5,000 | TTFT p95 (ms) | 15,504.5 | 19,656.7 | +21% |
+| 5K | 5,000 | TTFT p99 (ms) | 16,138.3 | 24,797.7 | +35% |
+| 5K | 5,000 | Tok/s p50 | 81.1 | 38.5 | +111% |
+| 5K | 5,000 | E2E p50 (ms) | 59,491.3 | 127,664.2 | +53% |
+| 5K | 5,000 | E2E p95 (ms) | 69,453.1 | 152,520.9 | +54% |
+| 10K | 500 | TTFT p50 (ms) | 4,769.5 | 7,847.0 | +39% |
+| 10K | 500 | TTFT p95 (ms) | 7,005.2 | 14,251.2 | +51% |
+| 10K | 500 | TTFT p99 (ms) | 7,705.7 | 14,428.0 | +47% |
+| 10K | 500 | Tok/s p50 | 198.4 | 172.2 | +15% |
+| 10K | 500 | E2E p50 (ms) | 6,858.6 | 11,548.4 | +41% |
+| 10K | 500 | E2E p95 (ms) | 8,121.3 | 16,418.8 | +51% |
+| 10K | 1,000 | TTFT p50 (ms) | 7,713.8 | 12,771.7 | +40% |
+| 10K | 1,000 | TTFT p95 (ms) | 10,194.8 | 24,874.4 | +59% |
+| 10K | 1,000 | TTFT p99 (ms) | 11,142.3 | 25,446.4 | +56% |
+| 10K | 1,000 | Tok/s p50 | 170.9 | 73.9 | +131% |
+| 10K | 1,000 | E2E p50 (ms) | 13,446.4 | 26,892.3 | +50% |
+| 10K | 1,000 | E2E p95 (ms) | 15,374.1 | 33,173.2 | +54% |
+| 10K | 5,000 | TTFT p50 (ms) | 4,803.5 | 9,868.6 | +51% |
+| 10K | 5,000 | TTFT p95 (ms) | 15,615.5 | 25,366.9 | +38% |
+| 10K | 5,000 | TTFT p99 (ms) | 15,837.0 | 27,641.0 | +43% |
+| 10K | 5,000 | Tok/s p50 | 85.4 | 51.4 | +66% |
+| 10K | 5,000 | E2E p50 (ms) | 48,838.0 | 78,595.5 | +38% |
+| 10K | 5,000 | E2E p95 (ms) | 63,951.0 | 121,495.8 | +47% |
+| 20K | 1,000 | TTFT p50 (ms) | 7,318.4 | 10,886.4 | +33% |
+| 20K | 1,000 | TTFT p95 (ms) | 9,874.2 | 23,204.0 | +57% |
+| 20K | 1,000 | TTFT p99 (ms) | 10,862.4 | 31,087.5 | +65% |
+| 20K | 1,000 | Tok/s p50 | 131.7 | 69.2 | +90% |
+| 20K | 1,000 | E2E p50 (ms) | 14,641.6 | 23,194.4 | +37% |
+| 20K | 1,000 | E2E p95 (ms) | 16,805.0 | 30,468.2 | +45% |
+| 20K | 5,000 | TTFT p50 (ms) | 6,238.8 | 7,769.5 | +20% |
+| 20K | 5,000 | TTFT p95 (ms) | 15,631.8 | 20,351.5 | +23% |
+| 20K | 5,000 | TTFT p99 (ms) | 238,776.3 | 22,187.7 | -976% |
+| 20K | 5,000 | Tok/s p50 | 82.7 | 51.8 | +60% |
+| 20K | 5,000 | E2E p50 (ms) | 47,917.7 | 81,981.8 | +42% |
+| 20K | 5,000 | E2E p95 (ms) | 81,117.7 | 95,518.0 | +15% |
+| 20K | 10,000 | TTFT p50 (ms) | 9,637.6 | 9,828.9 | +2% |
+| 20K | 10,000 | TTFT p95 (ms) | 18,196.7 | 20,617.9 | +12% |
+| 20K | 10,000 | TTFT p99 (ms) | 19,932.1 | 23,118.8 | +14% |
+| 20K | 10,000 | Tok/s p50 | 87.5 | 51.3 | +71% |
+| 20K | 10,000 | E2E p50 (ms) | 51,079.7 | 74,112.2 | +31% |
+| 20K | 10,000 | E2E p95 (ms) | 64,264.9 | 89,194.0 | +28% |
 
 ## Source files
 

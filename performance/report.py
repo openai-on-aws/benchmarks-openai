@@ -28,6 +28,7 @@ SIZES = ["1k", "5k", "10k", "20k"]
 MODELS = [
     ("gpt-5.6-luna", "openai.gpt-5.6-luna", "gpt-5.6-luna"),
     ("gpt-5.6-terra", "openai.gpt-5.6-terra", "gpt-5.6-terra"),
+    ("gpt-5.6-sol", "openai.gpt-5.6-sol", "gpt-5.6-sol"),
 ]
 BACKEND_LABEL = {"bedrock": "Bedrock", "openai": "OpenAI 1P"}
 
@@ -96,8 +97,8 @@ def build_setup_table(results):
     total_calls = sum(s["n_runs"] for cell in results.values() for d in cell.values() for s in d["summary"])
     total_errors = sum(s["n_errors"] for cell in results.values() for d in cell.values() for s in d["summary"])
     rows = [
-        ("Models", "`openai.gpt-5.6-luna`, `openai.gpt-5.6-terra` (Bedrock) vs `gpt-5.6-luna`, `gpt-5.6-terra` (1P)"),
-        ("Bedrock endpoint", "`https://bedrock-mantle.us-west-2.api.aws/openai/v1`"),
+        ("Models", "`openai.gpt-5.6-luna`, `-terra`, `-sol` (Bedrock) vs `gpt-5.6-luna`, `-terra`, `-sol` (1P)"),
+        ("Bedrock endpoint", "`https://bedrock-mantle.us-west-2.api.aws/openai/v1` (luna/terra) · `us-east-1` (sol — not served in us-west-2)"),
         ("OpenAI 1P endpoint", "`https://api.openai.com/v1`"),
         ("API surface", "Responses API, streaming — identical code path on both backends (`performance/benchmark.py`)"),
         ("Auth", "Bedrock: IAM via `aws-bedrock-token-generator` · 1P: user-supplied `OPENAI_API_KEY`"),
@@ -110,7 +111,7 @@ def build_setup_table(results):
         ("5k input prompt", f"{ps['5k'][0]:,} verified tokens ({ps['5k'][1]:,} chars)"),
         ("10k input prompt", f"{ps['10k'][0]:,} verified tokens ({ps['10k'][1]:,} chars)"),
         ("20k input prompt", f"{ps['20k'][0]:,} verified tokens ({ps['20k'][1]:,} chars)"),
-        ("Run dates", ", ".join(dates) + " (Bedrock luna 07-18; all else 07-20)"),
+        ("Run dates", ", ".join(dates) + " (Bedrock luna 07-18; sol overnight 07-20→21; rest 07-20)"),
         ("Total calls", f"{total_calls:,} ({total_errors} errored)"),
     ]
     lines = ["| Parameter | Value |", "|---|---|"]
@@ -190,7 +191,10 @@ def raw_band(payload, max_out, field):
 def build_chart(results, family, outfile):
     fig, axes = plt.subplots(2, 4, figsize=(13.5, 6.2), dpi=180)
     fig.patch.set_facecolor(SURFACE)
-    fig.suptitle(f"{family} — Bedrock (us-west-2) vs OpenAI 1P · p50 across 25 sequential runs",
+    regions = sorted({d["base_url"].split(".")[1] for cell in [results.get(("bedrock", family), {})]
+                      for d in cell.values() if "bedrock-mantle" in d["base_url"]})
+    region_label = "/".join(regions) if regions else "?"
+    fig.suptitle(f"{family} — Bedrock ({region_label}) vs OpenAI 1P · p50 across 25 sequential runs",
                  fontsize=12, fontweight="bold", color=INK, y=0.99)
 
     series = [("bedrock", C_BEDROCK, "Bedrock"), ("openai", C_OPENAI, "OpenAI 1P")]
@@ -220,11 +224,12 @@ def build_chart(results, family, outfile):
                 if all(v is not None for v in lo + hi):
                     ax.fill_between(xs, lo, hi, color=color, alpha=0.13, linewidth=0, zorder=2)
                 # p99 as a dashed tail line on latency panels only; on tok/s it
-                # tracks the burst outliers and would wreck the axis.
+                # tracks the burst outliers and would wreck the axis. It does NOT
+                # drive the y-limit — a single extreme call would flatten the row
+                # (sol 20k had a 240s outlier); it clips instead, per the footnote.
                 if metric == "ttft_ms" and all(v is not None for v in p99):
                     ax.plot(xs, p99, linestyle=(0, (3, 2)), linewidth=1.3, color=color,
                             label=f"{label} p99", zorder=3)
-                    band_vals += p99
                 vals += [v for v in p50 if v is not None]
                 band_vals += [v for v in hi if v is not None]
                 ax.set_xticks(xs)
@@ -241,13 +246,13 @@ def build_chart(results, family, outfile):
                 ax.spines[spine].set_visible(False)
             for spine in ["left", "bottom"]:
                 ax.spines[spine].set_color(GRID)
-        # TTFT row: scale to band tops. Tok/s row: scale to ~1.6x the largest p50 so
-        # the burst-flush outliers at tiny outputs (10,000+ tok/s) can't flatten it;
-        # the band is clipped there, which the footnote explains.
+        # TTFT row: scale to p95 band tops (p99 may clip). Tok/s row: scale to
+        # ~1.6x the largest p50 so burst-flush outliers at tiny outputs
+        # (10,000+ tok/s) can't flatten it; bands clip, per the footnote.
         if metric == "otps":
             ymax = max(vals) * 1.6 if vals else 1
         else:
-            ymax = max(vals + band_vals) * 1.08 if vals or band_vals else 1
+            ymax = max(vals + band_vals) * 1.15 if vals or band_vals else 1
         for col in range(4):
             axes[row][col].set_ylim(0, ymax)
             if col > 0:
@@ -260,7 +265,7 @@ def build_chart(results, family, outfile):
                fontsize=9, frameon=False)
     fig.text(0.005, 0.005,
              "Solid line: p50 per call · shaded band: p5→p95 (90% of calls fall inside) · "
-             "dashed: p99 (TTFT row only) · y-scale shared per row · "
+             "dashed: p99, may clip off-scale (TTFT row) · y-scale shared per row · "
              "tok/s axis scaled to p50s; single-flush outliers at small outputs exceed it",
              fontsize=8, color=MUTED)
     fig.tight_layout(rect=[0, 0.02, 1, 0.95])
@@ -403,10 +408,15 @@ timestamped result JSONs in `performance/results/` at report build time.
 
 ### Caveats
 
-- Bedrock **luna** ran 2026-07-18; all other matrices ran 2026-07-20, so the luna comparison includes
-  day-to-day variance. The **terra** comparison is same-day on both backends.
-- Sequential, single-region (us-west-2), default reasoning effort. Concurrency and effort sweeps are
-  supported by the harness but not yet run.
+- Bedrock **luna** ran 2026-07-18; all other matrices ran 2026-07-20 (sol overnight into 07-21), so the
+  luna comparison includes day-to-day variance. The **terra** and **sol** comparisons are same-session
+  on both backends.
+- **Sol's Bedrock runs used us-east-1** (sol is not served in us-west-2), so its Bedrock-vs-1P deltas
+  include a region difference; luna/terra used us-west-2.
+- Sol is a deep-reasoning model: it spends heavily on reasoning tokens before the first visible token,
+  so its TTFT is inherently higher and more variable than luna/terra on both backends.
+- Sequential, default reasoning effort. Concurrency and effort sweeps are supported by the harness but
+  not yet run.
 - Delta convention: **positive = Bedrock better** (lower latency or higher throughput).
 """]
 
