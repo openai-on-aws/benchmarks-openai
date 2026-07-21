@@ -1,6 +1,6 @@
 # GPT-5.6 on Amazon Bedrock vs OpenAI 1P — Latency & Quality Benchmark Report
 
-**Generated:** 2026-07-21 10:11 UTC · **Repo:** [openai-on-aws/benchmarks-openai](https://github.com/openai-on-aws/benchmarks-openai)
+**Generated:** 2026-07-21 10:18 UTC · **Repo:** [openai-on-aws/benchmarks-openai](https://github.com/openai-on-aws/benchmarks-openai)
 
 Both backends are exercised through an identical code path — the OpenAI Responses API with streaming
 (`performance/benchmark.py`). Metrics: **TTFT** (time to first output-text token), **Tok/s** (output tokens
@@ -424,24 +424,27 @@ One panel per input size; y-scale shared within each row.
 
 ## 6. Task-quality evals — gpt-5.6 (reasoning off) vs gpt-5.4-mini/nano
 
-Accuracy on fixed-seed samples of community benchmarks (MMLU-Pro 140 stratified Qs, MATH-500 100 Qs, GSM8K 100 Qs). Every model answered the **same questions** via the same Responses-API path; exact-match scoring (MCQ letter / normalized boxed answer / final number). Latency here is full-response wall time per question (not TTFT), measured under 6-way concurrency — comparable across rows, not to the tables above. At these sample sizes the 95% CI is roughly ±8–10 points: treat differences inside that band as ties. Result files: `quality/results/quickeval_*.json`.
+The matchup (an OpenAI-suggested comparison for migration planning): gpt-5.6 **luna**/**terra** on Bedrock with `reasoning: {effort: none}` — thinking disabled — vs **gpt-5.4-mini**/**nano** on the OpenAI API at their defaults. Fixed-seed samples of community benchmarks (MMLU-Pro 140 stratified Qs, MATH-500 100 Qs, GSM8K 100 Qs); every model answered the **same questions** via the same Responses-API path, exact-match scoring. **Bold** marks the best score per benchmark. At these sample sizes the 95% CI is roughly ±8–10 points: treat differences inside that band as ties. GSM8K is saturated for all four models and acts as a sanity control. Result files: `quality/results/quickeval_*.json`.
 
-| Model | Benchmark | Accuracy | Correct | Mean latency (ms) | Mean output tokens |
-|---|---|---|---|---|---|
-| gpt-5.4-mini (OpenAI 1P) | MMLU-Pro | 59% | 82/140 | 939 | 11 |
-| gpt-5.4-mini (OpenAI 1P) | MATH-500 | 84% | 84/100 | 2,579 | 295 |
-| gpt-5.4-mini (OpenAI 1P) | GSM8K | 96% | 96/100 | 1,868 | 139 |
-| gpt-5.4-nano (OpenAI 1P) | MMLU-Pro | 62% | 87/140 | 1,874 | 122 |
-| gpt-5.4-nano (OpenAI 1P) | MATH-500 | 84% | 84/100 | 3,457 | 382 |
-| gpt-5.4-nano (OpenAI 1P) | GSM8K | 95% | 95/100 | 2,160 | 153 |
-| gpt-5.6-luna (Bedrock, effort=none) | MMLU-Pro | 61% | 85/140 | 577 | 8 |
-| gpt-5.6-luna (Bedrock, effort=none) | MATH-500 | 88% | 88/100 | 1,195 | 203 |
-| gpt-5.6-luna (Bedrock, effort=none) | GSM8K | 97% | 97/100 | 956 | 113 |
-| gpt-5.6-terra (Bedrock, effort=none) | MMLU-Pro | 66% | 93/140 | 611 | 8 |
-| gpt-5.6-terra (Bedrock, effort=none) | MATH-500 | 92% | 92/100 | 1,925 | 213 |
-| gpt-5.6-terra (Bedrock, effort=none) | GSM8K | 96% | 96/100 | 1,144 | 95 |
+### 6.1 Accuracy
 
-Context for the matchup (an OpenAI-suggested comparison for migration planning): gpt-5.6 luna/terra on Bedrock with `reasoning: {effort: none}` — i.e. thinking disabled — against gpt-5.4-mini/nano on the OpenAI API at their defaults. GSM8K is saturated for all four models (95–97%) and acts as a sanity control.
+| Benchmark | luna (BR) | terra (BR) | mini (1P) | nano (1P) |
+|---|---|---|---|---|
+| MMLU-Pro | 61% (85/140) | **66% (93/140)** | 59% (82/140) | 62% (87/140) |
+| MATH-500 | 88% (88/100) | **92% (92/100)** | 84% (84/100) | 84% (84/100) |
+| GSM8K | **97% (97/100)** | 96% (96/100) | 96% (96/100) | 95% (95/100) |
+
+### 6.2 Mean latency per question (ms)
+
+Full-response wall time (not TTFT), measured under 6-way concurrency — comparable across this table, not to the latency sections above. Lowest per benchmark in bold.
+
+| Benchmark | luna (BR) | terra (BR) | mini (1P) | nano (1P) |
+|---|---|---|---|---|
+| MMLU-Pro | **577** | 611 | 939 | 1,874 |
+| MATH-500 | **1,195** | 1,925 | 2,579 | 3,457 |
+| GSM8K | **956** | 1,144 | 1,868 | 2,160 |
+
+Column key: **luna (BR)** = gpt-5.6-luna (Bedrock, effort=none) · **terra (BR)** = gpt-5.6-terra (Bedrock, effort=none) · **mini (1P)** = gpt-5.4-mini (OpenAI 1P) · **nano (1P)** = gpt-5.4-nano (OpenAI 1P)
 
 ## Source files
 

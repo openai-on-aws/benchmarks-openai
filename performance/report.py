@@ -402,40 +402,77 @@ def load_quickevals():
     return latest
 
 
+def _short_model_label(label):
+    """'gpt-5.6-luna (Bedrock, effort=none)' -> 'luna (BR)'; mini/nano -> 'mini (1P)'."""
+    name = label.split(" ")[0]
+    short = name.replace("gpt-5.6-", "").replace("gpt-5.4-", "")
+    backend = "BR" if "Bedrock" in label else "1P"
+    return f"{short} ({backend})"
+
+
 def build_evals_section(section_no):
     evals = load_quickevals()
     if not evals:
         return ""
-    models = sorted({k[0] for k in evals})
+    # Bedrock models first, then 1P, stable within each group
+    models = sorted({k[0] for k in evals}, key=lambda m: ("Bedrock" not in m, m))
+    heads = " | ".join(_short_model_label(m) for m in models)
     lines = [
         f"## {section_no}. Task-quality evals — gpt-5.6 (reasoning off) vs gpt-5.4-mini/nano",
         "",
-        "Accuracy on fixed-seed samples of community benchmarks (MMLU-Pro 140 stratified Qs, "
-        "MATH-500 100 Qs, GSM8K 100 Qs). Every model answered the **same questions** via the "
-        "same Responses-API path; exact-match scoring (MCQ letter / normalized boxed answer / "
-        "final number). Latency here is full-response wall time per question (not TTFT), "
-        "measured under 6-way concurrency — comparable across rows, not to the tables above. "
-        "At these sample sizes the 95% CI is roughly ±8–10 points: treat differences inside "
-        "that band as ties. Result files: `quality/results/quickeval_*.json`.",
+        "The matchup (an OpenAI-suggested comparison for migration planning): gpt-5.6 "
+        "**luna**/**terra** on Bedrock with `reasoning: {effort: none}` — thinking disabled — "
+        "vs **gpt-5.4-mini**/**nano** on the OpenAI API at their defaults. Fixed-seed samples "
+        "of community benchmarks (MMLU-Pro 140 stratified Qs, MATH-500 100 Qs, GSM8K 100 Qs); "
+        "every model answered the **same questions** via the same Responses-API path, "
+        "exact-match scoring. **Bold** marks the best score per benchmark. At these sample "
+        "sizes the 95% CI is roughly ±8–10 points: treat differences inside that band as "
+        "ties. GSM8K is saturated for all four models and acts as a sanity control. "
+        "Result files: `quality/results/quickeval_*.json`.",
         "",
-        "| Model | Benchmark | Accuracy | Correct | Mean latency (ms) | Mean output tokens |",
-        "|---|---|---|---|---|---|",
+        f"### {section_no}.1 Accuracy",
+        "",
+        f"| Benchmark | {heads} |",
+        "|---|" + "---|" * len(models),
     ]
-    for model in models:
-        for task in EVAL_TASK_ORDER:
-            s = evals.get((model, task))
+    for task in EVAL_TASK_ORDER:
+        cells = []
+        accs = {m: evals[(m, task)]["accuracy"] for m in models if (m, task) in evals}
+        best = max(accs.values()) if accs else None
+        for m in models:
+            s = evals.get((m, task))
             if not s:
+                cells.append("—")
                 continue
             n_ok = s["n_asked"] - s["n_errors"]
-            lines.append(
-                f"| {model} | {EVAL_TASK_LABELS[task]} | {s['accuracy']:.0%} "
-                f"| {s['n_correct']}/{n_ok} | {fnum(s['mean_latency_ms'])} | {fnum(s['mean_output_tokens'])} |")
+            cell = f"{s['accuracy']:.0%} ({s['n_correct']}/{n_ok})"
+            cells.append(f"**{cell}**" if s["accuracy"] == best else cell)
+        lines.append(f"| {EVAL_TASK_LABELS[task]} | " + " | ".join(cells) + " |")
     lines += [
         "",
-        "Context for the matchup (an OpenAI-suggested comparison for migration planning): "
-        "gpt-5.6 luna/terra on Bedrock with `reasoning: {effort: none}` — i.e. thinking "
-        "disabled — against gpt-5.4-mini/nano on the OpenAI API at their defaults. "
-        "GSM8K is saturated for all four models (95–97%) and acts as a sanity control.",
+        f"### {section_no}.2 Mean latency per question (ms)",
+        "",
+        "Full-response wall time (not TTFT), measured under 6-way concurrency — comparable "
+        "across this table, not to the latency sections above. Lowest per benchmark in bold.",
+        "",
+        f"| Benchmark | {heads} |",
+        "|---|" + "---|" * len(models),
+    ]
+    for task in EVAL_TASK_ORDER:
+        lats = {m: evals[(m, task)]["mean_latency_ms"] for m in models if (m, task) in evals}
+        best = min(lats.values()) if lats else None
+        cells = []
+        for m in models:
+            s = evals.get((m, task))
+            if not s:
+                cells.append("—")
+                continue
+            cell = fnum(s["mean_latency_ms"])
+            cells.append(f"**{cell}**" if s["mean_latency_ms"] == best else cell)
+        lines.append(f"| {EVAL_TASK_LABELS[task]} | " + " | ".join(cells) + " |")
+    lines += [
+        "",
+        "Column key: " + " · ".join(f"**{_short_model_label(m)}** = {m}" for m in models),
         "",
     ]
     return "\n".join(lines)
