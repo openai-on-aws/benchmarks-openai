@@ -14,7 +14,10 @@
     "accuracy": 0.6643,
     "mean_latency_ms": 611.1,
     "mean_output_tokens": 8.2,
-    "mean_reasoning_tokens": 0.1
+    "mean_reasoning_tokens": 0.1,
+    "total_cost_usd": 0.10128,
+    "mean_cost_per_call_usd": 0.000723,
+    "cost_per_success_usd": 0.001089
   },
   "results": [
     {

@@ -383,8 +383,9 @@ def build_findings(results):
 
 # -------------------------------------------------------------- quality evals
 
-EVAL_TASK_LABELS = {"mmlu_pro": "MMLU-Pro", "math500": "MATH-500", "gsm8k": "GSM8K"}
-EVAL_TASK_ORDER = ["mmlu_pro", "math500", "gsm8k"]
+EVAL_TASK_LABELS = {"aime": "AIME (2023–24)", "mmlu_pro": "MMLU-Pro", "math500": "MATH-500",
+                    "gsm8k": "GSM8K", "humaneval": "HumanEval"}
+EVAL_TASK_ORDER = ["aime", "mmlu_pro", "math500", "gsm8k", "humaneval"]
 
 
 def load_quickevals():
@@ -422,12 +423,14 @@ def build_evals_section(section_no):
         "",
         "The matchup (an OpenAI-suggested comparison for migration planning): gpt-5.6 "
         "**luna**/**terra** on Bedrock with `reasoning: {effort: none}` — thinking disabled — "
-        "vs **gpt-5.4-mini**/**nano** on the OpenAI API at their defaults. Fixed-seed samples "
-        "of community benchmarks (MMLU-Pro 140 stratified Qs, MATH-500 100 Qs, GSM8K 100 Qs); "
-        "every model answered the **same questions** via the same Responses-API path, "
-        "exact-match scoring. **Bold** marks the best score per benchmark. At these sample "
-        "sizes the 95% CI is roughly ±8–10 points: treat differences inside that band as "
-        "ties. GSM8K is saturated for all four models and acts as a sanity control. "
+        "vs **gpt-5.4-mini**/**nano** on the OpenAI API at their defaults. Fixed-seed or "
+        "deterministic samples of community benchmarks (AIME 60 most-recent problems, MMLU-Pro "
+        "140 stratified Qs, MATH-500 100 Qs, GSM8K 100 Qs, HumanEval all 164 tasks); every "
+        "model answered the **same questions** via the same Responses-API path. Scoring: "
+        "exact match for MCQ/number/boxed answers; HumanEval executes the official unit tests. "
+        "**Bold** marks the best score per benchmark. At these sample sizes the 95% CI is "
+        "roughly ±8–12 points: treat differences inside that band as ties. GSM8K is saturated "
+        "for all four models and acts as a sanity control. "
         "Result files: `quality/results/quickeval_*.json`.",
         "",
         f"### {section_no}.1 Accuracy",
@@ -470,6 +473,38 @@ def build_evals_section(section_no):
             cell = fnum(s["mean_latency_ms"])
             cells.append(f"**{cell}**" if s["mean_latency_ms"] == best else cell)
         lines.append(f"| {EVAL_TASK_LABELS[task]} | " + " | ".join(cells) + " |")
+    # Cost per successful answer, where recorded (list prices; retry-aware:
+    # total spend on all attempts divided by number of correct answers).
+    have_cost = any("cost_per_success_usd" in evals[k] and evals[k]["cost_per_success_usd"] is not None
+                    for k in evals)
+    if have_cost:
+        lines += [
+            "",
+            f"### {section_no}.3 Cost per successful answer (USD)",
+            "",
+            "Total spend across **all** attempts (correct and incorrect, at list prices as of "
+            "2026-07-21, no caching discounts) divided by the number of correct answers — i.e. "
+            "what a success actually costs once failures are paid for. A cheap model with a low "
+            "success rate on hard tasks gets expensive here. Lowest per benchmark in bold.",
+            "",
+            f"| Benchmark | {heads} |",
+            "|---|" + "---|" * len(models),
+        ]
+        for task in EVAL_TASK_ORDER:
+            cs = {m: evals[(m, task)].get("cost_per_success_usd") for m in models
+                  if (m, task) in evals and evals[(m, task)].get("cost_per_success_usd") is not None}
+            if not cs:
+                continue
+            best = min(cs.values())
+            cells = []
+            for m in models:
+                v = cs.get(m)
+                if v is None:
+                    cells.append("—")
+                    continue
+                cell = f"${v:.4f}"
+                cells.append(f"**{cell}**" if v == best else cell)
+            lines.append(f"| {EVAL_TASK_LABELS[task]} | " + " | ".join(cells) + " |")
     lines += [
         "",
         "Column key: " + " · ".join(f"**{_short_model_label(m)}** = {m}" for m in models),

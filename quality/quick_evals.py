@@ -31,10 +31,33 @@ from eval_utils import capture_error
 RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
 SEED = 42
 
-DEFAULTS = {"mmlu_pro": 140, "math500": 100, "gsm8k": 100}
-MAX_TOKENS = {"mmlu_pro": 1024, "math500": 2048, "gsm8k": 1024}
+DEFAULTS = {"mmlu_pro": 140, "math500": 100, "gsm8k": 100, "aime": 60, "humaneval": 164}
+MAX_TOKENS = {"mmlu_pro": 1024, "math500": 2048, "gsm8k": 1024, "aime": 8192, "humaneval": 2048}
 
 LETTERS = "ABCDEFGHIJ"
+
+# List prices, USD per 1M tokens (input, output). Sources, retrieved 2026-07-21:
+#   Bedrock: https://aws.amazon.com/bedrock/pricing/ (in-region US East)
+#   OpenAI:  https://developers.openai.com/api/docs/pricing (Standard tier)
+# Cached-input discounts are NOT applied (benchmark prompts are unique per question).
+PRICES = {
+    ("mantle", "openai.gpt-5.6-luna"):  (1.10, 6.60),
+    ("mantle", "openai.gpt-5.6-terra"): (2.75, 16.50),
+    ("mantle", "openai.gpt-5.6-sol"):   (5.50, 33.00),
+    ("mantle", "openai.gpt-5.4"):       (2.75, 16.50),
+    ("saas", "gpt-5.6-luna"):  (1.00, 6.00),
+    ("saas", "gpt-5.6-terra"): (2.50, 15.00),
+    ("saas", "gpt-5.6-sol"):   (5.00, 30.00),
+    ("saas", "gpt-5.4-mini"):  (0.75, 4.50),
+    ("saas", "gpt-5.4-nano"):  (0.20, 1.25),
+}
+
+
+def call_cost_usd(backend, model, input_tokens, output_tokens):
+    price = PRICES.get((backend, model))
+    if not price:
+        return None
+    return (input_tokens * price[0] + output_tokens * price[1]) / 1e6
 
 
 def make_client(backend):
@@ -102,7 +125,42 @@ def load_gsm8k(n):
         }
 
 
-LOADERS = {"mmlu_pro": load_mmlu_pro, "math500": load_math500, "gsm8k": load_gsm8k}
+def load_aime(n):
+    """Most recent AIME problems (hardest discrimination band). Answers are ints 0-999."""
+    ds = load_dataset("qq8933/AIME_1983_2024", split="train")
+    rows = sorted(ds, key=lambda r: (r["Year"], r["Problem Number"]), reverse=True)[:n]
+    for row in rows:
+        yield {
+            "id": f"aime_{row['Year']}_{row['Part'] or 'I'}_{row['Problem Number']}",
+            "prompt": (f"{row['Question']}\n\n"
+                       "Solve this competition problem. Show your work, then on the last "
+                       "line write 'Final answer: <integer>' (an integer from 0 to 999)."),
+            "gold": str(int(row["Answer"])),
+            "category": f"aime_{row['Year']}",
+        }
+
+
+def load_humaneval(n):
+    ds = load_dataset("openai/openai_humaneval", split="test")
+    for row in list(ds)[:n]:
+        yield {
+            "id": row["task_id"],
+            "prompt": ("Complete the following Python function. Return ONLY the complete "
+                       "function definition (including the signature) in a ```python code "
+                       "block, with no tests or example usage.\n\n```python\n"
+                       f"{row['prompt']}```"),
+            "gold": "",  # correctness comes from executing the checks, not string match
+            "category": "humaneval",
+            "_test": row["test"],
+            "_entry_point": row["entry_point"],
+            # Everything before the function def (imports, helpers) — the official
+            # harness always executes this preamble with the completion.
+            "_header": row["prompt"][:row["prompt"].index(f"def {row['entry_point']}")],
+        }
+
+
+LOADERS = {"mmlu_pro": load_mmlu_pro, "math500": load_math500, "gsm8k": load_gsm8k,
+           "aime": load_aime, "humaneval": load_humaneval}
 
 
 # ------------------------------------------------------------------- scoring
@@ -192,7 +250,28 @@ def extract_number(text):
     return m[-1].replace(",", "").rstrip(".")
 
 
-def score(task, gold, text):
+def extract_code(text):
+    m = re.findall(r"```(?:python)?\n(.*?)```", text, re.S)
+    return m[-1] if m else text
+
+
+def run_humaneval_check(code, test, entry_point, header="", timeout=15):
+    """Execute candidate code against the official HumanEval checks in a subprocess."""
+    import subprocess, sys, tempfile
+    program = f"{header}\n{code}\n\n{test}\n\ncheck({entry_point})\n"
+    with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as f:
+        f.write(program)
+        path = f.name
+    try:
+        r = subprocess.run([sys.executable, path], capture_output=True, timeout=timeout)
+        return r.returncode == 0
+    except subprocess.TimeoutExpired:
+        return False
+    finally:
+        os.unlink(path)
+
+
+def score(task, gold, text, item=None):
     if text is None:
         return None, False
     if task == "mmlu_pro":
@@ -201,6 +280,20 @@ def score(task, gold, text):
     if task == "math500":
         pred = extract_boxed(text)
         return pred, math_equal(pred, gold)
+    if task == "aime":
+        pred = extract_number(text)
+        if pred is None:
+            b = extract_boxed(text)
+            pred = norm_math(b) if b else None
+        try:
+            return pred, pred is not None and int(float(pred)) == int(gold)
+        except (ValueError, TypeError):
+            return pred, False
+    if task == "humaneval":
+        code = extract_code(text)
+        ok = run_humaneval_check(code, item["_test"], item["_entry_point"],
+                                 header=item.get("_header", ""))
+        return (code[:80] + "..."), ok
     pred = extract_number(text)
     try:
         return pred, pred is not None and float(pred) == float(gold)
@@ -261,7 +354,7 @@ def run_task(backend, model, effort, task, n, concurrency):
     def work(idx):
         item = items[idx]
         r = call_one(client, model, effort, item, max_tokens)
-        pred, correct = score(task, item["gold"], r["text"])
+        pred, correct = score(task, item["gold"], r["text"], item)
         done[0] += 1
         if done[0] % 20 == 0 or done[0] == len(items):
             n_ok = sum(1 for x in results if x and x["correct"])
@@ -276,6 +369,11 @@ def run_task(backend, model, effort, task, n, concurrency):
 
     ok = [r for r in results if not r["error"]]
     n_correct = sum(1 for r in ok if r["correct"])
+    costs = [call_cost_usd(backend, model, r["input_tokens"], r["output_tokens"]) for r in ok]
+    total_cost = round(sum(c for c in costs if c is not None), 6) if any(c is not None for c in costs) else None
+    # Cost per successful answer: total spend across ALL attempts / number of successes.
+    # This is the retry-aware number — failures aren't free.
+    cost_per_success = round(total_cost / n_correct, 6) if total_cost is not None and n_correct else None
     summary = {
         "n": len(items),
         "n_errors": len(items) - len(ok),
@@ -284,9 +382,13 @@ def run_task(backend, model, effort, task, n, concurrency):
         "mean_latency_ms": round(sum(r["latency_ms"] for r in ok) / len(ok), 1) if ok else None,
         "mean_output_tokens": round(sum(r["output_tokens"] for r in ok) / len(ok), 1) if ok else None,
         "mean_reasoning_tokens": round(sum(r["reasoning_tokens"] for r in ok) / len(ok), 1) if ok else None,
+        "total_cost_usd": total_cost,
+        "mean_cost_per_call_usd": round(total_cost / len(ok), 6) if total_cost is not None and ok else None,
+        "cost_per_success_usd": cost_per_success,
     }
     print(f"  DONE {task}: {n_correct}/{len(ok)} correct ({summary['accuracy']}), "
-          f"{summary['n_errors']} errors, mean latency {summary['mean_latency_ms']} ms")
+          f"{summary['n_errors']} errors, mean latency {summary['mean_latency_ms']} ms, "
+          f"cost/success ${cost_per_success}")
 
     ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     safe_model = model.replace("/", "-")
@@ -308,6 +410,8 @@ def rescore_all():
     for path in sorted(glob.glob(os.path.join(RESULTS_DIR, "quickeval_*.json"))):
         with open(path) as f:
             d = json.load(f)
+        if d["task"] == "humaneval":
+            continue  # grading requires executing the checks; can't re-grade from text
         changed = 0
         for r in d["results"]:
             if r["text"] is None:
@@ -321,6 +425,12 @@ def rescore_all():
         old = d["summary"]["accuracy"]
         d["summary"]["n_correct"] = n_correct
         d["summary"]["accuracy"] = round(n_correct / len(ok), 4) if ok else None
+        costs = [call_cost_usd(d["backend"], d["model"], r["input_tokens"], r["output_tokens"]) for r in ok]
+        if any(c is not None for c in costs):
+            total = round(sum(c for c in costs if c is not None), 6)
+            d["summary"]["total_cost_usd"] = total
+            d["summary"]["mean_cost_per_call_usd"] = round(total / len(ok), 6) if ok else None
+            d["summary"]["cost_per_success_usd"] = round(total / n_correct, 6) if n_correct else None
         with open(path, "w") as f:
             json.dump(d, f, indent=2)
         flag = f"  ({changed} grades changed, was {old})" if changed else ""
