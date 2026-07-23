@@ -441,7 +441,9 @@ def build_evals_section(section_no):
     for task in EVAL_TASK_ORDER:
         cells = []
         accs = {m: evals[(m, task)]["accuracy"] for m in models if (m, task) in evals}
-        best = max(accs.values()) if accs else None
+        if not accs:
+            continue
+        best = max(accs.values())
         for m in models:
             s = evals.get((m, task))
             if not s:
@@ -463,7 +465,9 @@ def build_evals_section(section_no):
     ]
     for task in EVAL_TASK_ORDER:
         lats = {m: evals[(m, task)]["mean_latency_ms"] for m in models if (m, task) in evals}
-        best = min(lats.values()) if lats else None
+        if not lats:
+            continue
+        best = min(lats.values())
         cells = []
         for m in models:
             s = evals.get((m, task))

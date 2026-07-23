@@ -37,7 +37,7 @@
 </head>
 <body>
 <h1>GPT-5.6 on Amazon Bedrock vs OpenAI 1P — Latency &amp; Quality Benchmark Report</h1>
-<p><strong>Generated:</strong> 2026-07-21 10:18 UTC · <strong>Repo:</strong> <a href="https://github.com/openai-on-aws/benchmarks-openai">openai-on-aws/benchmarks-openai</a></p>
+<p><strong>Generated:</strong> 2026-07-23 11:03 UTC · <strong>Repo:</strong> <a href="https://github.com/openai-on-aws/benchmarks-openai">openai-on-aws/benchmarks-openai</a></p>
 <p>Both backends are exercised through an identical code path — the OpenAI Responses API with streaming</p>
 <p>(<code>performance/benchmark.py</code>). Metrics: <strong>TTFT</strong> (time to first output-text token), <strong>Tok/s</strong> (output tokens</p>
 <p>per second of generation time), <strong>E2E</strong> (end-to-end wall time). Every number below is computed from the</p>
@@ -434,19 +434,32 @@
 <tr><td>20K</td><td>10,000</td><td>E2E p95 (ms)</td><td>64,264.9</td><td>89,194.0</td><td class="pos">+28%</td></tr>
 </tbody></table>
 <h2>6. Task-quality evals — gpt-5.6 (reasoning off) vs gpt-5.4-mini/nano</h2>
-<p>The matchup (an OpenAI-suggested comparison for migration planning): gpt-5.6 <strong>luna</strong>/<strong>terra</strong> on Bedrock with <code>reasoning: {effort: none}</code> — thinking disabled — vs <strong>gpt-5.4-mini</strong>/<strong>nano</strong> on the OpenAI API at their defaults. Fixed-seed samples of community benchmarks (MMLU-Pro 140 stratified Qs, MATH-500 100 Qs, GSM8K 100 Qs); every model answered the <strong>same questions</strong> via the same Responses-API path, exact-match scoring. <strong>Bold</strong> marks the best score per benchmark. At these sample sizes the 95% CI is roughly ±8–10 points: treat differences inside that band as ties. GSM8K is saturated for all four models and acts as a sanity control. Result files: <code>quality/results/quickeval_*.json</code>.</p>
+<p>The matchup (an OpenAI-suggested comparison for migration planning): gpt-5.6 <strong>luna</strong>/<strong>terra</strong> on Bedrock with <code>reasoning: {effort: none}</code> — thinking disabled — vs <strong>gpt-5.4-mini</strong>/<strong>nano</strong> on the OpenAI API at their defaults. Fixed-seed or deterministic samples of community benchmarks (AIME 60 most-recent problems, MMLU-Pro 140 stratified Qs, MATH-500 100 Qs, GSM8K 100 Qs, HumanEval all 164 tasks); every model answered the <strong>same questions</strong> via the same Responses-API path. Scoring: exact match for MCQ/number/boxed answers; HumanEval executes the official unit tests. <strong>Bold</strong> marks the best score per benchmark. At these sample sizes the 95% CI is roughly ±8–12 points: treat differences inside that band as ties. GSM8K is saturated for all four models and acts as a sanity control. Result files: <code>quality/results/quickeval_*.json</code>.</p>
 <h3>6.1 Accuracy</h3>
 <table><thead><tr><th>Benchmark</th><th>luna (BR)</th><th>terra (BR)</th><th>mini (1P)</th><th>nano (1P)</th></tr></thead><tbody>
+<tr><td>AIME (2022–24)</td><td>38% (23/60)</td><td><strong>58% (34/59)</strong></td><td>37% (22/60)</td><td>38% (23/60)</td></tr>
 <tr><td>MMLU-Pro</td><td>61% (85/140)</td><td><strong>66% (93/140)</strong></td><td>59% (82/140)</td><td>62% (87/140)</td></tr>
 <tr><td>MATH-500</td><td>88% (88/100)</td><td><strong>92% (92/100)</strong></td><td>84% (84/100)</td><td>84% (84/100)</td></tr>
 <tr><td>GSM8K</td><td><strong>97% (97/100)</strong></td><td>96% (96/100)</td><td>96% (96/100)</td><td>95% (95/100)</td></tr>
+<tr><td>HumanEval</td><td>95% (155/164)</td><td><strong>96% (157/164)</strong></td><td>95% (155/164)</td><td>90% (148/164)</td></tr>
 </tbody></table>
 <h3>6.2 Mean latency per question (ms)</h3>
 <p>Full-response wall time (not TTFT), measured under 6-way concurrency — comparable across this table, not to the latency sections above. Lowest per benchmark in bold.</p>
 <table><thead><tr><th>Benchmark</th><th>luna (BR)</th><th>terra (BR)</th><th>mini (1P)</th><th>nano (1P)</th></tr></thead><tbody>
+<tr><td>AIME (2022–24)</td><td><strong>3,128</strong></td><td>33,550</td><td>8,196</td><td>12,895</td></tr>
 <tr><td>MMLU-Pro</td><td><strong>577</strong></td><td>611</td><td>939</td><td>1,874</td></tr>
 <tr><td>MATH-500</td><td><strong>1,195</strong></td><td>1,925</td><td>2,579</td><td>3,457</td></tr>
 <tr><td>GSM8K</td><td><strong>956</strong></td><td>1,144</td><td>1,868</td><td>2,160</td></tr>
+<tr><td>HumanEval</td><td><strong>1,048</strong></td><td>23,363</td><td>1,925</td><td>2,677</td></tr>
+</tbody></table>
+<h3>6.3 Cost per successful answer (USD)</h3>
+<p>Total spend across <strong>all</strong> attempts (correct and incorrect, at list prices as of 2026-07-21, no caching discounts) divided by the number of correct answers — i.e. what a success actually costs once failures are paid for. A cheap model with a low success rate on hard tasks gets expensive here. Lowest per benchmark in bold.</p>
+<table><thead><tr><th>Benchmark</th><th>luna (BR)</th><th>terra (BR)</th><th>mini (1P)</th><th>nano (1P)</th></tr></thead><tbody>
+<tr><td>AIME (2022–24)</td><td>$0.0105</td><td>$0.0234</td><td>$0.0139</td><td><strong>$0.0050</strong></td></tr>
+<tr><td>MMLU-Pro</td><td>$0.0005</td><td>$0.0011</td><td>$0.0004</td><td><strong>$0.0003</strong></td></tr>
+<tr><td>MATH-500</td><td>$0.0016</td><td>$0.0041</td><td>$0.0017</td><td><strong>$0.0006</strong></td></tr>
+<tr><td>GSM8K</td><td>$0.0009</td><td>$0.0019</td><td>$0.0007</td><td><strong>$0.0002</strong></td></tr>
+<tr><td>HumanEval</td><td>$0.0012</td><td>$0.0026</td><td>$0.0009</td><td><strong>$0.0003</strong></td></tr>
 </tbody></table>
 <p>Column key: <strong>luna (BR)</strong> = gpt-5.6-luna (Bedrock, effort=none) · <strong>terra (BR)</strong> = gpt-5.6-terra (Bedrock, effort=none) · <strong>mini (1P)</strong> = gpt-5.4-mini (OpenAI 1P) · <strong>nano (1P)</strong> = gpt-5.4-nano (OpenAI 1P)</p>
 <h2>Source files</h2>
