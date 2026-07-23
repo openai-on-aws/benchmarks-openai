@@ -126,16 +126,26 @@ def load_gsm8k(n):
 
 
 def load_aime(n):
-    """Most recent AIME problems (hardest discrimination band). Answers are ints 0-999."""
+    """Most recent AIME problems (hardest discrimination band). Answers are ints 0-999.
+    A handful of rows have non-integer Answer fields (e.g. '080 or 081 (both were
+    accepted)') — those are skipped, and we keep taking newer problems until n parse."""
     ds = load_dataset("qq8933/AIME_1983_2024", split="train")
-    rows = sorted(ds, key=lambda r: (r["Year"], r["Problem Number"]), reverse=True)[:n]
+    rows = sorted(ds, key=lambda r: (r["Year"], r["Problem Number"]), reverse=True)
+    count = 0
     for row in rows:
+        if count >= n:
+            break
+        try:
+            gold = str(int(str(row["Answer"]).strip()))
+        except ValueError:
+            continue
+        count += 1
         yield {
             "id": f"aime_{row['Year']}_{row['Part'] or 'I'}_{row['Problem Number']}",
             "prompt": (f"{row['Question']}\n\n"
                        "Solve this competition problem. Show your work, then on the last "
                        "line write 'Final answer: <integer>' (an integer from 0 to 999)."),
-            "gold": str(int(row["Answer"])),
+            "gold": gold,
             "category": f"aime_{row['Year']}",
         }
 
