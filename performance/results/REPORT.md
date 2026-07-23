@@ -1,6 +1,6 @@
 # GPT-5.6 on Amazon Bedrock vs OpenAI 1P — Latency & Quality Benchmark Report
 
-**Generated:** 2026-07-23 11:15 UTC · **Repo:** [openai-on-aws/benchmarks-openai](https://github.com/openai-on-aws/benchmarks-openai)
+**Generated:** 2026-07-23 11:34 UTC · **Repo:** [openai-on-aws/benchmarks-openai](https://github.com/openai-on-aws/benchmarks-openai)
 
 Both backends are exercised through an identical code path — the OpenAI Responses API with streaming
 (`performance/benchmark.py`). Metrics: **TTFT** (time to first output-text token), **Tok/s** (output tokens
@@ -431,6 +431,7 @@ The matchup (an OpenAI-suggested comparison for migration planning): gpt-5.6 **l
 | Benchmark | luna (BR) | sol (BR) | terra (BR) | mini (1P) | nano (1P) |
 |---|---|---|---|---|---|
 | AIME (2022–24) | 38% (23/60) | **75% (45/60)** | 58% (34/59) | 37% (22/60) | 38% (23/60) |
+| GPQA Diamond | 49% (97/198) | **68% (134/197)** | 56% (111/198) | 43% (86/198) | 52% (102/198) |
 | MMLU-Pro | 61% (85/140) | **82% (115/140)** | 66% (93/140) | 59% (82/140) | 62% (87/140) |
 | MATH-500 | 88% (88/100) | **94% (94/100)** | 92% (92/100) | 84% (84/100) | 84% (84/100) |
 | GSM8K | **97% (97/100)** | 95% (95/100) | 96% (96/100) | 96% (96/100) | 95% (95/100) |
@@ -443,6 +444,7 @@ Full-response wall time (not TTFT), measured under 6-way concurrency — compara
 | Benchmark | luna (BR) | sol (BR) | terra (BR) | mini (1P) | nano (1P) |
 |---|---|---|---|---|---|
 | AIME (2022–24) | **3,128** | 5,554 | 33,550 | 8,196 | 12,895 |
+| GPQA Diamond | **594** | 750 | 15,445 | 1,330 | 3,318 |
 | MMLU-Pro | **577** | 683 | 611 | 939 | 1,874 |
 | MATH-500 | **1,195** | 1,868 | 1,925 | 2,579 | 3,457 |
 | GSM8K | **956** | 1,202 | 1,144 | 1,868 | 2,160 |
@@ -455,6 +457,7 @@ Total spend across **all** attempts (correct and incorrect, at list prices as of
 | Benchmark | luna (BR) | sol (BR) | terra (BR) | mini (1P) | nano (1P) |
 |---|---|---|---|---|---|
 | AIME (2022–24) | $0.0105 | $0.0299 | $0.0234 | $0.0139 | **$0.0050** |
+| GPQA Diamond | $0.0006 | $0.0025 | $0.0014 | **$0.0005** | $0.0008 |
 | MMLU-Pro | $0.0005 | $0.0018 | $0.0011 | $0.0004 | **$0.0003** |
 | MATH-500 | $0.0016 | $0.0069 | $0.0041 | $0.0017 | **$0.0006** |
 | GSM8K | $0.0009 | $0.0038 | $0.0019 | $0.0007 | **$0.0002** |

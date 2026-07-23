@@ -37,7 +37,7 @@
 </head>
 <body>
 <h1>GPT-5.6 on Amazon Bedrock vs OpenAI 1P — Latency &amp; Quality Benchmark Report</h1>
-<p><strong>Generated:</strong> 2026-07-23 11:15 UTC · <strong>Repo:</strong> <a href="https://github.com/openai-on-aws/benchmarks-openai">openai-on-aws/benchmarks-openai</a></p>
+<p><strong>Generated:</strong> 2026-07-23 11:34 UTC · <strong>Repo:</strong> <a href="https://github.com/openai-on-aws/benchmarks-openai">openai-on-aws/benchmarks-openai</a></p>
 <p>Both backends are exercised through an identical code path — the OpenAI Responses API with streaming</p>
 <p>(<code>performance/benchmark.py</code>). Metrics: <strong>TTFT</strong> (time to first output-text token), <strong>Tok/s</strong> (output tokens</p>
 <p>per second of generation time), <strong>E2E</strong> (end-to-end wall time). Every number below is computed from the</p>
@@ -438,6 +438,7 @@
 <h3>6.1 Accuracy</h3>
 <table><thead><tr><th>Benchmark</th><th>luna (BR)</th><th>sol (BR)</th><th>terra (BR)</th><th>mini (1P)</th><th>nano (1P)</th></tr></thead><tbody>
 <tr><td>AIME (2022–24)</td><td>38% (23/60)</td><td><strong>75% (45/60)</strong></td><td>58% (34/59)</td><td>37% (22/60)</td><td>38% (23/60)</td></tr>
+<tr><td>GPQA Diamond</td><td>49% (97/198)</td><td><strong>68% (134/197)</strong></td><td>56% (111/198)</td><td>43% (86/198)</td><td>52% (102/198)</td></tr>
 <tr><td>MMLU-Pro</td><td>61% (85/140)</td><td><strong>82% (115/140)</strong></td><td>66% (93/140)</td><td>59% (82/140)</td><td>62% (87/140)</td></tr>
 <tr><td>MATH-500</td><td>88% (88/100)</td><td><strong>94% (94/100)</strong></td><td>92% (92/100)</td><td>84% (84/100)</td><td>84% (84/100)</td></tr>
 <tr><td>GSM8K</td><td><strong>97% (97/100)</strong></td><td>95% (95/100)</td><td>96% (96/100)</td><td>96% (96/100)</td><td>95% (95/100)</td></tr>
@@ -447,6 +448,7 @@
 <p>Full-response wall time (not TTFT), measured under 6-way concurrency — comparable across this table, not to the latency sections above. Lowest per benchmark in bold.</p>
 <table><thead><tr><th>Benchmark</th><th>luna (BR)</th><th>sol (BR)</th><th>terra (BR)</th><th>mini (1P)</th><th>nano (1P)</th></tr></thead><tbody>
 <tr><td>AIME (2022–24)</td><td><strong>3,128</strong></td><td>5,554</td><td>33,550</td><td>8,196</td><td>12,895</td></tr>
+<tr><td>GPQA Diamond</td><td><strong>594</strong></td><td>750</td><td>15,445</td><td>1,330</td><td>3,318</td></tr>
 <tr><td>MMLU-Pro</td><td><strong>577</strong></td><td>683</td><td>611</td><td>939</td><td>1,874</td></tr>
 <tr><td>MATH-500</td><td><strong>1,195</strong></td><td>1,868</td><td>1,925</td><td>2,579</td><td>3,457</td></tr>
 <tr><td>GSM8K</td><td><strong>956</strong></td><td>1,202</td><td>1,144</td><td>1,868</td><td>2,160</td></tr>
@@ -456,6 +458,7 @@
 <p>Total spend across <strong>all</strong> attempts (correct and incorrect, at list prices as of 2026-07-21, no caching discounts) divided by the number of correct answers — i.e. what a success actually costs once failures are paid for. A cheap model with a low success rate on hard tasks gets expensive here. Lowest per benchmark in bold.</p>
 <table><thead><tr><th>Benchmark</th><th>luna (BR)</th><th>sol (BR)</th><th>terra (BR)</th><th>mini (1P)</th><th>nano (1P)</th></tr></thead><tbody>
 <tr><td>AIME (2022–24)</td><td>$0.0105</td><td>$0.0299</td><td>$0.0234</td><td>$0.0139</td><td><strong>$0.0050</strong></td></tr>
+<tr><td>GPQA Diamond</td><td>$0.0006</td><td>$0.0025</td><td>$0.0014</td><td><strong>$0.0005</strong></td><td>$0.0008</td></tr>
 <tr><td>MMLU-Pro</td><td>$0.0005</td><td>$0.0018</td><td>$0.0011</td><td>$0.0004</td><td><strong>$0.0003</strong></td></tr>
 <tr><td>MATH-500</td><td>$0.0016</td><td>$0.0069</td><td>$0.0041</td><td>$0.0017</td><td><strong>$0.0006</strong></td></tr>
 <tr><td>GSM8K</td><td>$0.0009</td><td>$0.0038</td><td>$0.0019</td><td>$0.0007</td><td><strong>$0.0002</strong></td></tr>

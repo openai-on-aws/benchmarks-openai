@@ -172,24 +172,47 @@ def load_humaneval(n):
 
 
 def load_gpqa(n):
-    """GPQA Diamond (gated on HF — needs an authorized token via huggingface-cli login
-    or HF_TOKEN). 4-option MCQ; options are shuffled with the fixed seed."""
-    ds = load_dataset("Idavidrein/gpqa", "gpqa_diamond", split="train")
+    """GPQA Diamond. Prefers the canonical gated set (Idavidrein/gpqa — needs an
+    authorized HF token AND approved access); falls back to the ungated CC-BY-4.0
+    mirror hendrydong/gpqa_diamond_mc (same 198 questions, options pre-baked into
+    the prompt text, gold letter in \\boxed{}). The two variants score the same
+    task but option ORDER differs, so don't mix runs across variants."""
+    try:
+        ds = load_dataset("Idavidrein/gpqa", "gpqa_diamond", split="train")
+        rng = random.Random(SEED)
+        rows = rng.sample(list(ds), min(n, len(ds)))
+        for i, row in enumerate(rows):
+            options = [row["Correct Answer"], row["Incorrect Answer 1"],
+                       row["Incorrect Answer 2"], row["Incorrect Answer 3"]]
+            order = rng.sample(range(4), 4)
+            gold = LETTERS[order.index(0)]
+            opts = "\n".join(f"{LETTERS[j]}. {options[order[j]].strip()}" for j in range(4))
+            yield {
+                "id": f"gpqa_{i}",
+                "prompt": (f"{row['Question']}\n\n{opts}\n\n"
+                           "Think briefly if needed, then give your final answer as "
+                           "'Final answer: <letter>'."),
+                "gold": gold,
+                "category": row.get("High-level domain", "gpqa"),
+            }
+        return
+    except Exception as e:
+        print(f"  (canonical Idavidrein/gpqa unavailable [{str(e)[:60]}...]; "
+              f"using ungated mirror hendrydong/gpqa_diamond_mc)")
+    ds = load_dataset("hendrydong/gpqa_diamond_mc", split="test")
     rng = random.Random(SEED)
     rows = rng.sample(list(ds), min(n, len(ds)))
     for i, row in enumerate(rows):
-        options = [row["Correct Answer"], row["Incorrect Answer 1"],
-                   row["Incorrect Answer 2"], row["Incorrect Answer 3"]]
-        order = rng.sample(range(4), 4)
-        gold = LETTERS[order.index(0)]
-        opts = "\n".join(f"{LETTERS[j]}. {options[order[j]].strip()}" for j in range(4))
+        m = re.search(r"\\boxed\{([A-D])\}", row["solution"])
+        if not m:
+            continue
         yield {
-            "id": f"gpqa_{i}",
-            "prompt": (f"{row['Question']}\n\n{opts}\n\n"
+            "id": f"gpqa_mc_{i}",
+            "prompt": (f"{row['problem'].split('Please write your final')[0].strip()}\n\n"
                        "Think briefly if needed, then give your final answer as "
                        "'Final answer: <letter>'."),
-            "gold": gold,
-            "category": row.get("High-level domain", "gpqa"),
+            "gold": m.group(1),
+            "category": row.get("domain", "gpqa"),
         }
 
 
