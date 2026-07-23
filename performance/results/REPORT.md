@@ -1,6 +1,6 @@
 # GPT-5.6 on Amazon Bedrock vs OpenAI 1P — Latency & Quality Benchmark Report
 
-**Generated:** 2026-07-23 11:03 UTC · **Repo:** [openai-on-aws/benchmarks-openai](https://github.com/openai-on-aws/benchmarks-openai)
+**Generated:** 2026-07-23 11:15 UTC · **Repo:** [openai-on-aws/benchmarks-openai](https://github.com/openai-on-aws/benchmarks-openai)
 
 Both backends are exercised through an identical code path — the OpenAI Responses API with streaming
 (`performance/benchmark.py`). Metrics: **TTFT** (time to first output-text token), **Tok/s** (output tokens
@@ -428,39 +428,39 @@ The matchup (an OpenAI-suggested comparison for migration planning): gpt-5.6 **l
 
 ### 6.1 Accuracy
 
-| Benchmark | luna (BR) | terra (BR) | mini (1P) | nano (1P) |
-|---|---|---|---|---|
-| AIME (2022–24) | 38% (23/60) | **58% (34/59)** | 37% (22/60) | 38% (23/60) |
-| MMLU-Pro | 61% (85/140) | **66% (93/140)** | 59% (82/140) | 62% (87/140) |
-| MATH-500 | 88% (88/100) | **92% (92/100)** | 84% (84/100) | 84% (84/100) |
-| GSM8K | **97% (97/100)** | 96% (96/100) | 96% (96/100) | 95% (95/100) |
-| HumanEval | 95% (155/164) | **96% (157/164)** | 95% (155/164) | 90% (148/164) |
+| Benchmark | luna (BR) | sol (BR) | terra (BR) | mini (1P) | nano (1P) |
+|---|---|---|---|---|---|
+| AIME (2022–24) | 38% (23/60) | **75% (45/60)** | 58% (34/59) | 37% (22/60) | 38% (23/60) |
+| MMLU-Pro | 61% (85/140) | **82% (115/140)** | 66% (93/140) | 59% (82/140) | 62% (87/140) |
+| MATH-500 | 88% (88/100) | **94% (94/100)** | 92% (92/100) | 84% (84/100) | 84% (84/100) |
+| GSM8K | **97% (97/100)** | 95% (95/100) | 96% (96/100) | 96% (96/100) | 95% (95/100) |
+| HumanEval | 95% (155/164) | **97% (158/163)** | 96% (157/164) | 95% (155/164) | 90% (148/164) |
 
 ### 6.2 Mean latency per question (ms)
 
 Full-response wall time (not TTFT), measured under 6-way concurrency — comparable across this table, not to the latency sections above. Lowest per benchmark in bold.
 
-| Benchmark | luna (BR) | terra (BR) | mini (1P) | nano (1P) |
-|---|---|---|---|---|
-| AIME (2022–24) | **3,128** | 33,550 | 8,196 | 12,895 |
-| MMLU-Pro | **577** | 611 | 939 | 1,874 |
-| MATH-500 | **1,195** | 1,925 | 2,579 | 3,457 |
-| GSM8K | **956** | 1,144 | 1,868 | 2,160 |
-| HumanEval | **1,048** | 23,363 | 1,925 | 2,677 |
+| Benchmark | luna (BR) | sol (BR) | terra (BR) | mini (1P) | nano (1P) |
+|---|---|---|---|---|---|
+| AIME (2022–24) | **3,128** | 5,554 | 33,550 | 8,196 | 12,895 |
+| MMLU-Pro | **577** | 683 | 611 | 939 | 1,874 |
+| MATH-500 | **1,195** | 1,868 | 1,925 | 2,579 | 3,457 |
+| GSM8K | **956** | 1,202 | 1,144 | 1,868 | 2,160 |
+| HumanEval | **1,048** | 1,171 | 23,363 | 1,925 | 2,677 |
 
 ### 6.3 Cost per successful answer (USD)
 
 Total spend across **all** attempts (correct and incorrect, at list prices as of 2026-07-21, no caching discounts) divided by the number of correct answers — i.e. what a success actually costs once failures are paid for. A cheap model with a low success rate on hard tasks gets expensive here. Lowest per benchmark in bold.
 
-| Benchmark | luna (BR) | terra (BR) | mini (1P) | nano (1P) |
-|---|---|---|---|---|
-| AIME (2022–24) | $0.0105 | $0.0234 | $0.0139 | **$0.0050** |
-| MMLU-Pro | $0.0005 | $0.0011 | $0.0004 | **$0.0003** |
-| MATH-500 | $0.0016 | $0.0041 | $0.0017 | **$0.0006** |
-| GSM8K | $0.0009 | $0.0019 | $0.0007 | **$0.0002** |
-| HumanEval | $0.0012 | $0.0026 | $0.0009 | **$0.0003** |
+| Benchmark | luna (BR) | sol (BR) | terra (BR) | mini (1P) | nano (1P) |
+|---|---|---|---|---|---|
+| AIME (2022–24) | $0.0105 | $0.0299 | $0.0234 | $0.0139 | **$0.0050** |
+| MMLU-Pro | $0.0005 | $0.0018 | $0.0011 | $0.0004 | **$0.0003** |
+| MATH-500 | $0.0016 | $0.0069 | $0.0041 | $0.0017 | **$0.0006** |
+| GSM8K | $0.0009 | $0.0038 | $0.0019 | $0.0007 | **$0.0002** |
+| HumanEval | $0.0012 | $0.0045 | $0.0026 | $0.0009 | **$0.0003** |
 
-Column key: **luna (BR)** = gpt-5.6-luna (Bedrock, effort=none) · **terra (BR)** = gpt-5.6-terra (Bedrock, effort=none) · **mini (1P)** = gpt-5.4-mini (OpenAI 1P) · **nano (1P)** = gpt-5.4-nano (OpenAI 1P)
+Column key: **luna (BR)** = gpt-5.6-luna (Bedrock, effort=none) · **sol (BR)** = gpt-5.6-sol (Bedrock, effort=none) · **terra (BR)** = gpt-5.6-terra (Bedrock, effort=none) · **mini (1P)** = gpt-5.4-mini (OpenAI 1P) · **nano (1P)** = gpt-5.4-nano (OpenAI 1P)
 
 ## Source files
 
