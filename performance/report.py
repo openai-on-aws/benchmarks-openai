@@ -638,7 +638,10 @@ def md_to_html(md, charts):
                 cells = []
                 for j, c in enumerate(r):
                     cls = ""
-                    if j == len(r) - 1 and c.endswith("%"):
+                    # fully-bold cell = per-benchmark winner -> green highlight
+                    if re.fullmatch(r"\*\*.+\*\*", c):
+                        cls = ' class="win"'
+                    elif j == len(r) - 1 and c.endswith("%"):
                         try:
                             v = float(c.rstrip("%"))
                             cls = ' class="pos"' if v > 0 else (' class="neg"' if v < 0 else "")
@@ -676,11 +679,13 @@ def md_to_html(md, charts):
   :root {{
     --fg: #0b0b0b; --muted: #52514e; --line: #e1e0d9; --accent: #146eb4;
     --pos: #006300; --neg: #b42318; --bg: #fcfcfb; --code-bg: #f0efec;
+    --win-bg: #dcf2dc;
   }}
   @media (prefers-color-scheme: dark) {{
     :root {{
       --fg: #e6e8ee; --muted: #c3c2b7; --line: #2c2c2a; --accent: #5aa9e6;
       --pos: #4ade80; --neg: #f87171; --bg: #1a1a19; --code-bg: #262624;
+      --win-bg: #1d3a24;
     }}
   }}
   body {{ font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -698,6 +703,7 @@ def md_to_html(md, charts):
   tbody tr:nth-child(even) {{ background: color-mix(in srgb, var(--code-bg) 50%, transparent); }}
   td.pos {{ color: var(--pos); font-weight: 600; }}
   td.neg {{ color: var(--neg); font-weight: 600; }}
+  td.win {{ background: var(--win-bg); color: var(--pos); font-weight: 600; }}
   .chart {{ background: #fcfcfb; border: 1px solid var(--line); border-radius: 8px;
            padding: .5rem; margin: 1rem 0; }}
   .chart img {{ width: 100%; height: auto; display: block; }}
@@ -716,6 +722,14 @@ def md_to_docx(md, outfile):
     from docx import Document
     from docx.shared import Pt, Inches, RGBColor
     from docx.enum.table import WD_TABLE_ALIGNMENT
+    from docx.oxml.ns import qn
+    from docx.oxml import OxmlElement
+
+    def shade_cell(cell, hex_fill):
+        shd = OxmlElement("w:shd")
+        shd.set(qn("w:val"), "clear")
+        shd.set(qn("w:fill"), hex_fill)
+        cell._tc.get_or_add_tcPr().append(shd)
 
     doc = Document()
     style = doc.styles["Normal"]
@@ -751,8 +765,14 @@ def md_to_docx(md, outfile):
             t.alignment = WD_TABLE_ALIGNMENT.LEFT
             for ri, row in enumerate(rows):
                 for ci, cell in enumerate(row):
-                    par = t.rows[ri].cells[ci].paragraphs[0]
+                    tcell = t.rows[ri].cells[ci]
+                    par = tcell.paragraphs[0]
                     add_runs(par, cell)
+                    # fully-bold cell = per-benchmark winner -> green fill
+                    if ri > 0 and re.fullmatch(r"\*\*.+\*\*", cell):
+                        shade_cell(tcell, "DCF2DC")
+                        for r in par.runs:
+                            r.font.color.rgb = RGBColor(0x00, 0x63, 0x00)
                     for r in par.runs:
                         r.font.size = Pt(8.5)
                         if ri == 0:

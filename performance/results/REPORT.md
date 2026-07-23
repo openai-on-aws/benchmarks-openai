@@ -1,6 +1,6 @@
 # GPT-5.6 on Amazon Bedrock vs OpenAI 1P — Latency & Quality Benchmark Report
 
-**Generated:** 2026-07-23 11:34 UTC · **Repo:** [openai-on-aws/benchmarks-openai](https://github.com/openai-on-aws/benchmarks-openai)
+**Generated:** 2026-07-23 13:31 UTC · **Repo:** [openai-on-aws/benchmarks-openai](https://github.com/openai-on-aws/benchmarks-openai)
 
 Both backends are exercised through an identical code path — the OpenAI Responses API with streaming
 (`performance/benchmark.py`). Metrics: **TTFT** (time to first output-text token), **Tok/s** (output tokens
