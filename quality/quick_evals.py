@@ -31,8 +31,10 @@ from eval_utils import capture_error
 RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
 SEED = 42
 
-DEFAULTS = {"mmlu_pro": 140, "math500": 100, "gsm8k": 100, "aime": 60, "humaneval": 164}
-MAX_TOKENS = {"mmlu_pro": 1024, "math500": 2048, "gsm8k": 1024, "aime": 8192, "humaneval": 2048}
+DEFAULTS = {"mmlu_pro": 140, "math500": 100, "gsm8k": 100, "aime": 60, "humaneval": 164,
+            "gpqa": 198}
+MAX_TOKENS = {"mmlu_pro": 1024, "math500": 2048, "gsm8k": 1024, "aime": 8192, "humaneval": 2048,
+              "gpqa": 4096}
 
 LETTERS = "ABCDEFGHIJ"
 
@@ -169,8 +171,30 @@ def load_humaneval(n):
         }
 
 
+def load_gpqa(n):
+    """GPQA Diamond (gated on HF — needs an authorized token via huggingface-cli login
+    or HF_TOKEN). 4-option MCQ; options are shuffled with the fixed seed."""
+    ds = load_dataset("Idavidrein/gpqa", "gpqa_diamond", split="train")
+    rng = random.Random(SEED)
+    rows = rng.sample(list(ds), min(n, len(ds)))
+    for i, row in enumerate(rows):
+        options = [row["Correct Answer"], row["Incorrect Answer 1"],
+                   row["Incorrect Answer 2"], row["Incorrect Answer 3"]]
+        order = rng.sample(range(4), 4)
+        gold = LETTERS[order.index(0)]
+        opts = "\n".join(f"{LETTERS[j]}. {options[order[j]].strip()}" for j in range(4))
+        yield {
+            "id": f"gpqa_{i}",
+            "prompt": (f"{row['Question']}\n\n{opts}\n\n"
+                       "Think briefly if needed, then give your final answer as "
+                       "'Final answer: <letter>'."),
+            "gold": gold,
+            "category": row.get("High-level domain", "gpqa"),
+        }
+
+
 LOADERS = {"mmlu_pro": load_mmlu_pro, "math500": load_math500, "gsm8k": load_gsm8k,
-           "aime": load_aime, "humaneval": load_humaneval}
+           "aime": load_aime, "humaneval": load_humaneval, "gpqa": load_gpqa}
 
 
 # ------------------------------------------------------------------- scoring
@@ -284,7 +308,7 @@ def run_humaneval_check(code, test, entry_point, header="", timeout=15):
 def score(task, gold, text, item=None):
     if text is None:
         return None, False
-    if task == "mmlu_pro":
+    if task in ("mmlu_pro", "gpqa"):
         pred = extract_letter(text)
         return pred, pred == gold
     if task == "math500":
@@ -458,7 +482,8 @@ def main():
     p.add_argument("--backend", choices=["mantle", "saas"], required=True)
     p.add_argument("--model", required=True)
     p.add_argument("--effort", help="reasoning effort (e.g. none, low); omit for model default")
-    p.add_argument("--tasks", default="mmlu_pro,math500,gsm8k")
+    p.add_argument("--tasks", default="aime,gpqa,mmlu_pro,math500,gsm8k,humaneval",
+                   help="comma-separated; gpqa needs an authorized HF token")
     p.add_argument("--n", type=int, help="override sample size for every task")
     p.add_argument("--concurrency", type=int, default=6)
     args = p.parse_args()

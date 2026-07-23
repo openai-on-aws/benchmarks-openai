@@ -383,9 +383,9 @@ def build_findings(results):
 
 # -------------------------------------------------------------- quality evals
 
-EVAL_TASK_LABELS = {"aime": "AIME (2023–24)", "mmlu_pro": "MMLU-Pro", "math500": "MATH-500",
-                    "gsm8k": "GSM8K", "humaneval": "HumanEval"}
-EVAL_TASK_ORDER = ["aime", "mmlu_pro", "math500", "gsm8k", "humaneval"]
+EVAL_TASK_LABELS = {"aime": "AIME (2022–24)", "gpqa": "GPQA Diamond", "mmlu_pro": "MMLU-Pro",
+                    "math500": "MATH-500", "gsm8k": "GSM8K", "humaneval": "HumanEval"}
+EVAL_TASK_ORDER = ["aime", "gpqa", "mmlu_pro", "math500", "gsm8k", "humaneval"]
 
 
 def load_quickevals():
