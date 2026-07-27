@@ -29,3 +29,7 @@ env/
 *.pem
 *.key
 credentials
+# DeepSearchQA search cache (20MB, ported from colleague eval — share out-of-band)
+quality/deepsearchqa/search-cache.json
+# DeepSearchQA env (Tavily keys)
+quality/deepsearchqa/eval.env
