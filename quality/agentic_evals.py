@@ -20,6 +20,7 @@ Usage:
 import argparse
 import json
 import os
+import re
 import time
 from datetime import datetime, timezone
 
@@ -74,6 +75,56 @@ KG = {  # tiny knowledge graph for multi-hop lookup
     "NASA": {"founded": "1958", "headquarters": "Washington, D.C."},
     "Washington, D.C.": {"population_millions": "0.7"},
 }
+
+# ── hard-suite data ──────────────────────────────────────────────────────────
+
+# deploy_chain: topological-order deployment. Deploying 'metrics' requires its
+# full dependency closure — 8 services. The backend enforces ordering, so a
+# model that doesn't plan pays for failed deploys and extra turns.
+SERVICE_DEPS = {
+    "db": [], "cache": [], "queue": [],
+    "auth": ["db"], "api": ["db", "cache"],
+    "web": ["api", "auth"], "worker": ["api", "queue"],
+    "metrics": ["web", "worker"],
+}
+
+# rag_research: three quarterly figures buried in long documents. Chunks are
+# deliberately big (~1k+ tokens) so every turn re-sends a heavy context —
+# this is the payload-amplification scenario real RAG agents live in.
+def _make_doc(title, quarter, revenue, seed_lines=55):
+    lines = [f"# {title}", ""]
+    for i in range(seed_lines):
+        lines.append(
+            f"Section {i+1}: Operational review item {i+1} covers routine matters "
+            f"including staffing updates, facility maintenance schedules, vendor "
+            f"contract renewals, compliance attestations, and inter-departmental "
+            f"coordination notes logged during the reporting period for {title}.")
+        if i == seed_lines // 2:
+            lines.append(
+                f"KEY FIGURE: Total recognized revenue for {quarter} was "
+                f"${revenue} million, as confirmed by the finance controller.")
+    return "\n".join(lines)
+
+RAG_DOCS = {
+    "q1_review": _make_doc("Q1 Operations Review", "Q1", 4.2),
+    "q2_review": _make_doc("Q2 Operations Review", "Q2", 5.1),
+    "q3_review": _make_doc("Q3 Operations Review", "Q3", 6.3),
+    "hr_handbook": _make_doc("HR Handbook (no financials)", "N/A", 0.0).replace("KEY FIGURE:", "NOTE:"),
+}
+RAG_KEYWORDS = {"q1": "q1_review", "q2": "q2_review", "q3": "q3_review", "hr": "hr_handbook"}
+
+# inventory_audit: aggregate discrepancies across 3 warehouses.
+STOCK = {
+    "W-EAST":  {"widget": 120, "gadget": 45, "sprocket": 200},
+    "W-WEST":  {"widget": 80,  "gadget": 60},
+    "W-NORTH": {"widget": 55,  "sprocket": 93, "gizmo": 14},
+}
+MANIFEST = {
+    "W-EAST":  {"widget": 125, "gadget": 45, "sprocket": 200},   # missing 5
+    "W-WEST":  {"widget": 80,  "gadget": 60},                    # missing 0
+    "W-NORTH": {"widget": 60,  "sprocket": 95, "gizmo": 14},     # missing 5+2=7
+}
+# total missing across all warehouses = 12
 
 
 def _err(msg):
@@ -194,6 +245,100 @@ TASKS = [
     },
 ]
 
+# Hard suite: long-horizon and big-payload tasks where trajectory shape should
+# actually differ between models. Run with --suite hard (or --suite all).
+
+def _deploy_backend():
+    state = {"deployed": set(), "failed_attempts": 0}
+    def get_deps(a):
+        svc = a["service"].strip()
+        if svc not in SERVICE_DEPS:
+            return _err(f"unknown service {svc}")
+        return json.dumps({"service": svc, "depends_on": SERVICE_DEPS[svc]})
+    def deploy(a):
+        svc = a["service"].strip()
+        if svc not in SERVICE_DEPS:
+            return _err(f"unknown service {svc}")
+        missing = [d for d in SERVICE_DEPS[svc] if d not in state["deployed"]]
+        if missing:
+            state["failed_attempts"] += 1
+            return _err(f"cannot deploy {svc}: dependencies not deployed yet: {missing}")
+        state["deployed"].add(svc)
+        return json.dumps({"deployed": svc, "total_deployed": len(state["deployed"])})
+    def status(a):
+        return json.dumps({"deployed": sorted(state["deployed"])})
+    return {"get_dependencies": get_deps, "deploy_service": deploy,
+            "deployment_status": status}, state
+
+
+HARD_TASKS = [
+    {
+        "id": "deploy_chain",
+        "goal": ("Deploy the 'metrics' service. Services can only be deployed after "
+                 "ALL their dependencies (transitively) are deployed. Use the tools to "
+                 "discover dependencies and deploy everything needed in a valid order. "
+                 "When 'metrics' is deployed, confirm in plain text how many services "
+                 "you deployed in total."),
+        "tools": [
+            tool("get_dependencies", "List the direct dependencies of a service.",
+                 {"service": {"type": "string"}}),
+            tool("deploy_service", "Deploy one service. Fails unless all its dependencies are already deployed.",
+                 {"service": {"type": "string"}}),
+            tool("deployment_status", "List currently deployed services.", {}, []),
+        ],
+        "backend_factory": lambda: _deploy_backend()[0],
+        "check": lambda text: bool(re.search(r"\b(8|eight)\b", text.lower())),
+        "max_turns": 20,  # legitimate solutions need ~9 turns; wanderers need headroom
+        # optimal: discover deps (1-3 turns) + deploy 8 services in order + answer.
+        # A planner can batch parallel deploys; a wanderer hits dependency errors.
+    },
+    {
+        "id": "rag_research",
+        "goal": ("Using the document tools, find the total recognized revenue across "
+                 "Q1, Q2, and Q3 (each quarterly review document states its figure), "
+                 "then report the combined total in $ millions in plain text."),
+        "tools": [
+            tool("search_docs", "Search documents by keyword; returns matching doc ids.",
+                 {"keyword": {"type": "string"}}),
+            tool("read_doc", "Read the FULL text of a document by id (documents are long).",
+                 {"doc_id": {"type": "string"}}),
+        ],
+        "backend": {
+            "search_docs": lambda a: json.dumps({"matches": sorted({v for k, v in RAG_KEYWORDS.items()
+                                                 if k in a["keyword"].lower()} or set(RAG_DOCS))}),
+            "read_doc": lambda a: json.dumps({"doc_id": a["doc_id"], "content": RAG_DOCS[a["doc_id"]]})
+                if a["doc_id"] in RAG_DOCS else _err("no such doc"),
+        },
+        "check": lambda text: "15.6" in text,
+        # 4.2 + 5.1 + 6.3 = 15.6. Each read_doc returns ~1k+ tokens that get
+        # re-sent on every later turn — the payload-amplification scenario.
+    },
+    {
+        "id": "inventory_audit",
+        "goal": ("Audit all warehouses: for every item, compare actual stock against "
+                 "the shipping manifest, and report the TOTAL number of missing units "
+                 "across all warehouses as a plain-text number."),
+        "tools": [
+            tool("list_warehouses", "List warehouse ids.", {}, []),
+            tool("get_stock", "Actual stock levels for one warehouse.",
+                 {"warehouse": {"type": "string"}}),
+            tool("get_manifest", "Manifest (expected) levels for one warehouse.",
+                 {"warehouse": {"type": "string"}}),
+        ],
+        "backend": {
+            "list_warehouses": lambda a: json.dumps({"warehouses": sorted(STOCK)}),
+            "get_stock": lambda a: json.dumps(STOCK.get(a["warehouse"].strip().upper(), {}))
+                if a["warehouse"].strip().upper() in STOCK else _err("unknown warehouse"),
+            "get_manifest": lambda a: json.dumps(MANIFEST.get(a["warehouse"].strip().upper(), {}))
+                if a["warehouse"].strip().upper() in MANIFEST else _err("unknown warehouse"),
+        },
+        "check": lambda text: bool(re.search(r"\b(12|twelve)\b", text.lower())),
+        # optimal: list + 3x(stock+manifest) + answer; parallel calls compress it.
+    },
+]
+
+SUITES = {"core": TASKS, "hard": HARD_TASKS, "all": TASKS + HARD_TASKS}
+
 
 # ──────────────────────────────────────────────────────────── agentic loop ──
 
@@ -201,8 +346,10 @@ def run_trajectory(client, backend_label, model, effort, task):
     backend = task["backend_factory"]() if "backend_factory" in task else task["backend"]
     history = [{"role": "user", "content": task["goal"]}]
     kwargs = {"reasoning": {"effort": effort}} if effort else {}
+    max_turns = task.get("max_turns", MAX_TURNS)
 
     turns = 0
+    input_tokens_per_turn = []
     tool_calls_made = []
     tot_in = tot_out = tot_reasoning = 0
     cost = 0.0
@@ -210,7 +357,7 @@ def run_trajectory(client, backend_label, model, effort, task):
     final_text = None
     outcome = "no_answer"
 
-    while turns < MAX_TURNS:
+    while turns < max_turns:
         turns += 1
         try:
             r = client.responses.create(
@@ -221,9 +368,11 @@ def run_trajectory(client, backend_label, model, effort, task):
                     "success": False, "tool_calls": len(tool_calls_made),
                     "input_tokens": tot_in, "output_tokens": tot_out,
                     "reasoning_tokens": tot_reasoning, "cost_usd": round(cost, 6),
+                    "input_tokens_per_turn": input_tokens_per_turn,
                     "wall_s": round(time.perf_counter() - t0, 2), "final_text": None}
 
         u = r.usage
+        input_tokens_per_turn.append(u.input_tokens)
         tot_in += u.input_tokens
         tot_out += u.output_tokens
         tot_reasoning += getattr(u.output_tokens_details, "reasoning_tokens", 0) or 0
@@ -267,6 +416,7 @@ def run_trajectory(client, backend_label, model, effort, task):
             "tool_calls": len(tool_calls_made),
             "input_tokens": tot_in, "output_tokens": tot_out,
             "reasoning_tokens": tot_reasoning, "cost_usd": round(cost, 6),
+            "input_tokens_per_turn": input_tokens_per_turn,
             "wall_s": round(time.perf_counter() - t0, 2),
             "final_text": (final_text or "")[:500]}
 
@@ -277,12 +427,15 @@ def main():
     p.add_argument("--model", required=True)
     p.add_argument("--effort", help="reasoning effort (e.g. none); omit for default")
     p.add_argument("--repeats", type=int, default=5)
-    p.add_argument("--tasks", help="comma-separated task ids (default: all)")
+    p.add_argument("--suite", choices=["core", "hard", "all"], default="core",
+                   help="core = original 6 tasks; hard = long-horizon/big-payload; all = both")
+    p.add_argument("--tasks", help="comma-separated task ids (default: whole suite)")
     args = p.parse_args()
 
     client, base_url = make_client(args.backend)
+    pool = SUITES[args.suite]
     wanted = args.tasks.split(",") if args.tasks else None
-    tasks = [t for t in TASKS if wanted is None or t["id"] in wanted]
+    tasks = [t for t in pool if wanted is None or t["id"] in wanted]
 
     print(f"Agentic evals: {len(tasks)} tasks x {args.repeats} repeats | "
           f"{args.backend}/{args.model}" + (f" | effort={args.effort}" if args.effort else ""))
@@ -321,10 +474,17 @@ def main():
     for task in tasks:
         tr = [r for r in ok if r["task"] == task["id"]]
         ts = [r for r in tr if r["success"]]
+        # mean input tokens on the final turn / first turn: the context-growth
+        # multiplier a customer pays for this task's trajectory length
+        growth = [r["input_tokens_per_turn"][-1] / r["input_tokens_per_turn"][0]
+                  for r in tr if r.get("input_tokens_per_turn") and r["input_tokens_per_turn"][0] > 0
+                  and len(r["input_tokens_per_turn"]) > 1]
         summary["per_task"][task["id"]] = {
             "success": f"{len(ts)}/{len(tr)}",
             "mean_turns": round(sum(r["turns"] for r in tr) / len(tr), 2) if tr else None,
             "mean_cost_usd": round(sum(r["cost_usd"] for r in tr) / len(tr), 6) if tr else None,
+            "mean_input_tokens": round(sum(r["input_tokens"] for r in tr) / len(tr), 1) if tr else None,
+            "context_growth_x": round(sum(growth) / len(growth), 2) if growth else None,
         }
 
     print(f"\nSUMMARY: success {summary['n_success']}/{len(ok)} "
@@ -335,10 +495,11 @@ def main():
     ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     safe_model = args.model.replace("/", "-")
     path = os.path.join(RESULTS_DIR,
-        f"agentic_{args.backend}_{safe_model}" + (f"_{args.effort}" if args.effort else "") + f"_{ts}.json")
+        f"agentic_{args.suite}_{args.backend}_{safe_model}" + (f"_{args.effort}" if args.effort else "") + f"_{ts}.json")
     with open(path, "w") as f:
         json.dump({"backend": args.backend, "model": args.model, "base_url": base_url,
                    "reasoning_effort": args.effort, "max_turns": MAX_TURNS,
+                   "suite": args.suite,
                    "repeats": args.repeats, "timestamp": ts,
                    "summary": summary, "results": all_results}, f, indent=2)
     print(f"Saved {os.path.basename(path)}")
