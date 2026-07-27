@@ -1,6 +1,6 @@
 # GPT-5.6 on Amazon Bedrock vs OpenAI 1P — Latency & Quality Benchmark Report
 
-**Generated:** 2026-07-23 13:31 UTC · **Repo:** [openai-on-aws/benchmarks-openai](https://github.com/openai-on-aws/benchmarks-openai)
+**Generated:** 2026-07-27 14:43 UTC · **Repo:** [openai-on-aws/benchmarks-openai](https://github.com/openai-on-aws/benchmarks-openai)
 
 Both backends are exercised through an identical code path — the OpenAI Responses API with streaming
 (`performance/benchmark.py`). Metrics: **TTFT** (time to first output-text token), **Tok/s** (output tokens
@@ -454,14 +454,16 @@ Full-response wall time (not TTFT), measured under 6-way concurrency — compara
 
 Total spend across **all** attempts (correct and incorrect, at list prices as of 2026-07-21, no caching discounts) divided by the number of correct answers — i.e. what a success actually costs once failures are paid for. A cheap model with a low success rate on hard tasks gets expensive here. Lowest per benchmark in bold.
 
-| Benchmark | luna (BR) | sol (BR) | terra (BR) | mini (1P) | nano (1P) |
-|---|---|---|---|---|---|
-| AIME (2022–24) | $0.0105 | $0.0299 | $0.0234 | $0.0139 | **$0.0050** |
-| GPQA Diamond | $0.0006 | $0.0025 | $0.0014 | **$0.0005** | $0.0008 |
-| MMLU-Pro | $0.0005 | $0.0018 | $0.0011 | $0.0004 | **$0.0003** |
-| MATH-500 | $0.0016 | $0.0069 | $0.0041 | $0.0017 | **$0.0006** |
-| GSM8K | $0.0009 | $0.0038 | $0.0019 | $0.0007 | **$0.0002** |
-| HumanEval | $0.0012 | $0.0045 | $0.0026 | $0.0009 | **$0.0003** |
+| Benchmark | luna (BR) | sol (BR) | terra (BR) | mini (1P) | nano (1P) | luna vs mini |
+|---|---|---|---|---|---|---|
+| AIME (2022–24) | $0.0105 | $0.0299 | $0.0234 | $0.0139 | **$0.0050** | -25% |
+| GPQA Diamond | $0.0006 | $0.0025 | $0.0014 | **$0.0005** | $0.0008 | +22% |
+| MMLU-Pro | $0.0005 | $0.0018 | $0.0011 | $0.0004 | **$0.0003** | +34% |
+| MATH-500 | $0.0016 | $0.0069 | $0.0041 | $0.0017 | **$0.0006** | -1% |
+| GSM8K | $0.0009 | $0.0038 | $0.0019 | $0.0007 | **$0.0002** | +20% |
+| HumanEval | $0.0012 | $0.0045 | $0.0026 | $0.0009 | **$0.0003** | +29% |
+
+The **luna vs mini** column is luna's cost-per-success relative to mini's (negative = a luna success costs less than a mini success, once failed attempts are paid for).
 
 Column key: **luna (BR)** = gpt-5.6-luna (Bedrock, effort=none) · **sol (BR)** = gpt-5.6-sol (Bedrock, effort=none) · **terra (BR)** = gpt-5.6-terra (Bedrock, effort=none) · **mini (1P)** = gpt-5.4-mini (OpenAI 1P) · **nano (1P)** = gpt-5.4-nano (OpenAI 1P)
 

@@ -494,6 +494,12 @@ def build_evals_section(section_no):
             f"| Benchmark | {heads} |",
             "|---|" + "---|" * len(models),
         ]
+        # locate the luna (Bedrock) and mini (1P) columns for the headline delta
+        luna_m = next((m for m in models if m.startswith("gpt-5.6-luna") and "Bedrock" in m), None)
+        mini_m = next((m for m in models if m.startswith("gpt-5.4-mini")), None)
+        heads_cost = heads + " | luna vs mini" if luna_m and mini_m else heads
+        lines[-2] = f"| Benchmark | {heads_cost} |"
+        lines[-1] = "|---|" + "---|" * (len(models) + (1 if luna_m and mini_m else 0))
         for task in EVAL_TASK_ORDER:
             cs = {m: evals[(m, task)].get("cost_per_success_usd") for m in models
                   if (m, task) in evals and evals[(m, task)].get("cost_per_success_usd") is not None}
@@ -508,7 +514,20 @@ def build_evals_section(section_no):
                     continue
                 cell = f"${v:.4f}"
                 cells.append(f"**{cell}**" if v == best else cell)
+            if luna_m and mini_m:
+                lv, mv = cs.get(luna_m), cs.get(mini_m)
+                if lv is not None and mv is not None and mv > 0:
+                    pct = (lv - mv) / mv * 100
+                    # negative = luna's success is CHEAPER than mini's
+                    cells.append(f"{'+' if pct >= 0 else ''}{pct:.0f}%")
+                else:
+                    cells.append("—")
             lines.append(f"| {EVAL_TASK_LABELS[task]} | " + " | ".join(cells) + " |")
+        if luna_m and mini_m:
+            lines.append("")
+            lines.append("The **luna vs mini** column is luna's cost-per-success relative to mini's "
+                         "(negative = a luna success costs less than a mini success, once failed "
+                         "attempts are paid for).")
     lines += [
         "",
         "Column key: " + " · ".join(f"**{_short_model_label(m)}** = {m}" for m in models),
