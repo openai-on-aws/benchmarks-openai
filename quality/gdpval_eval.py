@@ -37,7 +37,11 @@ RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
 SEED = 42
 N_TASKS = 24
 MAX_OUTPUT_TOKENS = 8192
-JUDGE_MODEL = "gpt-5.5"   # not a candidate arm; family caveat recorded in output
+# Judge is gpt-5.5 (not a candidate arm; family caveat recorded in output).
+# It can be served from either backend; all arms of one comparison must be
+# judged by the same backend so scores stay apples-to-apples.
+JUDGE_MODELS = {"saas": "gpt-5.5", "mantle": "openai.gpt-5.5"}
+JUDGE_RETRIES = 3
 PASS_FRACTION = 0.70
 
 # Applied identically to every arm. Without it, models decline tasks that ask
@@ -127,17 +131,41 @@ def generate(backend, model, effort, tasks):
     return results, base_url
 
 
-def judge_file(path, tasks_by_id):
-    with open(path) as f:
+def _judge_call(client, judge_model, prompt):
+    for attempt in range(JUDGE_RETRIES):
+        try:
+            jr = client.responses.create(model=judge_model,
+                input=[{"role": "user", "content": prompt}], max_output_tokens=16384)
+            text = jr.output_text
+            return json.loads(text[text.index("{"):text.rindex("}") + 1])["verdicts"]
+        except Exception:
+            if attempt == JUDGE_RETRIES - 1:
+                raise
+            time.sleep(5 * (attempt + 1))
+
+
+def judge_file(path, tasks_by_id, backend="saas"):
+    # Resume from an existing _judged.json: keep good judgments, redo errors.
+    out = path.replace(".json", "_judged.json")
+    with open(out if os.path.exists(out) else path) as f:
         d = json.load(f)
-    if d.get("judge_summary"):
+
+    def is_graded(r):
+        return isinstance(r.get("judgment"), dict) and "rubric_fraction" in r["judgment"]
+
+    todo = [r for r in d["results"]
+            if not r["error"] and r["deliverable"] and not is_graded(r)]
+    if not todo and d.get("judge_summary"):
         return None
-    client, _ = make_client("saas")
-    print(f"Judging {os.path.basename(path)}")
-    scores = []
+    client, _ = make_client(backend)
+    judge_model = JUDGE_MODELS[backend]
+    print(f"Judging {os.path.basename(path)} "
+          f"({len(todo)} to grade, judge {backend}/{judge_model})")
     for i, r in enumerate(d["results"]):
         if r["error"] or not r["deliverable"]:
             r["judgment"] = None
+            continue
+        if is_graded(r):
             continue
         t = tasks_by_id[r["task_id"]]
         rubric_slim = [{"rubric_item_id": it["rubric_item_id"], "score": it["score"],
@@ -146,28 +174,28 @@ def judge_file(path, tasks_by_id):
             prompt=t["prompt"], rubric=json.dumps(rubric_slim, indent=1),
             deliverable=r["deliverable"])
         try:
-            jr = client.responses.create(model=JUDGE_MODEL,
-                input=[{"role": "user", "content": prompt}], max_output_tokens=16384)
-            text = jr.output_text
-            verdicts = json.loads(text[text.index("{"):text.rindex("}") + 1])["verdicts"]
+            verdicts = _judge_call(client, judge_model, prompt)
             by_id = {v["id"]: bool(v.get("ok")) for v in verdicts}
             total_w = sum(it["score"] for it in t["rubric"])
             earned = sum(it["score"] for it in t["rubric"] if by_id.get(it["rubric_item_id"]))
             frac = earned / total_w if total_w else 0.0
             r["judgment"] = {"rubric_fraction": round(frac, 4),
                              "items_satisfied": sum(by_id.values()),
-                             "items_total": len(t["rubric"]), "verdicts": verdicts}
-            scores.append(frac)
+                             "items_total": len(t["rubric"]), "verdicts": verdicts,
+                             "judge_backend": backend, "judge_model": judge_model}
             print(f"  [{i+1:>2}] rubric_fraction={frac:.2f} "
                   f"({sum(by_id.values())}/{len(t['rubric'])} items)")
         except Exception as e:
             r["judgment"] = {"error": str(e)[:300]}
             print(f"  [{i+1:>2}] JUDGE ERROR {str(e)[:80]}")
-    graded = [r for r in d["results"] if r.get("judgment") and "rubric_fraction" in (r["judgment"] or {})]
+    graded = [r for r in d["results"] if is_graded(r)]
+    scores = [r["judgment"]["rubric_fraction"] for r in graded]
     passed = sum(1 for r in graded if r["judgment"]["rubric_fraction"] >= PASS_FRACTION)
     total_cost = sum(r["cost_usd"] or 0 for r in d["results"])
+    judge_backends = sorted({r["judgment"].get("judge_backend", "saas") for r in graded})
     d["judge_summary"] = {
-        "judge_model": JUDGE_MODEL,
+        "judge_model": "gpt-5.5",
+        "judge_backends": judge_backends,
         "judge_caveat": ("Rubric-anchored LLM judge, same family (OpenAI) as all candidates "
                          "but not a candidate arm. Official GDPval uses blind human expert "
                          "pairwise grading; these scores are NOT comparable to paper win "
@@ -178,7 +206,6 @@ def judge_file(path, tasks_by_id):
         "pass_rate": round(passed / len(graded), 4) if graded else None,
         "cost_per_pass_usd": round(total_cost / passed, 6) if passed else None,
     }
-    out = path.replace(".json", "_judged.json")
     with open(out, "w") as f:
         json.dump(d, f, indent=2)
     js = d["judge_summary"]
@@ -194,15 +221,20 @@ def main():
     p.add_argument("--effort")
     p.add_argument("--n", type=int, default=N_TASKS)
     p.add_argument("--judge-only", action="store_true")
+    p.add_argument("--judge-backend", choices=["saas", "mantle"], default="saas",
+                   help="where gpt-5.5 judge calls go; use one backend per comparison")
+    p.add_argument("--file", help="judge only this result file (with --judge-only)")
     args = p.parse_args()
 
     tasks = load_tasks(args.n)
     tasks_by_id = {t["task_id"]: t for t in tasks}
 
     if args.judge_only:
-        for path in sorted(glob.glob(os.path.join(RESULTS_DIR, "gdpval_*.json"))):
+        paths = [args.file] if args.file else sorted(
+            glob.glob(os.path.join(RESULTS_DIR, "gdpval_*.json")))
+        for path in paths:
             if not path.endswith("_judged.json"):
-                judge_file(path, tasks_by_id)
+                judge_file(path, tasks_by_id, backend=args.judge_backend)
         return
 
     if not args.backend or not args.model:
