@@ -536,6 +536,77 @@ def build_evals_section(section_no):
     return "\n".join(lines)
 
 
+# ------------------------------------------------------------ GDPval section
+
+def load_gdpval():
+    """latest[model_label] = judged payload; newest file per (backend, model)."""
+    latest = {}
+    for path in sorted(glob.glob(os.path.join(QUALITY_RESULTS_DIR, "gdpval_*_judged.json"))):
+        with open(path) as f:
+            d = json.load(f)
+        if not d.get("judge_summary") or d["judge_summary"].get("mean_rubric_fraction") is None:
+            continue
+        backend = "Bedrock" if d["backend"] == "mantle" else "OpenAI 1P"
+        model = d["model"].replace("openai.", "")
+        label = f"{model} ({backend}" + (f", effort={d['reasoning_effort']}" if d.get("reasoning_effort") else "") + ")"
+        if label not in latest or d["timestamp"] > latest[label]["timestamp"]:
+            latest[label] = d
+    return latest
+
+
+def build_gdpval_section(section_no):
+    runs = load_gdpval()
+    if not runs:
+        return ""
+    models = sorted(runs, key=lambda m: ("Bedrock" not in m, m))
+    lines = [
+        f"## {section_no}. Professional-work deliverables — GDPval text-only slice",
+        "",
+        "24 stratified tasks from [openai/gdpval](https://huggingface.co/datasets/openai/gdpval) "
+        "(arXiv:2510.04374) — real occupational deliverables (briefs, plans, analyses) written by "
+        "professionals with 14+ years of experience, each with a human-authored rubric. Only the "
+        "no-reference-file slice a Responses API call can attempt (fixed seed, same 24 tasks per "
+        "model). Grading: rubric-anchored LLM judge (gpt-5.5 — OpenAI family, **not** a candidate "
+        "arm); a task **passes** at ≥0.7 of weighted rubric points. Official GDPval uses blind "
+        "human expert pairwise grading — these scores are NOT comparable to the paper's win "
+        "rates; within-run comparison only. Best per column in bold. "
+        "Result files: `quality/results/gdpval_*_judged.json`.",
+        "",
+        "| Model | Mean rubric fraction | Pass rate (≥0.7) | Cost/task | Cost/passing deliverable |",
+        "|---|---|---|---|---|",
+    ]
+    def cells_for(m):
+        d = runs[m]
+        js = d["judge_summary"]
+        graded = [r for r in d["results"]
+                  if isinstance(r.get("judgment"), dict) and "rubric_fraction" in r["judgment"]]
+        passed = sum(1 for r in graded if r["judgment"]["rubric_fraction"] >= js["pass_fraction_threshold"])
+        return (js["mean_rubric_fraction"], passed, len(graded),
+                d["summary"]["mean_cost_per_task_usd"], js["cost_per_pass_usd"])
+    stats = {m: cells_for(m) for m in models}
+    best_frac = max(s[0] for s in stats.values())
+    best_pass = max(s[1] / s[2] for s in stats.values())
+    best_cpt = min(s[3] for s in stats.values())
+    best_cpp = min(s[4] for s in stats.values() if s[4] is not None)
+    for m in models:
+        frac, passed, n, cpt, cpp = stats[m]
+        c1 = f"{frac:.3f}"
+        c2 = f"{passed}/{n} ({passed / n:.0%})"
+        c3 = f"${cpt:.4f}"
+        c4 = f"${cpp:.4f}" if cpp is not None else "—"
+        row = [f"**{c1}**" if frac == best_frac else c1,
+               f"**{c2}**" if passed / n == best_pass else c2,
+               f"**{c3}**" if cpt == best_cpt else c3,
+               f"**{c4}**" if cpp == best_cpp else c4]
+        lines.append(f"| {_short_model_label(m)} | " + " | ".join(row) + " |")
+    lines += [
+        "",
+        "Column key: " + " · ".join(f"**{_short_model_label(m)}** = {m}" for m in models),
+        "",
+    ]
+    return "\n".join(lines)
+
+
 # ------------------------------------------------------------------- markdown
 
 def build_markdown(results):
@@ -606,6 +677,11 @@ One panel per input size; y-scale shared within each row.
     evals_md = build_evals_section(section_no)
     if evals_md:
         parts.append(evals_md)
+        section_no += 1
+
+    gdpval_md = build_gdpval_section(section_no)
+    if gdpval_md:
+        parts.append(gdpval_md)
         section_no += 1
 
     parts.append("""## Source files

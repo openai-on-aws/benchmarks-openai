@@ -1,6 +1,6 @@
 # GPT-5.6 on Amazon Bedrock vs OpenAI 1P — Latency & Quality Benchmark Report
 
-**Generated:** 2026-07-27 14:43 UTC · **Repo:** [openai-on-aws/benchmarks-openai](https://github.com/openai-on-aws/benchmarks-openai)
+**Generated:** 2026-07-28 19:22 UTC · **Repo:** [openai-on-aws/benchmarks-openai](https://github.com/openai-on-aws/benchmarks-openai)
 
 Both backends are exercised through an identical code path — the OpenAI Responses API with streaming
 (`performance/benchmark.py`). Metrics: **TTFT** (time to first output-text token), **Tok/s** (output tokens
@@ -464,6 +464,20 @@ Total spend across **all** attempts (correct and incorrect, at list prices as of
 | HumanEval | $0.0012 | $0.0045 | $0.0026 | $0.0009 | **$0.0003** | +29% |
 
 The **luna vs mini** column is luna's cost-per-success relative to mini's (negative = a luna success costs less than a mini success, once failed attempts are paid for).
+
+Column key: **luna (BR)** = gpt-5.6-luna (Bedrock, effort=none) · **sol (BR)** = gpt-5.6-sol (Bedrock, effort=none) · **terra (BR)** = gpt-5.6-terra (Bedrock, effort=none) · **mini (1P)** = gpt-5.4-mini (OpenAI 1P) · **nano (1P)** = gpt-5.4-nano (OpenAI 1P)
+
+## 7. Professional-work deliverables — GDPval text-only slice
+
+24 stratified tasks from [openai/gdpval](https://huggingface.co/datasets/openai/gdpval) (arXiv:2510.04374) — real occupational deliverables (briefs, plans, analyses) written by professionals with 14+ years of experience, each with a human-authored rubric. Only the no-reference-file slice a Responses API call can attempt (fixed seed, same 24 tasks per model). Grading: rubric-anchored LLM judge (gpt-5.5 — OpenAI family, **not** a candidate arm); a task **passes** at ≥0.7 of weighted rubric points. Official GDPval uses blind human expert pairwise grading — these scores are NOT comparable to the paper's win rates; within-run comparison only. Best per column in bold. Result files: `quality/results/gdpval_*_judged.json`.
+
+| Model | Mean rubric fraction | Pass rate (≥0.7) | Cost/task | Cost/passing deliverable |
+|---|---|---|---|---|
+| luna (BR) | 0.703 | 15/24 (62%) | $0.0285 | $0.0456 |
+| sol (BR) | **0.723** | **17/24 (71%)** | $0.1453 | $0.2051 |
+| terra (BR) | 0.704 | 13/24 (54%) | $0.0689 | $0.1272 |
+| mini (1P) | 0.660 | 11/24 (46%) | $0.0119 | $0.0259 |
+| nano (1P) | 0.603 | 10/24 (42%) | **$0.0042** | **$0.0100** |
 
 Column key: **luna (BR)** = gpt-5.6-luna (Bedrock, effort=none) · **sol (BR)** = gpt-5.6-sol (Bedrock, effort=none) · **terra (BR)** = gpt-5.6-terra (Bedrock, effort=none) · **mini (1P)** = gpt-5.4-mini (OpenAI 1P) · **nano (1P)** = gpt-5.4-nano (OpenAI 1P)
 

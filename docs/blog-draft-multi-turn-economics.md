@@ -108,7 +108,26 @@ Here the turn effect stops being theoretical. Mini took the most turns of any ar
 
 (Caveats: n=20 questions per arm, so treat small F1 gaps as directional; absolute scores aren't comparable to the paper's leaderboard because our judge differs from the one it prescribes.)
 
-### 3. Reliability is a cost line, not a footnote
+### 3. When the output is the deliverable: GDPval professional work
+
+Accuracy benchmarks grade answers; much of production LLM spend produces *documents* — compliance briefs, financial plans, care protocols — where "correct" is a rubric, not a string match. So we ran a 24-task text-only slice of [GDPval](https://arxiv.org/abs/2510.04374): real occupational deliverables written by professionals with 14+ years of experience, each with a human-authored rubric (`quality/gdpval_eval.py`, stratified across nine sectors, same 24 tasks for every model). A rubric-anchored LLM judge (gpt-5.5 — an OpenAI model that is not a candidate arm) marks every rubric item; a deliverable **passes** at ≥0.7 of weighted rubric points. One honesty note up front: the official GDPval grading is blind pairwise comparison by human domain experts, so these scores are not comparable to the paper's published win rates — within-run comparison is the point.
+
+| Model | Mean rubric fraction | Pass rate (≥0.7) | Cost/task | Cost/passing deliverable |
+|---|---|---|---|---|
+| sol (BR) | **0.723** | **17/24 (71%)** | $0.145 | $0.205 |
+| terra (BR) | 0.704 | 13/24 (54%) | $0.069 | $0.127 |
+| luna (BR) | 0.703 | 15/24 (63%) | $0.029 | $0.046 |
+| mini (1P) | 0.660 | 11/24 (46%) | $0.012 | $0.026 |
+| nano (1P) | 0.603 | 10/24 (42%) | $0.004 | $0.010 |
+
+Two findings, and this time one of them favors the incumbents:
+
+- **All three 5.6 models out-write mini and nano — with thinking disabled.** Luna scores higher than mini on 15 of 24 tasks head-to-head (4 losses, 5 ties), and the gap concentrates in regulated professions — lawyers, nurses, financial advisors — where rubrics demand specific caveats, structure, and completeness. Luna is the value point: statistically tied with terra and within 2 points of sol on mean rubric fraction, at 22% of sol's cost per passing deliverable.
+- **There is no cost inversion here.** GDPval is a single call — no turns, no compounding context — so the cost ranking follows list price and mini/nano stay cheaper per passing deliverable. What 5.6 buys on this workload is pass *rate*, not pass *price*. Whether that trade is worth it is exactly the failure-cost question again: if a sub-bar draft means a professional spends an hour fixing it, the rework — not the API bill — decides. (Contrast with DeepSearchQA above, where turn-count effects made terra cheaper per pass than mini despite a 3.7× price gap: cost inversions come from trajectories, quality gaps show up everywhere.)
+
+(Caveats: n=24 tasks, so pass-rate gaps under ~20 points are directional — mean rubric fraction, averaged over 16–83 rubric items per task, is the steadier metric. Our 8,192-token output cap truncated more 5.6 deliverables than 1P ones — luna 3, terra 4, sol 6, vs mini 0, nano 1 — so the 5.6 scores are floors. And we cross-checked the judge across serving paths: arms judged by gpt-5.5 on both the 1P API and Bedrock moved ≤0.007 in mean rubric fraction.)
+
+### 4. Reliability is a cost line, not a footnote
 
 Nano's 3 failures out of 30 agentic runs are not free. A failed trajectory burns its entire token budget *and* triggers whatever comes next — an automated retry (double the cost) or a human review (dwarfing the model bill entirely). Cost-per-success accounting captures the first effect; your incident process pays the second.
 
@@ -139,6 +158,7 @@ Most teams evaluating Bedrock are running mini or nano on the 1P API, and the da
 - **Chained reasoning, cheap failures:** terra is the balanced answer in our data — 30/30 agentic success, 3.33 mean turns, $0.00293 per success, and near-luna wall time.
 - **Chained reasoning, expensive failures** (customer-facing agents, code changes, anything with human review downstream): sol's premium narrows to ~2x per success on hard tasks while sweeping 4 of 6 accuracy benchmarks and taking the fewest turns. Price the failure, then decide.
 - **Latency-sensitive, interactive:** luna — fastest per question in every eval, flat TTFT (~1.1–1.7s) across input sizes, tighter tails — with the caveat that it wanders on chained tasks (more turns than mini, but a 30/30 finish rate).
+- **Document production, quality-gated** (briefs, plans, client-facing writing): the 5.6 family out-writes mini/nano on rubric-graded professional deliverables even with thinking off, but stays pricier per passing deliverable — luna is the value point at $0.046/pass. Price your rework cost before deciding; there is no free upgrade here.
 
 The general principle travels even if our numbers don't map to your workload: **compute cost per successful task, not cost per token, and weight it by what a failure costs you.**
 
@@ -152,6 +172,7 @@ export AWS_REGION=us-west-2    # plus IAM credentials
 
 quality/quick_evals.py         # accuracy + cost-per-success suites
 quality/agentic_evals.py       # the multi-turn tool-calling loop
+quality/gdpval_eval.py         # professional deliverables, rubric-judged
 performance/run_all.sh         # latency matrix, both backends
 ```
 

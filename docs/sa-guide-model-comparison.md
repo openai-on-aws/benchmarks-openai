@@ -60,6 +60,25 @@ Read this carefully before quoting it:
 - **Nano wins this lens 4 of 6 times.** Be honest about that. Nano is legitimately the cost-per-success floor when the task is within its capability and failures are cheap. Its weaknesses show up in the third lens.
 - **Sol's premium compresses on hard tasks.** List price is 2–5x luna/terra; per-success on AIME it's $0.0299 vs luna's $0.0105 — roughly 2x mini's $0.0139 — because sol converts far more attempts into successes (75% vs 37–38%).
 
+### Real-work validation: GDPval professional deliverables
+
+Benchmarks measure question-answering; customers ship *work products*. **GDPval** (`quality/gdpval_eval.py`, 24 stratified tasks from openai/gdpval, arXiv:2510.04374) tests exactly that: real occupational deliverables — compliance briefs, financial plans, nursing protocols, purchasing analyses — written by professionals with 14+ years of experience, each with a human-authored rubric. We run the text-only slice (tasks with no reference files), same 24 tasks per model, fixed seed. Grading: a rubric-anchored LLM judge (gpt-5.5 — OpenAI family, **not** a candidate arm) marks every rubric item; a deliverable **passes** at ≥0.7 of weighted rubric points. The official GDPval grading is blind pairwise comparison by human domain experts — these scores are NOT comparable to the paper's win rates; within-run comparisons only.
+
+| Model | Mean rubric fraction | Pass rate (≥0.7) | Cost/task | Cost/passing deliverable |
+|---|---|---|---|---|
+| BR sol | **0.723** | **17/24 (71%)** | $0.145 | $0.205 |
+| BR terra | 0.704 | 13/24 (54%) | $0.069 | $0.127 |
+| BR luna | 0.703 | 15/24 (63%) | $0.029 | $0.046 |
+| 1P mini | 0.660 | 11/24 (46%) | $0.012 | $0.026 |
+| 1P nano | 0.603 | 10/24 (42%) | $0.004 | $0.010 |
+
+How to read it — and what *not* to claim:
+
+- **All three 5.6 arms out-write mini and nano, with thinking disabled.** Luna beats mini head-to-head on 15 of 24 tasks (4 losses, 5 ties) and passes 15 deliverables to mini's 11. The gap concentrates in the regulated professions (lawyers, nurses, financial advisors) where rubrics demand specific caveats and structure.
+- **This is a quality argument, not a cost inversion.** GDPval is single-call — no turns, no compounding context — so unlike DeepSearchQA the cost ranking follows list price: mini/nano stay cheaper per passing deliverable. What 5.6 buys here is pass *rate*, not pass *price*. The pivot question is what a failed deliverable costs: if a sub-bar draft means human rework, price that rework into the mini/nano columns before deciding.
+- **Luna is the value point.** Statistically tied with terra and within 2 points of sol on mean rubric fraction, at 22% of sol's cost per passing deliverable ($0.046 vs $0.205). Terra's agentic turn advantage (Section 3) simply doesn't apply to single-call writing — one more reminder that model choice is workload-specific.
+- **Caveats, always attached:** n=24 tasks; pass-rate gaps under ~20 points are directional at this sample size (mean rubric fraction, averaged over 16–83 rubric items per task, is the steadier metric). The 8,192-token output cap truncated more 5.6 deliverables than 1P ones (luna 3, terra 4, sol 6 vs mini 0, nano 1), so the 5.6 scores are floors. Judge-serving stability was cross-checked: the two arms fully judged on both the 1P and Bedrock serving paths of gpt-5.5 moved ≤0.007 mean rubric fraction. Result files: `quality/results/gdpval_*_judged.json`.
+
 ### Lens 3: Trajectory cost (what agents actually spend)
 
 Single-call benchmarks price one request. Real agentic workloads are trajectories: N turns, each re-sending the growing conversation, each adding a round trip, with failed trajectories burning their full budget *and* triggering retries or human review. This is the lens most decks skip, and it's where model rankings reshuffle again — Section 3 covers it in full.
@@ -193,6 +212,13 @@ python quality/quick_evals.py    # AIME, GPQA, MMLU-Pro, MATH-500, GSM8K, HumanE
 
 ```bash
 python quality/agentic_evals.py  # 6 tasks x 5 repeats, deterministic mock backends, max 12 turns
+```
+
+**Professional-work deliverables (GDPval text-only slice, rubric-judged):**
+
+```bash
+python quality/gdpval_eval.py --backend mantle --model openai.gpt-5.6-luna --effort none
+python quality/gdpval_eval.py --judge-only --judge-backend mantle  # gpt-5.5 judge; one backend per comparison
 ```
 
 All harnesses emit result JSONs; every table in this guide is derived from those files. The highest-leverage SA move: swap in 50–100 of the *customer's* tasks and re-run — the methodology in Section 4 then produces per-success economics in their own domain, on their own account, with numbers they generated themselves.

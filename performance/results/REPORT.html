@@ -40,7 +40,7 @@
 </head>
 <body>
 <h1>GPT-5.6 on Amazon Bedrock vs OpenAI 1P — Latency &amp; Quality Benchmark Report</h1>
-<p><strong>Generated:</strong> 2026-07-27 14:43 UTC · <strong>Repo:</strong> <a href="https://github.com/openai-on-aws/benchmarks-openai">openai-on-aws/benchmarks-openai</a></p>
+<p><strong>Generated:</strong> 2026-07-28 19:22 UTC · <strong>Repo:</strong> <a href="https://github.com/openai-on-aws/benchmarks-openai">openai-on-aws/benchmarks-openai</a></p>
 <p>Both backends are exercised through an identical code path — the OpenAI Responses API with streaming</p>
 <p>(<code>performance/benchmark.py</code>). Metrics: <strong>TTFT</strong> (time to first output-text token), <strong>Tok/s</strong> (output tokens</p>
 <p>per second of generation time), <strong>E2E</strong> (end-to-end wall time). Every number below is computed from the</p>
@@ -468,6 +468,16 @@
 <tr><td>HumanEval</td><td>$0.0012</td><td>$0.0045</td><td>$0.0026</td><td>$0.0009</td><td class="win"><strong>$0.0003</strong></td><td class="pos">+29%</td></tr>
 </tbody></table>
 <p>The <strong>luna vs mini</strong> column is luna&#x27;s cost-per-success relative to mini&#x27;s (negative = a luna success costs less than a mini success, once failed attempts are paid for).</p>
+<p>Column key: <strong>luna (BR)</strong> = gpt-5.6-luna (Bedrock, effort=none) · <strong>sol (BR)</strong> = gpt-5.6-sol (Bedrock, effort=none) · <strong>terra (BR)</strong> = gpt-5.6-terra (Bedrock, effort=none) · <strong>mini (1P)</strong> = gpt-5.4-mini (OpenAI 1P) · <strong>nano (1P)</strong> = gpt-5.4-nano (OpenAI 1P)</p>
+<h2>7. Professional-work deliverables — GDPval text-only slice</h2>
+<p>24 stratified tasks from <a href="https://huggingface.co/datasets/openai/gdpval">openai/gdpval</a> (arXiv:2510.04374) — real occupational deliverables (briefs, plans, analyses) written by professionals with 14+ years of experience, each with a human-authored rubric. Only the no-reference-file slice a Responses API call can attempt (fixed seed, same 24 tasks per model). Grading: rubric-anchored LLM judge (gpt-5.5 — OpenAI family, <strong>not</strong> a candidate arm); a task <strong>passes</strong> at ≥0.7 of weighted rubric points. Official GDPval uses blind human expert pairwise grading — these scores are NOT comparable to the paper&#x27;s win rates; within-run comparison only. Best per column in bold. Result files: <code>quality/results/gdpval_*_judged.json</code>.</p>
+<table><thead><tr><th>Model</th><th>Mean rubric fraction</th><th>Pass rate (≥0.7)</th><th>Cost/task</th><th>Cost/passing deliverable</th></tr></thead><tbody>
+<tr><td>luna (BR)</td><td>0.703</td><td>15/24 (62%)</td><td>$0.0285</td><td>$0.0456</td></tr>
+<tr><td>sol (BR)</td><td class="win"><strong>0.723</strong></td><td class="win"><strong>17/24 (71%)</strong></td><td>$0.1453</td><td>$0.2051</td></tr>
+<tr><td>terra (BR)</td><td>0.704</td><td>13/24 (54%)</td><td>$0.0689</td><td>$0.1272</td></tr>
+<tr><td>mini (1P)</td><td>0.660</td><td>11/24 (46%)</td><td>$0.0119</td><td>$0.0259</td></tr>
+<tr><td>nano (1P)</td><td>0.603</td><td>10/24 (42%)</td><td class="win"><strong>$0.0042</strong></td><td class="win"><strong>$0.0100</strong></td></tr>
+</tbody></table>
 <p>Column key: <strong>luna (BR)</strong> = gpt-5.6-luna (Bedrock, effort=none) · <strong>sol (BR)</strong> = gpt-5.6-sol (Bedrock, effort=none) · <strong>terra (BR)</strong> = gpt-5.6-terra (Bedrock, effort=none) · <strong>mini (1P)</strong> = gpt-5.4-mini (OpenAI 1P) · <strong>nano (1P)</strong> = gpt-5.4-nano (OpenAI 1P)</p>
 <h2>Source files</h2>
 <p>Every table row and chart point traces to a result JSON under <code>performance/results/</code></p>
