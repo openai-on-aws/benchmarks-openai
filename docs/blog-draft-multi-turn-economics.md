@@ -86,9 +86,27 @@ The separator is `multi_hop`, which requires chaining knowledge-graph lookups wh
 Two things are true at once, and we want to state both plainly:
 
 - The "smarter models take fewer turns" hypothesis **holds for sol and terra** versus mini and nano. Sol plans the chain and executes it in a third fewer turns than mini (3.2 vs 4.8), about half the turns of nano.
-- It **does not hold for luna**. Luna took *more* turns than mini on the hard task (6.4 vs 4.8) — it explored less efficiently, though it always got there in the end. Any claim that luna reduces turn counts versus mini would be factually wrong, and we checked.
+- It **does not hold for luna on this task**. Luna took *more* turns than mini on the mock hard task (6.4 vs 4.8) — it explored less efficiently, though it always got there in the end. (Keep reading: on the live-web benchmark below, luna flips this and beats mini on turns *and* accuracy — turn efficiency is a property of the model-workload pair, not the model alone.)
 
 Why turns matter economically: each turn re-sends the entire conversation, so input tokens compound superlinearly as trajectories lengthen, and each turn adds a full network round trip. Our mock tools return short results, which *understates* the effect — real workloads that stuff RAG chunks or log excerpts into tool results amplify per-turn cost far more. And at n=5 repeats per task, the turn-count numbers are directional, not conclusive.
+
+So we removed the mock-tool control and measured the amplified version directly.
+
+### 2b. The same effect on the live web: DeepSearchQA
+
+We ran a 20-question stratified sample of [DeepSearchQA](https://arxiv.org/abs/2601.20975) — multi-step web-research questions — through a real agent loop: live `web_search` and `fetch_page` tools (disk-cached for reproducibility), budgets of 8 searches, 6 fetches, and 14 turns per question. Grading uses the paper's frozen autorater prompt with a two-layer design (a deterministic string-match pass first, then an LLM judge that is not one of the candidate models; per-arm agreement between layers ran 0.82–1.00).
+
+| Model | Mean F1 | Pass rate (F1≥0.7) | Mean turns | Input tokens/question | Cost/question | Cost/pass |
+|---|---|---|---|---|---|---|
+| terra (BR) | **0.717** | **60%** | **5.55** | 44k | $0.129 | $0.214 |
+| sol (BR) | 0.690 | 65% | 7.95 | 109k | $0.620 | $0.953 |
+| luna (BR) | 0.547 | 50% | 6.45 | 62k | $0.071 | $0.143 |
+| mini (1P) | 0.459 | 35% | 8.40 | 115k | $0.089 | $0.254 |
+| nano (1P) | 0.406 | 35% | 5.60 | 67k | $0.014 | $0.040 |
+
+Here the turn effect stops being theoretical. Mini took the most turns of any arm (8.4) — mostly re-search loops — and every extra turn re-sent a context stuffed with search results, driving its input tokens to 115k per question, 2.6× terra's 44k. That's how a model with a ~3.7× lower per-token price ends up with a *higher* cost-per-pass than terra ($0.254 vs $0.214). Luna, which lost the turn race on the mock micro-task, wins it here: fewer turns than mini, 9 F1 points higher, and 44% cheaper per passing answer. Turn efficiency is workload-dependent — which is exactly why you should measure it on trajectories that look like yours.
+
+(Caveats: n=20 questions per arm, so treat small F1 gaps as directional; absolute scores aren't comparable to the paper's leaderboard because our judge differs from the one it prescribes.)
 
 ### 3. Reliability is a cost line, not a footnote
 

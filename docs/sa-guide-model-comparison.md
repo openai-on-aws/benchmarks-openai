@@ -100,12 +100,26 @@ The separator is **multi_hop** (chained knowledge-graph lookups, where each answ
 | luna | 6.4 | 5/5 |
 | nano | 6.6 | **2/5** |
 
+### 3b-ii. Real-web validation: DeepSearchQA
+
+The mock-tool suite controls for tool cost; **DeepSearchQA** (`quality/deepsearchqa/`, 20 stratified questions from google/deepsearchqa, arXiv:2601.20975) removes that control: a live web_search + fetch_page agent loop (Tavily-backed, disk-cached for reproducibility), budgets of 8 searches / 6 fetches / 14 turns per question. Grading is two-layer to contain same-family judge bias: a deterministic string-match pre-pass settles what it can, and a frozen autorater prompt on gpt-5.5 (an OpenAI model that is *not* a candidate arm) grades the rest; every file records the layer-agreement rate (0.82–1.00 across arms). Absolute scores are not leaderboard-comparable (the paper prescribes a gemini judge); within-run comparisons are the point.
+
+| Model | Mean F1 | Pass (F1≥0.7) | Mean turns | Mean cost/question | Cost/pass |
+|---|---|---|---|---|---|
+| BR terra | **0.717** | **12/20** | **5.55** | $0.129 | $0.214 |
+| BR sol | 0.690 | 13/20 | 7.95 | $0.620 | $0.953 |
+| BR luna | 0.547 | 10/20 | 6.45 | $0.071 | $0.143 |
+| 1P mini | 0.459 | 7/20 | 8.40 | $0.089 | $0.254 |
+| 1P nano | 0.406 | 7/20 | 5.60 | $0.014 | $0.040 |
+
+This is the strongest version of the turns argument in our data, because it's a real workload: **terra needs 34% fewer turns than mini (5.55 vs 8.40) while scoring 26 F1 points higher** — and the turn gap makes terra's *trajectory* economics competitive despite a ~3.7× per-token price gap: cost-per-pass is terra $0.214 vs mini $0.254. Mini's extra turns (8.4, the most of any arm, with the most searches and fetches) are re-search loops that inflate its input tokens to 115k/question vs terra's 44k — the compounding-context effect measured live. Luna beats mini on every axis here: higher F1 (0.547 vs 0.459), fewer turns, lower cost/question, and 44% lower cost-per-pass. Nano stays the floor-price option ($0.040/pass) but passes only 35% of questions — fine for tolerant workloads, disqualifying for research agents whose failures cost human review time. Caveat: n=20 per arm; treat gaps under ~15 F1 points as directional.
+
 ### 3c. The honest version of the claim
 
 State this precisely, because the sloppy version is factually wrong:
 
-- **TRUE:** terra and sol take fewer turns than mini and nano on chained-reasoning tasks (terra 4.0 and sol 3.2 vs mini 4.8, nano 6.6 on multi_hop). Given the superlinear math above, that turn advantage compounds into real input-token and latency savings on exactly the workloads where trajectories are long.
-- **FALSE — do not say it:** "luna takes fewer turns than mini." On multi_hop, luna took **more** turns than mini (6.4 vs 4.8). Luna still succeeded 5/5 — it grinds its way there reliably — but it is not the fewer-turns story. Any deck claiming otherwise misquotes our own data and will not survive a customer's re-run.
+- **TRUE:** terra and sol take fewer turns than mini and nano on chained-reasoning tasks (terra 4.0 and sol 3.2 vs mini 4.8, nano 6.6 on multi_hop). On the live-web DeepSearchQA run the gap widens: terra 5.55 turns vs mini 8.40 — 34% fewer — with mini's extra turns showing up directly as 2.6× the input tokens per question (115k vs 44k). Given the superlinear math above, that turn advantage compounds into real input-token and latency savings on exactly the workloads where trajectories are long.
+- **MIXED — scope it:** "luna takes fewer turns than mini" is true on the live-web workload (6.45 vs 8.40 on DeepSearchQA, where luna also wins F1 0.547 vs 0.459) but **false** on the mock multi_hop task (luna 6.4 vs mini 4.8). The safe formulation: *on real research workloads our data shows luna needing fewer turns and scoring higher than mini; on isolated chained-lookup micro-tasks it does not.* Quote the workload with the number, or a customer re-run will surface the discrepancy.
 - **Nano's failure mode matters most here:** 2/5 on multi_hop. In production, those 3 failures each burn a full trajectory budget and generate a retry or escalation. Nano's $0.000301 cost-per-success already absorbs those failures in this harness, but only because mock-tool trajectories are cheap (see Section 5).
 
 ### 3d. When this matters: the task-complexity threshold
