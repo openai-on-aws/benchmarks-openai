@@ -1,5 +1,7 @@
 aws-bedrock-token-generator
 boto3
 datasets
+httpx
+matplotlib
 openai
 python-docx

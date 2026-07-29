@@ -33,3 +33,8 @@ credentials
 quality/deepsearchqa/search-cache.json
 # DeepSearchQA env (Tavily keys)
 quality/deepsearchqa/eval.env
+
+# Console logs from detached benchmark runs
+*_run.log
+quality/results/*.log
+performance/results/*.log

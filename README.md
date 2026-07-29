@@ -19,7 +19,9 @@ flowchart LR
 | Suite | Question it answers | Entry point |
 |---|---|---|
 | ⏱️ **performance/** | How fast? TTFT, inter-token latency, tokens/sec, E2E — p50/p95/p99 | `run_all.sh` · `benchmark.py` |
-| 🎯 **quality/** | How accurate? MMLU-Pro, MATH-500, GSM8K, GPQA, AIME, HLE | `quick_evals.py` · per-eval scripts |
+| 🎯 **quality/** | How accurate, per benchmark *and* per dollar? AIME, GPQA, MMLU-Pro, MATH-500, GSM8K, HumanEval — with cost-per-success | `quick_evals.py` |
+| 🤖 **quality/ (agentic)** | How do multi-turn agents behave? Turn counts, trajectory cost, live web research | `agentic_evals.py` · `deepsearchqa/` |
+| 📝 **quality/ (deliverables)** | Can it produce professional work products? Rubric-judged GDPval slice | `gdpval_eval.py` |
 | 🧩 **parity/** | Which Responses-API features work on Bedrock? 34 live checks | `run_parity.py` |
 | 📄 **report** | One shareable document from all results | `performance/report.py` |
 
@@ -112,14 +114,36 @@ Legacy single-backend scripts (`benchmark_bedrock.py`, `benchmark_openai_saas.py
 
 ## 🎯 Quality suite
 
-Two tiers, all switched between backends with `--backend mantle|saas`:
+All quality harnesses switch backends with `--backend mantle|saas` and emit timestamped result JSONs with per-attempt token usage, so cost-per-success falls out of every run.
 
-**Quick evals** — fixed-seed samples of community benchmarks (MMLU-Pro, MATH-500, GSM8K), exact-match scoring, every model sees the same questions:
+**Quick evals** — fixed-seed samples of six community benchmarks (AIME 2022–24, GPQA Diamond via ungated mirror, MMLU-Pro, MATH-500, GSM8K, HumanEval with official tests executed), exact-match scoring, every model sees the same questions:
 
 ```bash
 python quality/quick_evals.py --backend mantle --model openai.gpt-5.6-luna --effort none
 python quality/quick_evals.py --backend saas --model gpt-5.4-mini
 python quality/quick_evals.py --rescore     # re-grade existing results after scorer changes
+```
+
+**Agentic multi-turn** — 6 tool-calling tasks × 5 repeats, deterministic mock backends, a real execute-and-feedback loop (max 12 turns). Measures success rate, turn counts, and trajectory cost:
+
+```bash
+python quality/agentic_evals.py --backend mantle --model openai.gpt-5.6-terra --effort none
+```
+
+**DeepSearchQA (live web research)** — stratified questions from google/deepsearchqa through a real `web_search` + `fetch_page` agent loop (Tavily-backed, disk-cached for reproducibility). Two-layer grading: deterministic pre-pass, then a frozen autorater prompt on gpt-5.5 (never a candidate model):
+
+```bash
+cp quality/deepsearchqa/eval.env.example quality/deepsearchqa/eval.env  # add Tavily key(s)
+python quality/deepsearchqa/run_deepsearchqa.py --backend mantle --model openai.gpt-5.6-terra --effort none
+python quality/deepsearchqa/judge_deepsearchqa.py       # grade unjudged result files
+bash quality/deepsearchqa/run_all_arms.sh               # or: all five arms + judging
+```
+
+**GDPval (professional deliverables)** — a stratified text-only slice of openai/gdpval: real occupational work products graded item-by-item against human-authored rubrics by a gpt-5.5 judge (rubric-anchored; not comparable to the paper's human pairwise win rates):
+
+```bash
+python quality/gdpval_eval.py --backend mantle --model openai.gpt-5.6-luna --effort none
+python quality/gdpval_eval.py --judge-only --judge-backend mantle   # judge; one backend per comparison
 ```
 
 **Full evals** — GPQA Diamond (198 Qs × 5 repeats), AIME competition math, HLE text-only (~2,158 Qs):
@@ -130,7 +154,7 @@ python quality/hle.py --backend mantle --max-questions 20    # quick smoke test
 python quality/rescore_hle.py    # LLM-judge rescoring of strict exact-match HLE runs
 ```
 
-> 📌 GPQA and HLE are gated on Hugging Face — accept their terms and `huggingface-cli login` first. MMLU-Pro, MATH-500, GSM8K, and AIME need no gating.
+> 📌 The canonical GPQA and HLE datasets are gated on Hugging Face — accept their terms and `huggingface-cli login` first. Everything else (AIME, MMLU-Pro, MATH-500, GSM8K, HumanEval, the GPQA mirror, deepsearchqa, gdpval) needs no gating.
 
 Methodology and completed-run details: [`quality/RESULTS.md`](quality/RESULTS.md). Per the house rule, accuracy numbers live in the results files, not here.
 
@@ -192,7 +216,10 @@ performance/
   data/                 # canonical prompts: ~1k / 5k / 10k / 20k input tokens
   results/              # timestamped result JSONs, chart PNGs, REPORT.*
 quality/
-  quick_evals.py        # ⭐ MMLU-Pro / MATH-500 / GSM8K, seeded samples, both backends
+  quick_evals.py        # ⭐ 6 benchmarks + cost-per-success, seeded samples, both backends
+  agentic_evals.py      # multi-turn tool-calling: success, turns, trajectory cost
+  deepsearchqa/         # live-web research agent loop + two-layer judging
+  gdpval_eval.py        # professional deliverables, rubric-judged (GDPval slice)
   gpqa_diamond.py       # GPQA Diamond, 5 repeats, mean pass@1
   aime_2025.py          # AIME competition math (public 1983–2024 dataset)
   hle.py                # Humanity's Last Exam, text-only subset
@@ -202,6 +229,9 @@ parity/
   run_parity.py         # 34 Responses-API feature checks
 docs/
   migration-workload-plan.md
+  sa-guide-model-comparison.md    # field guide: mini/nano migration decision, data-backed
+  blog-draft-multi-turn-economics.md
+  img/build_blog_charts.py        # regenerates the blog charts from result JSONs
 ```
 
 ## 🤝 Provenance, contributing, license
