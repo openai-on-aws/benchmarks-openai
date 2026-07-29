@@ -536,6 +536,83 @@ def build_evals_section(section_no):
     return "\n".join(lines)
 
 
+# ------------------------------------------------------- DeepSearchQA section
+
+def load_deepsearchqa():
+    """latest[model_label] = judged payload; newest file per (backend, model)."""
+    latest = {}
+    for path in sorted(glob.glob(os.path.join(QUALITY_RESULTS_DIR, "deepsearchqa_*_judged.json"))):
+        with open(path) as f:
+            d = json.load(f)
+        if not d.get("judge_summary") or d["judge_summary"].get("mean_f1") is None:
+            continue
+        backend = "Bedrock" if d["backend"] == "mantle" else "OpenAI 1P"
+        model = d["model"].replace("openai.", "")
+        label = f"{model} ({backend}" + (f", effort={d['reasoning_effort']}" if d.get("reasoning_effort") else "") + ")"
+        if label not in latest or d["timestamp"] > latest[label]["timestamp"]:
+            latest[label] = d
+    return latest
+
+
+def build_deepsearchqa_section(section_no):
+    runs = load_deepsearchqa()
+    if not runs:
+        return ""
+    models = sorted(runs, key=lambda m: ("Bedrock" not in m, m))
+    lines = [
+        f"## {section_no}. Agentic web research — DeepSearchQA",
+        "",
+        "20 stratified questions from google/deepsearchqa (arXiv:2601.20975) through a live "
+        "web_search + fetch_page agent loop (Tavily-backed, disk-cached for reproducibility; "
+        "budgets of 8 searches / 6 fetches / 14 turns per question). This is the multi-turn "
+        "trajectory-economics measurement: every turn re-sends the growing context, so turn "
+        "count drives input tokens superlinearly. Grading is two-layer (deterministic "
+        "string-match pre-pass, then a frozen autorater prompt on gpt-5.5 — an OpenAI model "
+        "that is **not** a candidate arm); a question **passes** at F1 ≥ 0.7. Absolute scores "
+        "are not leaderboard-comparable (the paper prescribes a different judge); within-run "
+        "comparison only. Best per column in bold. "
+        "Result files: `quality/results/deepsearchqa_*_judged.json`.",
+        "",
+        "| Model | Mean F1 | Pass rate (F1≥0.7) | Mean turns | Input tok/question | Cost/question | Cost/pass |",
+        "|---|---|---|---|---|---|---|",
+    ]
+    def cells_for(m):
+        d = runs[m]
+        s, js = d["summary"], d["judge_summary"]
+        n_pass = round(js["pass_rate"] * s["n"])
+        return (js["mean_f1"], n_pass, s["n"], s["mean_turns"],
+                s["mean_input_tokens"], s["mean_cost_per_q_usd"],
+                s["total_cost_usd"] / n_pass if n_pass else None)
+    stats = {m: cells_for(m) for m in models}
+    best_f1 = max(s[0] for s in stats.values())
+    best_pass = max(s[1] / s[2] for s in stats.values())
+    best_turns = min(s[3] for s in stats.values())
+    best_tok = min(s[4] for s in stats.values())
+    best_cq = min(s[5] for s in stats.values())
+    best_cpp = min(s[6] for s in stats.values() if s[6] is not None)
+    for m in models:
+        f1, n_pass, n, turns, tok, cq, cpp = stats[m]
+        cells = [(f"{f1:.3f}", f1 == best_f1),
+                 (f"{n_pass}/{n} ({n_pass / n:.0%})", n_pass / n == best_pass),
+                 (f"{turns:.2f}", turns == best_turns),
+                 (f"{tok / 1000:,.0f}k", tok == best_tok),
+                 (f"${cq:.3f}", cq == best_cq),
+                 (f"${cpp:.3f}" if cpp is not None else "—", cpp == best_cpp)]
+        row = [f"**{c}**" if is_best else c for c, is_best in cells]
+        lines.append(f"| {_short_model_label(m)} | " + " | ".join(row) + " |")
+    lines += [
+        "",
+        "The turn column is the economics: models that re-search in loops re-send a "
+        "context stuffed with search results on every extra turn, which is how a "
+        "higher-priced-per-token model can end up cheaper per passing answer. "
+        "Caveat: n=20 per model; treat F1 gaps under ~0.15 as directional.",
+        "",
+        "Column key: " + " · ".join(f"**{_short_model_label(m)}** = {m}" for m in models),
+        "",
+    ]
+    return "\n".join(lines)
+
+
 # ------------------------------------------------------------ GDPval section
 
 def load_gdpval():
@@ -677,6 +754,11 @@ One panel per input size; y-scale shared within each row.
     evals_md = build_evals_section(section_no)
     if evals_md:
         parts.append(evals_md)
+        section_no += 1
+
+    dsqa_md = build_deepsearchqa_section(section_no)
+    if dsqa_md:
+        parts.append(dsqa_md)
         section_no += 1
 
     gdpval_md = build_gdpval_section(section_no)

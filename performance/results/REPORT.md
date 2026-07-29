@@ -1,6 +1,6 @@
 # GPT-5.6 on Amazon Bedrock vs OpenAI 1P — Latency & Quality Benchmark Report
 
-**Generated:** 2026-07-28 19:22 UTC · **Repo:** [openai-on-aws/benchmarks-openai](https://github.com/openai-on-aws/benchmarks-openai)
+**Generated:** 2026-07-29 14:35 UTC · **Repo:** [openai-on-aws/benchmarks-openai](https://github.com/openai-on-aws/benchmarks-openai)
 
 Both backends are exercised through an identical code path — the OpenAI Responses API with streaming
 (`performance/benchmark.py`). Metrics: **TTFT** (time to first output-text token), **Tok/s** (output tokens
@@ -467,7 +467,23 @@ The **luna vs mini** column is luna's cost-per-success relative to mini's (negat
 
 Column key: **luna (BR)** = gpt-5.6-luna (Bedrock, effort=none) · **sol (BR)** = gpt-5.6-sol (Bedrock, effort=none) · **terra (BR)** = gpt-5.6-terra (Bedrock, effort=none) · **mini (1P)** = gpt-5.4-mini (OpenAI 1P) · **nano (1P)** = gpt-5.4-nano (OpenAI 1P)
 
-## 7. Professional-work deliverables — GDPval text-only slice
+## 7. Agentic web research — DeepSearchQA
+
+20 stratified questions from google/deepsearchqa (arXiv:2601.20975) through a live web_search + fetch_page agent loop (Tavily-backed, disk-cached for reproducibility; budgets of 8 searches / 6 fetches / 14 turns per question). This is the multi-turn trajectory-economics measurement: every turn re-sends the growing context, so turn count drives input tokens superlinearly. Grading is two-layer (deterministic string-match pre-pass, then a frozen autorater prompt on gpt-5.5 — an OpenAI model that is **not** a candidate arm); a question **passes** at F1 ≥ 0.7. Absolute scores are not leaderboard-comparable (the paper prescribes a different judge); within-run comparison only. Best per column in bold. Result files: `quality/results/deepsearchqa_*_judged.json`.
+
+| Model | Mean F1 | Pass rate (F1≥0.7) | Mean turns | Input tok/question | Cost/question | Cost/pass |
+|---|---|---|---|---|---|---|
+| luna (BR) | 0.547 | 10/20 (50%) | 6.45 | 62k | $0.071 | $0.143 |
+| sol (BR) | 0.690 | **13/20 (65%)** | 7.95 | 109k | $0.620 | $0.953 |
+| terra (BR) | **0.717** | 12/20 (60%) | **5.55** | **44k** | $0.129 | $0.214 |
+| mini (1P) | 0.459 | 7/20 (35%) | 8.40 | 115k | $0.089 | $0.254 |
+| nano (1P) | 0.406 | 7/20 (35%) | 5.60 | 67k | **$0.014** | **$0.040** |
+
+The turn column is the economics: models that re-search in loops re-send a context stuffed with search results on every extra turn, which is how a higher-priced-per-token model can end up cheaper per passing answer. Caveat: n=20 per model; treat F1 gaps under ~0.15 as directional.
+
+Column key: **luna (BR)** = gpt-5.6-luna (Bedrock, effort=none) · **sol (BR)** = gpt-5.6-sol (Bedrock, effort=none) · **terra (BR)** = gpt-5.6-terra (Bedrock, effort=none) · **mini (1P)** = gpt-5.4-mini (OpenAI 1P) · **nano (1P)** = gpt-5.4-nano (OpenAI 1P)
+
+## 8. Professional-work deliverables — GDPval text-only slice
 
 24 stratified tasks from [openai/gdpval](https://huggingface.co/datasets/openai/gdpval) (arXiv:2510.04374) — real occupational deliverables (briefs, plans, analyses) written by professionals with 14+ years of experience, each with a human-authored rubric. Only the no-reference-file slice a Responses API call can attempt (fixed seed, same 24 tasks per model). Grading: rubric-anchored LLM judge (gpt-5.5 — OpenAI family, **not** a candidate arm); a task **passes** at ≥0.7 of weighted rubric points. Official GDPval uses blind human expert pairwise grading — these scores are NOT comparable to the paper's win rates; within-run comparison only. Best per column in bold. Result files: `quality/results/gdpval_*_judged.json`.
 
