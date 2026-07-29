@@ -38,3 +38,10 @@ quality/deepsearchqa/eval.env
 *_run.log
 quality/results/*.log
 performance/results/*.log
+
+# Internal-facing docs and generated reports (keep local; do not publish)
+docs/blog-draft-*.md
+docs/sa-guide-*.md
+docs/img/
+performance/results/REPORT.md
+performance/results/REPORT.html

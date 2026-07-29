@@ -229,9 +229,6 @@ parity/
   run_parity.py         # 34 Responses-API feature checks
 docs/
   migration-workload-plan.md
-  sa-guide-model-comparison.md    # field guide: mini/nano migration decision, data-backed
-  blog-draft-multi-turn-economics.md
-  img/build_blog_charts.py        # regenerates the blog charts from result JSONs
 ```
 
 ## 🤝 Provenance, contributing, license
