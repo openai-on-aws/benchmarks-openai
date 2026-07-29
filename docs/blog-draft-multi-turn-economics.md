@@ -53,12 +53,15 @@ It's important to note that this workload is a single call, so there are no turn
 
 ## Putting it together: a decision framework
 
+If you run gpt-5.4-mini or nano today, the migration question comes down to workload shape:
+
 | Your workload looks like… | Start with | Why |
 |---|---|---|
 | High-volume, simple tasks; failures are cheap | **gpt-5.4-nano or gpt-5.6-luna** — benchmark both | Nano is the floor price per success on easy work; luna adds reliability and speed for pennies |
 | Interactive apps; accuracy matters; latency SLOs | **gpt-5.6-luna on Amazon Bedrock** | Matches or beats mini on every suite we ran, often cheaper per success, fastest per question in our harness |
 | Agents that chain tool calls (research, multi-hop) | **gpt-5.6-terra on Amazon Bedrock** | Fewest turns and highest F1 on live web research; turn efficiency made it cheaper per pass than mini |
-| Hard reasoning or quality-gated deliverables | **gpt-5.6-sol on Amazon Bedrock** | The accuracy ceiling in our runs (AIME 75%, GPQA 68%, MMLU-Pro 82%, GDPval 17/24); price the failure cost and its premium narrows |
+| Quality-gated document production | **gpt-5.6-luna on Amazon Bedrock**, priced against rework | Highest pass rate among the cost-efficient models on GDPval (15/24 vs mini's 11/24) at $0.046 per passing deliverable |
+| Accuracy is a hard gate on genuinely difficult work | **gpt-5.6-sol on Amazon Bedrock** | A different capability tier (AIME 75%, GDPval 17/24) at a different price tier; relevant only when the cost-efficient models can't clear the bar |
 
 We also measured same-model latency on both platforms with the same streaming harness. In our July 2026 runs (us-west-2, single-region, point-in-time — shared services vary with load, so treat these as a snapshot and re-measure): Bedrock's median time-to-first-token averaged 21% lower for luna and 5% lower for terra across the 12 matched configurations, luna's throughput averaged 43% higher on Bedrock at ≥500-token outputs (terra +4%), and — most relevant for anyone with a p99 SLO — luna and terra's worst-case TTFT tail ratios were 2.1–2.5× on Bedrock versus 4.6–6.6× on the OpenAI API. Sol behaves differently (it is a deep-reasoning model with inherently long and variable time-to-first-token, and its Bedrock runs used us-east-1); per-configuration detail for all three models is in the repo's [latency report](https://github.com/openai-on-aws/benchmarks-openai), and `performance/run_all.sh` reproduces the comparison on your own account. Beyond raw numbers, running OpenAI models on Amazon Bedrock keeps them inside your AWS security and governance boundary — [AWS Identity and Access Management (IAM)](https://aws.amazon.com/iam/) access control, [Amazon Virtual Private Cloud (Amazon VPC)](https://aws.amazon.com/vpc/) connectivity, [Amazon CloudWatch](https://aws.amazon.com/cloudwatch/) observability — alongside every other model your teams use.
 
