@@ -256,7 +256,8 @@ def main():
     ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     safe_model = args.model.replace("/", "-")
     path = os.path.join(RESULTS_DIR,
-        f"gdpval_{args.backend}_{safe_model}" + (f"_{args.effort}" if args.effort else "") + f"_{ts}.json")
+        f"gdpval_{args.backend}_{safe_model}" + (f"_{args.effort}" if args.effort else "")
+        + (f"_n{args.n}" if args.n != N_TASKS else "") + f"_{ts}.json")
     with open(path, "w") as f:
         json.dump({"dataset": "openai/gdpval (text-only slice)", "seed": SEED,
                    "backend": args.backend, "model": args.model, "base_url": base_url,

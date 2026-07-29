@@ -43,6 +43,14 @@ MAX_OUTPUT_TOKENS = 4096
 # problem_category values, deterministic). Frozen for comparability.
 DEFAULT_INDICES = [0, 1, 3, 4, 5, 6, 7, 9, 11, 12, 13, 15, 18, 24, 31, 35, 47, 80, 125, 187]
 
+# Stratified-50 superset of the frozen 20: per-category proportional quotas,
+# extra picks drawn with random.Random(42) from the remaining pool per
+# category. Deterministic; every arm sees the same 50.
+STRATIFIED_50 = [0, 1, 3, 4, 5, 6, 7, 9, 11, 12, 13, 15, 18, 19, 24, 31, 35, 37,
+                 42, 47, 54, 80, 98, 103, 125, 128, 154, 175, 187, 190, 205, 370,
+                 371, 400, 411, 438, 440, 455, 558, 646, 662, 665, 701, 746, 805,
+                 813, 842, 843, 894, 899]
+
 # Verbatim from the colleague's run (results-deepsearchqa.json system_prompt).
 SYSTEM_PROMPT = """You are a meticulous research assistant. You have two tools:
 - web_search(query): returns top web results as JSON (title, url, snippet).
@@ -153,12 +161,14 @@ def main():
     p.add_argument("--effort", help="reasoning effort (e.g. none); omit for default")
     p.add_argument("--indices", help="comma-separated dataset indices "
                                      "(default: the colleague-run stratified 20)")
+    p.add_argument("--sample", choices=["20", "50"], default="20",
+                   help="frozen sample to run: stratified 20 or its 50-question superset")
     args = p.parse_args()
 
     from datasets import load_dataset
     ds = load_dataset("google/deepsearchqa", split="eval")
     indices = ([int(x) for x in args.indices.split(",")] if args.indices
-               else DEFAULT_INDICES)
+               else STRATIFIED_50 if args.sample == "50" else DEFAULT_INDICES)
 
     client, base_url = make_client(args.backend)
     print(f"DeepSearchQA: {len(indices)} questions | {args.backend}/{args.model}"
@@ -195,7 +205,8 @@ def main():
     safe_model = args.model.replace("/", "-")
     path = os.path.join(RESULTS_DIR,
         f"deepsearchqa_{args.backend}_{safe_model}"
-        + (f"_{args.effort}" if args.effort else "") + f"_{ts}.json")
+        + (f"_{args.effort}" if args.effort else "")
+        + (f"_n{len(indices)}" if len(indices) != 20 else "") + f"_{ts}.json")
     with open(path, "w") as f:
         json.dump({"dataset": "google/deepsearchqa (eval split)",
                    "indices": indices, "backend": args.backend, "model": args.model,
