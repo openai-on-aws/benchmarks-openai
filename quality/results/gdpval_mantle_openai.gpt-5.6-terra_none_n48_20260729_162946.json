@@ -61,8 +61,8 @@
     "n_errors": 0,
     "mean_output_tokens": 4703.2,
     "mean_latency_s": 43.92,
-    "total_cost_usd": 3.792604,
-    "mean_cost_per_task_usd": 0.079013
+    "total_cost_usd": 3.034083,
+    "mean_cost_per_task_usd": 0.06321
   },
   "results": [
     {
@@ -75,7 +75,7 @@
       "output_tokens": 467,
       "reasoning_tokens": 0,
       "latency_s": 5.33,
-      "cost_usd": 0.008866,
+      "cost_usd": 0.007093,
       "error": null
     },
     {
@@ -88,7 +88,7 @@
       "output_tokens": 2808,
       "reasoning_tokens": 0,
       "latency_s": 32.09,
-      "cost_usd": 0.048015,
+      "cost_usd": 0.038412,
       "error": null
     },
     {
@@ -101,7 +101,7 @@
       "output_tokens": 825,
       "reasoning_tokens": 0,
       "latency_s": 7.61,
-      "cost_usd": 0.014897,
+      "cost_usd": 0.011918,
       "error": null
     },
     {
@@ -114,7 +114,7 @@
       "output_tokens": 4481,
       "reasoning_tokens": 0,
       "latency_s": 38.2,
-      "cost_usd": 0.075276,
+      "cost_usd": 0.060221,
       "error": null
     },
     {
@@ -127,7 +127,7 @@
       "output_tokens": 1790,
       "reasoning_tokens": 0,
       "latency_s": 19.57,
-      "cost_usd": 0.030478,
+      "cost_usd": 0.024382,
       "error": null
     },
     {
@@ -140,7 +140,7 @@
       "output_tokens": 5427,
       "reasoning_tokens": 0,
       "latency_s": 55.84,
-      "cost_usd": 0.090973,
+      "cost_usd": 0.072778,
       "error": null
     },
     {
@@ -153,7 +153,7 @@
       "output_tokens": 4691,
       "reasoning_tokens": 0,
       "latency_s": 44.71,
-      "cost_usd": 0.078952,
+      "cost_usd": 0.063162,
       "error": null
     },
     {
@@ -166,7 +166,7 @@
       "output_tokens": 3780,
       "reasoning_tokens": 0,
       "latency_s": 43.24,
-      "cost_usd": 0.063781,
+      "cost_usd": 0.051025,
       "error": null
     },
     {
@@ -179,7 +179,7 @@
       "output_tokens": 5543,
       "reasoning_tokens": 0,
       "latency_s": 26.57,
-      "cost_usd": 0.093558,
+      "cost_usd": 0.074846,
       "error": null
     },
     {
@@ -192,7 +192,7 @@
       "output_tokens": 8192,
       "reasoning_tokens": 0,
       "latency_s": 55.99,
-      "cost_usd": 0.137387,
+      "cost_usd": 0.10991,
       "error": null
     },
     {
@@ -205,7 +205,7 @@
       "output_tokens": 8192,
       "reasoning_tokens": 0,
       "latency_s": 74.96,
-      "cost_usd": 0.136846,
+      "cost_usd": 0.109477,
       "error": null
     },
     {
@@ -218,7 +218,7 @@
       "output_tokens": 6300,
       "reasoning_tokens": 0,
       "latency_s": 67.3,
-      "cost_usd": 0.105724,
+      "cost_usd": 0.084579,
       "error": null
     },
     {
@@ -231,7 +231,7 @@
       "output_tokens": 4038,
       "reasoning_tokens": 0,
       "latency_s": 23.34,
-      "cost_usd": 0.067798,
+      "cost_usd": 0.054238,
       "error": null
     },
     {
@@ -244,7 +244,7 @@
       "output_tokens": 6474,
       "reasoning_tokens": 0,
       "latency_s": 62.69,
-      "cost_usd": 0.108375,
+      "cost_usd": 0.0867,
       "error": null
     },
     {
@@ -257,7 +257,7 @@
       "output_tokens": 4237,
       "reasoning_tokens": 0,
       "latency_s": 41.02,
-      "cost_usd": 0.072424,
+      "cost_usd": 0.057939,
       "error": null
     },
     {
@@ -270,7 +270,7 @@
       "output_tokens": 2624,
       "reasoning_tokens": 0,
       "latency_s": 24.57,
-      "cost_usd": 0.043876,
+      "cost_usd": 0.035101,
       "error": null
     },
     {
@@ -283,7 +283,7 @@
       "output_tokens": 8192,
       "reasoning_tokens": 0,
       "latency_s": 70.87,
-      "cost_usd": 0.136273,
+      "cost_usd": 0.109018,
       "error": null
     },
     {
@@ -296,7 +296,7 @@
       "output_tokens": 8192,
       "reasoning_tokens": 0,
       "latency_s": 50.15,
-      "cost_usd": 0.135943,
+      "cost_usd": 0.108754,
       "error": null
     },
     {
@@ -309,7 +309,7 @@
       "output_tokens": 4530,
       "reasoning_tokens": 0,
       "latency_s": 51.14,
-      "cost_usd": 0.075691,
+      "cost_usd": 0.060553,
       "error": null
     },
     {
@@ -322,7 +322,7 @@
       "output_tokens": 8079,
       "reasoning_tokens": 0,
       "latency_s": 69.95,
-      "cost_usd": 0.13475,
+      "cost_usd": 0.1078,
       "error": null
     },
     {
@@ -335,7 +335,7 @@
       "output_tokens": 6501,
       "reasoning_tokens": 0,
       "latency_s": 61.32,
-      "cost_usd": 0.108378,
+      "cost_usd": 0.086702,
       "error": null
     },
     {
@@ -348,7 +348,7 @@
       "output_tokens": 8192,
       "reasoning_tokens": 0,
       "latency_s": 92.34,
-      "cost_usd": 0.136191,
+      "cost_usd": 0.108953,
       "error": null
     },
     {
@@ -361,7 +361,7 @@
       "output_tokens": 3594,
       "reasoning_tokens": 0,
       "latency_s": 25.8,
-      "cost_usd": 0.062213,
+      "cost_usd": 0.04977,
       "error": null
     },
     {
@@ -374,7 +374,7 @@
       "output_tokens": 2362,
       "reasoning_tokens": 0,
       "latency_s": 22.71,
-      "cost_usd": 0.03985,
+      "cost_usd": 0.03188,
       "error": null
     },
     {
@@ -387,7 +387,7 @@
       "output_tokens": 8192,
       "reasoning_tokens": 0,
       "latency_s": 82.53,
-      "cost_usd": 0.135957,
+      "cost_usd": 0.108766,
       "error": null
     },
     {
@@ -400,7 +400,7 @@
       "output_tokens": 8192,
       "reasoning_tokens": 0,
       "latency_s": 91.24,
-      "cost_usd": 0.136238,
+      "cost_usd": 0.10899,
       "error": null
     },
     {
@@ -413,7 +413,7 @@
       "output_tokens": 1923,
       "reasoning_tokens": 0,
       "latency_s": 18.38,
-      "cost_usd": 0.033319,
+      "cost_usd": 0.026655,
       "error": null
     },
     {
@@ -426,7 +426,7 @@
       "output_tokens": 4546,
       "reasoning_tokens": 0,
       "latency_s": 42.35,
-      "cost_usd": 0.075911,
+      "cost_usd": 0.060729,
       "error": null
     },
     {
@@ -439,7 +439,7 @@
       "output_tokens": 2666,
       "reasoning_tokens": 0,
       "latency_s": 27.9,
-      "cost_usd": 0.044963,
+      "cost_usd": 0.03597,
       "error": null
     },
     {
@@ -452,7 +452,7 @@
       "output_tokens": 5049,
       "reasoning_tokens": 0,
       "latency_s": 50.57,
-      "cost_usd": 0.087323,
+      "cost_usd": 0.069858,
       "error": null
     },
     {
@@ -465,7 +465,7 @@
       "output_tokens": 2623,
       "reasoning_tokens": 0,
       "latency_s": 26.3,
-      "cost_usd": 0.044319,
+      "cost_usd": 0.035455,
       "error": null
     },
     {
@@ -478,7 +478,7 @@
       "output_tokens": 7764,
       "reasoning_tokens": 0,
       "latency_s": 69.61,
-      "cost_usd": 0.12911,
+      "cost_usd": 0.103288,
       "error": null
     },
     {
@@ -491,7 +491,7 @@
       "output_tokens": 7152,
       "reasoning_tokens": 0,
       "latency_s": 68.35,
-      "cost_usd": 0.119119,
+      "cost_usd": 0.095295,
       "error": null
     },
     {
@@ -504,7 +504,7 @@
       "output_tokens": 3455,
       "reasoning_tokens": 0,
       "latency_s": 34.61,
-      "cost_usd": 0.058143,
+      "cost_usd": 0.046514,
       "error": null
     },
     {
@@ -517,7 +517,7 @@
       "output_tokens": 1772,
       "reasoning_tokens": 0,
       "latency_s": 13.12,
-      "cost_usd": 0.03019,
+      "cost_usd": 0.024152,
       "error": null
     },
     {
@@ -530,7 +530,7 @@
       "output_tokens": 4366,
       "reasoning_tokens": 0,
       "latency_s": 32.48,
-      "cost_usd": 0.073202,
+      "cost_usd": 0.058562,
       "error": null
     },
     {
@@ -543,7 +543,7 @@
       "output_tokens": 3849,
       "reasoning_tokens": 0,
       "latency_s": 42.85,
-      "cost_usd": 0.064614,
+      "cost_usd": 0.051691,
       "error": null
     },
     {
@@ -556,7 +556,7 @@
       "output_tokens": 6993,
       "reasoning_tokens": 0,
       "latency_s": 72.93,
-      "cost_usd": 0.116369,
+      "cost_usd": 0.093095,
       "error": null
     },
     {
@@ -569,7 +569,7 @@
       "output_tokens": 768,
       "reasoning_tokens": 0,
       "latency_s": 11.75,
-      "cost_usd": 0.013508,
+      "cost_usd": 0.010806,
       "error": null
     },
     {
@@ -582,7 +582,7 @@
       "output_tokens": 1312,
       "reasoning_tokens": 0,
       "latency_s": 10.32,
-      "cost_usd": 0.023713,
+      "cost_usd": 0.01897,
       "error": null
     },
     {
@@ -595,7 +595,7 @@
       "output_tokens": 3539,
       "reasoning_tokens": 0,
       "latency_s": 19.86,
-      "cost_usd": 0.061726,
+      "cost_usd": 0.049381,
       "error": null
     },
     {
@@ -608,7 +608,7 @@
       "output_tokens": 683,
       "reasoning_tokens": 0,
       "latency_s": 7.92,
-      "cost_usd": 0.012213,
+      "cost_usd": 0.00977,
       "error": null
     },
     {
@@ -621,7 +621,7 @@
       "output_tokens": 577,
       "reasoning_tokens": 0,
       "latency_s": 7.56,
-      "cost_usd": 0.010288,
+      "cost_usd": 0.00823,
       "error": null
     },
     {
@@ -634,7 +634,7 @@
       "output_tokens": 3131,
       "reasoning_tokens": 0,
       "latency_s": 31.47,
-      "cost_usd": 0.052896,
+      "cost_usd": 0.042317,
       "error": null
     },
     {
@@ -647,7 +647,7 @@
       "output_tokens": 8192,
       "reasoning_tokens": 0,
       "latency_s": 75.68,
-      "cost_usd": 0.136425,
+      "cost_usd": 0.10914,
       "error": null
     },
     {
@@ -660,7 +660,7 @@
       "output_tokens": 8192,
       "reasoning_tokens": 0,
       "latency_s": 87.89,
-      "cost_usd": 0.136722,
+      "cost_usd": 0.109378,
       "error": null
     },
     {
@@ -673,7 +673,7 @@
       "output_tokens": 3380,
       "reasoning_tokens": 0,
       "latency_s": 38.58,
-      "cost_usd": 0.058099,
+      "cost_usd": 0.046479,
       "error": null
     },
     {
@@ -686,8 +686,14 @@
       "output_tokens": 7928,
       "reasoning_tokens": 0,
       "latency_s": 76.46,
-      "cost_usd": 0.131722,
+      "cost_usd": 0.105378,
       "error": null
     }
-  ]
+  ],
+  "repriced": {
+    "date": "2026-07-31",
+    "note": "Costs rescaled to the 2026-07-30 list prices (Bedrock luna -80%, terra -20%; OpenAI 1P matched). Token counts unchanged; scaling is exact because input and output prices moved by the same factor.",
+    "factor": 0.8,
+    "fields_rescaled": 50
+  }
 }

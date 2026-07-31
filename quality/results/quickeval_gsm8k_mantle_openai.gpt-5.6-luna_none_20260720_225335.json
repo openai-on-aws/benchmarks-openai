@@ -15,9 +15,9 @@
     "mean_latency_ms": 955.7,
     "mean_output_tokens": 112.7,
     "mean_reasoning_tokens": 0.0,
-    "total_cost_usd": 0.083444,
-    "mean_cost_per_call_usd": 0.000834,
-    "cost_per_success_usd": 0.00086
+    "total_cost_usd": 0.016689,
+    "mean_cost_per_call_usd": 0.000167,
+    "cost_per_success_usd": 0.000172
   },
   "results": [
     {
@@ -1420,5 +1420,11 @@
       "status": "completed",
       "error": null
     }
-  ]
+  ],
+  "repriced": {
+    "date": "2026-07-31",
+    "note": "Costs rescaled to the 2026-07-30 list prices (Bedrock luna -80%, terra -20%; OpenAI 1P matched). Token counts unchanged; scaling is exact because input and output prices moved by the same factor.",
+    "factor": 0.2,
+    "fields_rescaled": 3
+  }
 }

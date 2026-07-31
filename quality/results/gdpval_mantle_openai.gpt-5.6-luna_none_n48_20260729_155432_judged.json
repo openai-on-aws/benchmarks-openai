@@ -61,8 +61,8 @@
     "n_errors": 0,
     "mean_output_tokens": 4217.1,
     "mean_latency_s": 22.91,
-    "total_cost_usd": 1.36305,
-    "mean_cost_per_task_usd": 0.028397
+    "total_cost_usd": 0.27261,
+    "mean_cost_per_task_usd": 0.005679
   },
   "results": [
     {
@@ -75,7 +75,7 @@
       "output_tokens": 502,
       "reasoning_tokens": 0,
       "latency_s": 3.39,
-      "cost_usd": 0.003777,
+      "cost_usd": 0.000755,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.4359,
@@ -197,7 +197,7 @@
       "output_tokens": 2849,
       "reasoning_tokens": 0,
       "latency_s": 16.32,
-      "cost_usd": 0.019477,
+      "cost_usd": 0.003895,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.6933,
@@ -459,7 +459,7 @@
       "output_tokens": 855,
       "reasoning_tokens": 0,
       "latency_s": 4.99,
-      "cost_usd": 0.006157,
+      "cost_usd": 0.001231,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.7917,
@@ -545,7 +545,7 @@
       "output_tokens": 3025,
       "reasoning_tokens": 0,
       "latency_s": 13.57,
-      "cost_usd": 0.020501,
+      "cost_usd": 0.0041,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.7547,
@@ -715,7 +715,7 @@
       "output_tokens": 1689,
       "reasoning_tokens": 0,
       "latency_s": 10.81,
-      "cost_usd": 0.011525,
+      "cost_usd": 0.002305,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.7321,
@@ -857,7 +857,7 @@
       "output_tokens": 5586,
       "reasoning_tokens": 0,
       "latency_s": 29.99,
-      "cost_usd": 0.037438,
+      "cost_usd": 0.007488,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.5882,
@@ -1107,7 +1107,7 @@
       "output_tokens": 3349,
       "reasoning_tokens": 0,
       "latency_s": 17.29,
-      "cost_usd": 0.022724,
+      "cost_usd": 0.004545,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.8641,
@@ -1361,7 +1361,7 @@
       "output_tokens": 4687,
       "reasoning_tokens": 0,
       "latency_s": 24.59,
-      "cost_usd": 0.031498,
+      "cost_usd": 0.0063,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.6047,
@@ -1499,7 +1499,7 @@
       "output_tokens": 4663,
       "reasoning_tokens": 0,
       "latency_s": 14.77,
-      "cost_usd": 0.031615,
+      "cost_usd": 0.006323,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.536,
@@ -1713,7 +1713,7 @@
       "output_tokens": 3262,
       "reasoning_tokens": 0,
       "latency_s": 15.44,
-      "cost_usd": 0.022417,
+      "cost_usd": 0.004483,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.0,
@@ -1955,7 +1955,7 @@
       "output_tokens": 8192,
       "reasoning_tokens": 0,
       "latency_s": 34.68,
-      "cost_usd": 0.054738,
+      "cost_usd": 0.010948,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.748,
@@ -2313,7 +2313,7 @@
       "output_tokens": 4946,
       "reasoning_tokens": 0,
       "latency_s": 25.41,
-      "cost_usd": 0.033353,
+      "cost_usd": 0.006671,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.7863,
@@ -2507,7 +2507,7 @@
       "output_tokens": 1798,
       "reasoning_tokens": 0,
       "latency_s": 7.81,
-      "cost_usd": 0.012335,
+      "cost_usd": 0.002467,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.1512,
@@ -2813,7 +2813,7 @@
       "output_tokens": 5242,
       "reasoning_tokens": 0,
       "latency_s": 25.16,
-      "cost_usd": 0.035219,
+      "cost_usd": 0.007044,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.9071,
@@ -3103,7 +3103,7 @@
       "output_tokens": 3663,
       "reasoning_tokens": 0,
       "latency_s": 22.29,
-      "cost_usd": 0.025181,
+      "cost_usd": 0.005036,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.8871,
@@ -3265,7 +3265,7 @@
       "output_tokens": 4077,
       "reasoning_tokens": 0,
       "latency_s": 20.59,
-      "cost_usd": 0.02714,
+      "cost_usd": 0.005428,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.8182,
@@ -3379,7 +3379,7 @@
       "output_tokens": 8192,
       "reasoning_tokens": 0,
       "latency_s": 35.75,
-      "cost_usd": 0.054509,
+      "cost_usd": 0.010902,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.1091,
@@ -3561,7 +3561,7 @@
       "output_tokens": 8192,
       "reasoning_tokens": 0,
       "latency_s": 29.81,
-      "cost_usd": 0.054377,
+      "cost_usd": 0.010875,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.6792,
@@ -3755,7 +3755,7 @@
       "output_tokens": 4688,
       "reasoning_tokens": 0,
       "latency_s": 24.41,
-      "cost_usd": 0.031319,
+      "cost_usd": 0.006264,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.6154,
@@ -3889,7 +3889,7 @@
       "output_tokens": 7252,
       "reasoning_tokens": 0,
       "latency_s": 32.19,
-      "cost_usd": 0.048442,
+      "cost_usd": 0.009688,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.6441,
@@ -4083,7 +4083,7 @@
       "output_tokens": 6542,
       "reasoning_tokens": 0,
       "latency_s": 35.09,
-      "cost_usd": 0.043622,
+      "cost_usd": 0.008724,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.9038,
@@ -4437,7 +4437,7 @@
       "output_tokens": 7027,
       "reasoning_tokens": 0,
       "latency_s": 144.25,
-      "cost_usd": 0.046787,
+      "cost_usd": 0.009357,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.7391,
@@ -4515,7 +4515,7 @@
       "output_tokens": 2645,
       "reasoning_tokens": 0,
       "latency_s": 11.64,
-      "cost_usd": 0.018622,
+      "cost_usd": 0.003724,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.4459,
@@ -4725,7 +4725,7 @@
       "output_tokens": 1888,
       "reasoning_tokens": 0,
       "latency_s": 10.09,
-      "cost_usd": 0.012812,
+      "cost_usd": 0.002562,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.9565,
@@ -4979,7 +4979,7 @@
       "output_tokens": 8192,
       "reasoning_tokens": 0,
       "latency_s": 40.5,
-      "cost_usd": 0.054383,
+      "cost_usd": 0.010877,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.4203,
@@ -5217,7 +5217,7 @@
       "output_tokens": 8192,
       "reasoning_tokens": 0,
       "latency_s": 44.75,
-      "cost_usd": 0.054495,
+      "cost_usd": 0.010899,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.7294,
@@ -5491,7 +5491,7 @@
       "output_tokens": 1588,
       "reasoning_tokens": 0,
       "latency_s": 7.49,
-      "cost_usd": 0.011117,
+      "cost_usd": 0.002223,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.8902,
@@ -5773,7 +5773,7 @@
       "output_tokens": 4520,
       "reasoning_tokens": 0,
       "latency_s": 22.25,
-      "cost_usd": 0.030193,
+      "cost_usd": 0.006039,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.9322,
@@ -5983,7 +5983,7 @@
       "output_tokens": 2684,
       "reasoning_tokens": 0,
       "latency_s": 14.41,
-      "cost_usd": 0.018104,
+      "cost_usd": 0.003621,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.381,
@@ -6245,7 +6245,7 @@
       "output_tokens": 4651,
       "reasoning_tokens": 0,
       "latency_s": 22.15,
-      "cost_usd": 0.032303,
+      "cost_usd": 0.006461,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.8267,
@@ -6467,7 +6467,7 @@
       "output_tokens": 2136,
       "reasoning_tokens": 0,
       "latency_s": 10.22,
-      "cost_usd": 0.014513,
+      "cost_usd": 0.002903,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.7273,
@@ -6601,7 +6601,7 @@
       "output_tokens": 6296,
       "reasoning_tokens": 0,
       "latency_s": 33.28,
-      "cost_usd": 0.041955,
+      "cost_usd": 0.008391,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.8793,
@@ -6787,7 +6787,7 @@
       "output_tokens": 6022,
       "reasoning_tokens": 0,
       "latency_s": 32.2,
-      "cost_usd": 0.04019,
+      "cost_usd": 0.008038,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.8358,
@@ -6993,7 +6993,7 @@
       "output_tokens": 4615,
       "reasoning_tokens": 0,
       "latency_s": 23.02,
-      "cost_usd": 0.030913,
+      "cost_usd": 0.006183,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.9388,
@@ -7147,7 +7147,7 @@
       "output_tokens": 2585,
       "reasoning_tokens": 0,
       "latency_s": 9.61,
-      "cost_usd": 0.017442,
+      "cost_usd": 0.003488,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.8571,
@@ -7357,7 +7357,7 @@
       "output_tokens": 2534,
       "reasoning_tokens": 0,
       "latency_s": 11.28,
-      "cost_usd": 0.01719,
+      "cost_usd": 0.003438,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.8182,
@@ -7555,7 +7555,7 @@
       "output_tokens": 3334,
       "reasoning_tokens": 0,
       "latency_s": 16.88,
-      "cost_usd": 0.022447,
+      "cost_usd": 0.004489,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.4247,
@@ -7713,7 +7713,7 @@
       "output_tokens": 6321,
       "reasoning_tokens": 0,
       "latency_s": 32.5,
-      "cost_usd": 0.042112,
+      "cost_usd": 0.008422,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.6364,
@@ -7791,7 +7791,7 @@
       "output_tokens": 735,
       "reasoning_tokens": 0,
       "latency_s": 4.95,
-      "cost_usd": 0.005185,
+      "cost_usd": 0.001037,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.7879,
@@ -7897,7 +7897,7 @@
       "output_tokens": 1646,
       "reasoning_tokens": 0,
       "latency_s": 6.56,
-      "cost_usd": 0.01169,
+      "cost_usd": 0.002338,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.6835,
@@ -8123,7 +8123,7 @@
       "output_tokens": 3760,
       "reasoning_tokens": 0,
       "latency_s": 12.17,
-      "cost_usd": 0.026149,
+      "cost_usd": 0.00523,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.7853,
@@ -8385,7 +8385,7 @@
       "output_tokens": 721,
       "reasoning_tokens": 0,
       "latency_s": 4.22,
-      "cost_usd": 0.005136,
+      "cost_usd": 0.001027,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.5357,
@@ -8603,7 +8603,7 @@
       "output_tokens": 583,
       "reasoning_tokens": 0,
       "latency_s": 3.43,
-      "cost_usd": 0.004155,
+      "cost_usd": 0.000831,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.8519,
@@ -8705,7 +8705,7 @@
       "output_tokens": 2767,
       "reasoning_tokens": 0,
       "latency_s": 14.64,
-      "cost_usd": 0.018756,
+      "cost_usd": 0.003751,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.9,
@@ -8851,7 +8851,7 @@
       "output_tokens": 8192,
       "reasoning_tokens": 0,
       "latency_s": 37.64,
-      "cost_usd": 0.05457,
+      "cost_usd": 0.010914,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.4118,
@@ -9025,7 +9025,7 @@
       "output_tokens": 6798,
       "reasoning_tokens": 0,
       "latency_s": 34.19,
-      "cost_usd": 0.045488,
+      "cost_usd": 0.009098,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.8144,
@@ -9303,7 +9303,7 @@
       "output_tokens": 3128,
       "reasoning_tokens": 0,
       "latency_s": 19.37,
-      "cost_usd": 0.021576,
+      "cost_usd": 0.004315,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.6667,
@@ -9509,7 +9509,7 @@
       "output_tokens": 5612,
       "reasoning_tokens": 0,
       "latency_s": 31.52,
-      "cost_usd": 0.037403,
+      "cost_usd": 0.007481,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.2667,
@@ -9780,6 +9780,12 @@
     "n_graded": 48,
     "mean_rubric_fraction": 0.6749,
     "pass_rate": 0.5625,
-    "cost_per_pass_usd": 0.050483
+    "cost_per_pass_usd": 0.010097
+  },
+  "repriced": {
+    "date": "2026-07-31",
+    "note": "Costs rescaled to the 2026-07-30 list prices (Bedrock luna -80%, terra -20%; OpenAI 1P matched). Token counts unchanged; scaling is exact because input and output prices moved by the same factor.",
+    "factor": 0.2,
+    "fields_rescaled": 51
   }
 }

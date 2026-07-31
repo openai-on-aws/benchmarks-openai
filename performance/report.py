@@ -487,7 +487,8 @@ def build_evals_section(section_no):
             f"### {section_no}.3 Cost per successful answer (USD)",
             "",
             "Total spend across **all** attempts (correct and incorrect, at list prices as of "
-            "2026-07-21, no caching discounts) divided by the number of correct answers — i.e. "
+            "2026-07-30 — Bedrock luna −80% and terra −20% vs earlier runs, costs rescaled "
+            "exactly; no caching discounts) divided by the number of correct answers — i.e. "
             "what a success actually costs once failures are paid for. A cheap model with a low "
             "success rate on hard tasks gets expensive here. Lowest per benchmark in bold.",
             "",
@@ -559,10 +560,11 @@ def build_deepsearchqa_section(section_no):
     if not runs:
         return ""
     models = sorted(runs, key=lambda m: ("Bedrock" not in m, m))
+    n_qs = max(r["summary"]["n"] for r in runs.values())
     lines = [
         f"## {section_no}. Agentic web research — DeepSearchQA",
         "",
-        "20 stratified questions from google/deepsearchqa (arXiv:2601.20975) through a live "
+        f"{n_qs} stratified questions from google/deepsearchqa (arXiv:2601.20975) through a live "
         "web_search + fetch_page agent loop (Tavily-backed, disk-cached for reproducibility; "
         "budgets of 8 searches / 6 fetches / 14 turns per question). This is the multi-turn "
         "trajectory-economics measurement: every turn re-sends the growing context, so turn "
@@ -579,8 +581,9 @@ def build_deepsearchqa_section(section_no):
     def cells_for(m):
         d = runs[m]
         s, js = d["summary"], d["judge_summary"]
-        n_pass = round(js["pass_rate"] * s["n"])
-        return (js["mean_f1"], n_pass, s["n"], s["mean_turns"],
+        ok = s["n"] - s["n_api_errors"]
+        n_pass = round(js["pass_rate"] * ok)
+        return (js["mean_f1"], n_pass, ok, s["mean_turns"],
                 s["mean_input_tokens"], s["mean_cost_per_q_usd"],
                 s["total_cost_usd"] / n_pass if n_pass else None)
     stats = {m: cells_for(m) for m in models}
@@ -605,7 +608,9 @@ def build_deepsearchqa_section(section_no):
         "The turn column is the economics: models that re-search in loops re-send a "
         "context stuffed with search results on every extra turn, which is how a "
         "higher-priced-per-token model can end up cheaper per passing answer. "
-        "Caveat: n=20 per model; treat F1 gaps under ~0.15 as directional.",
+        f"Caveat: n={n_qs} per model; treat F1 gaps under ~0.1 as directional. "
+        "Costs use the 2026-07-30 list prices (luna/terra runs executed earlier are "
+        "rescaled exactly; each file records the factor).",
         "",
         "Column key: " + " · ".join(f"**{_short_model_label(m)}** = {m}" for m in models),
         "",
@@ -639,11 +644,11 @@ def build_gdpval_section(section_no):
     lines = [
         f"## {section_no}. Professional-work deliverables — GDPval text-only slice",
         "",
-        "24 stratified tasks from [openai/gdpval](https://huggingface.co/datasets/openai/gdpval) "
+        "Stratified tasks from [openai/gdpval](https://huggingface.co/datasets/openai/gdpval) "
         "(arXiv:2510.04374) — real occupational deliverables (briefs, plans, analyses) written by "
         "professionals with 14+ years of experience, each with a human-authored rubric. Only the "
-        "no-reference-file slice a Responses API call can attempt (fixed seed, same 24 tasks per "
-        "model). Grading: rubric-anchored LLM judge (gpt-5.5 — OpenAI family, **not** a candidate "
+        "no-reference-file slice a Responses API call can attempt (fixed seed, same tasks per "
+        "model; the sample size is shown in the pass-rate column). Grading: rubric-anchored LLM judge (gpt-5.5 — OpenAI family, **not** a candidate "
         "arm); a task **passes** at ≥0.7 of weighted rubric points. Official GDPval uses blind "
         "human expert pairwise grading — these scores are NOT comparable to the paper's win "
         "rates; within-run comparison only. Best per column in bold. "

@@ -42,13 +42,15 @@ LETTERS = "ABCDEFGHIJ"
 #   Bedrock: https://aws.amazon.com/bedrock/pricing/ (in-region US East)
 #   OpenAI:  https://developers.openai.com/api/docs/pricing (Standard tier)
 # Cached-input discounts are NOT applied (benchmark prompts are unique per question).
+# Luna/terra repriced 2026-07-30 (Bedrock: luna -80%, terra -20%; OpenAI
+# matched on 1P). Result files generated earlier carry a "repriced" note.
 PRICES = {
-    ("mantle", "openai.gpt-5.6-luna"):  (1.10, 6.60),
-    ("mantle", "openai.gpt-5.6-terra"): (2.75, 16.50),
+    ("mantle", "openai.gpt-5.6-luna"):  (0.22, 1.32),
+    ("mantle", "openai.gpt-5.6-terra"): (2.20, 13.20),
     ("mantle", "openai.gpt-5.6-sol"):   (5.50, 33.00),
     ("mantle", "openai.gpt-5.4"):       (2.75, 16.50),
-    ("saas", "gpt-5.6-luna"):  (1.00, 6.00),
-    ("saas", "gpt-5.6-terra"): (2.50, 15.00),
+    ("saas", "gpt-5.6-luna"):  (0.20, 1.20),
+    ("saas", "gpt-5.6-terra"): (2.00, 12.00),
     ("saas", "gpt-5.6-sol"):   (5.00, 30.00),
     ("saas", "gpt-5.4-mini"):  (0.75, 4.50),
     ("saas", "gpt-5.4-nano"):  (0.20, 1.25),

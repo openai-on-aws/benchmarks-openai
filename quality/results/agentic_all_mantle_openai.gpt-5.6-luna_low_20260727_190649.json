@@ -18,70 +18,70 @@
     "mean_input_tokens": 2116.3,
     "mean_output_tokens": 162.3,
     "mean_wall_s": 3.3,
-    "total_cost_usd": 0.305932,
-    "mean_cost_per_run_usd": 0.003399,
-    "cost_per_success_usd": 0.003557,
+    "total_cost_usd": 0.061186,
+    "mean_cost_per_run_usd": 0.00068,
+    "cost_per_success_usd": 0.000711,
     "per_task": {
       "order_totals": {
         "success": "10/10",
         "mean_turns": 4.0,
-        "mean_cost_usd": 0.00203,
+        "mean_cost_usd": 0.000406,
         "mean_input_tokens": 884.0,
         "context_growth_x": 2.7
       },
       "warm_city": {
         "success": "10/10",
         "mean_turns": 3.0,
-        "mean_cost_usd": 0.001391,
+        "mean_cost_usd": 0.000278,
         "mean_input_tokens": 625.0,
         "context_growth_x": 2.59
       },
       "config_hunt": {
         "success": "10/10",
         "mean_turns": 3.0,
-        "mean_cost_usd": 0.001213,
+        "mean_cost_usd": 0.000243,
         "mean_input_tokens": 485.0,
         "context_growth_x": 3.3
       },
       "ticket_triage": {
         "success": "10/10",
         "mean_turns": 3.0,
-        "mean_cost_usd": 0.000992,
+        "mean_cost_usd": 0.000198,
         "mean_input_tokens": 496.0,
         "context_growth_x": 2.45
       },
       "multi_hop": {
         "success": "10/10",
         "mean_turns": 3.6,
-        "mean_cost_usd": 0.001894,
+        "mean_cost_usd": 0.000379,
         "mean_input_tokens": 658.9,
         "context_growth_x": 3.64
       },
       "flaky_tool": {
         "success": "10/10",
         "mean_turns": 3.0,
-        "mean_cost_usd": 0.000841,
+        "mean_cost_usd": 0.000168,
         "mean_input_tokens": 377.0,
         "context_growth_x": 2.23
       },
       "deploy_chain": {
         "success": "10/10",
         "mean_turns": 11.1,
-        "mean_cost_usd": 0.009471,
+        "mean_cost_usd": 0.001894,
         "mean_input_tokens": 6026.6,
         "context_growth_x": 6.03
       },
       "rag_research": {
         "success": "10/10",
         "mean_turns": 3.0,
-        "mean_cost_usd": 0.010804,
+        "mean_cost_usd": 0.002161,
         "mean_input_tokens": 8754.0,
         "context_growth_x": 72.35
       },
       "inventory_audit": {
         "success": "6/10",
         "mean_turns": 3.0,
-        "mean_cost_usd": 0.001958,
+        "mean_cost_usd": 0.000392,
         "mean_input_tokens": 740.0,
         "context_growth_x": 3.96
       }
@@ -97,7 +97,7 @@
       "input_tokens": 884,
       "output_tokens": 160,
       "reasoning_tokens": 30,
-      "cost_usd": 0.002028,
+      "cost_usd": 0.000406,
       "input_tokens_per_turn": [
         131,
         174,
@@ -118,7 +118,7 @@
       "input_tokens": 884,
       "output_tokens": 159,
       "reasoning_tokens": 29,
-      "cost_usd": 0.002022,
+      "cost_usd": 0.000404,
       "input_tokens_per_turn": [
         131,
         174,
@@ -139,7 +139,7 @@
       "input_tokens": 884,
       "output_tokens": 171,
       "reasoning_tokens": 41,
-      "cost_usd": 0.002101,
+      "cost_usd": 0.00042,
       "input_tokens_per_turn": [
         131,
         174,
@@ -160,7 +160,7 @@
       "input_tokens": 884,
       "output_tokens": 158,
       "reasoning_tokens": 28,
-      "cost_usd": 0.002015,
+      "cost_usd": 0.000403,
       "input_tokens_per_turn": [
         131,
         174,
@@ -181,7 +181,7 @@
       "input_tokens": 884,
       "output_tokens": 160,
       "reasoning_tokens": 30,
-      "cost_usd": 0.002028,
+      "cost_usd": 0.000406,
       "input_tokens_per_turn": [
         131,
         174,
@@ -202,7 +202,7 @@
       "input_tokens": 884,
       "output_tokens": 160,
       "reasoning_tokens": 30,
-      "cost_usd": 0.002028,
+      "cost_usd": 0.000406,
       "input_tokens_per_turn": [
         131,
         174,
@@ -223,7 +223,7 @@
       "input_tokens": 884,
       "output_tokens": 160,
       "reasoning_tokens": 30,
-      "cost_usd": 0.002028,
+      "cost_usd": 0.000406,
       "input_tokens_per_turn": [
         131,
         174,
@@ -244,7 +244,7 @@
       "input_tokens": 884,
       "output_tokens": 157,
       "reasoning_tokens": 27,
-      "cost_usd": 0.002009,
+      "cost_usd": 0.000402,
       "input_tokens_per_turn": [
         131,
         174,
@@ -265,7 +265,7 @@
       "input_tokens": 884,
       "output_tokens": 160,
       "reasoning_tokens": 30,
-      "cost_usd": 0.002028,
+      "cost_usd": 0.000406,
       "input_tokens_per_turn": [
         131,
         174,
@@ -286,7 +286,7 @@
       "input_tokens": 884,
       "output_tokens": 157,
       "reasoning_tokens": 27,
-      "cost_usd": 0.002009,
+      "cost_usd": 0.000402,
       "input_tokens_per_turn": [
         131,
         174,
@@ -307,7 +307,7 @@
       "input_tokens": 625,
       "output_tokens": 109,
       "reasoning_tokens": 14,
-      "cost_usd": 0.001407,
+      "cost_usd": 0.000281,
       "input_tokens_per_turn": [
         108,
         237,
@@ -327,7 +327,7 @@
       "input_tokens": 625,
       "output_tokens": 109,
       "reasoning_tokens": 14,
-      "cost_usd": 0.001407,
+      "cost_usd": 0.000281,
       "input_tokens_per_turn": [
         108,
         237,
@@ -347,7 +347,7 @@
       "input_tokens": 625,
       "output_tokens": 109,
       "reasoning_tokens": 14,
-      "cost_usd": 0.001407,
+      "cost_usd": 0.000281,
       "input_tokens_per_turn": [
         108,
         237,
@@ -367,7 +367,7 @@
       "input_tokens": 625,
       "output_tokens": 104,
       "reasoning_tokens": 9,
-      "cost_usd": 0.001374,
+      "cost_usd": 0.000275,
       "input_tokens_per_turn": [
         108,
         237,
@@ -387,7 +387,7 @@
       "input_tokens": 625,
       "output_tokens": 107,
       "reasoning_tokens": 12,
-      "cost_usd": 0.001394,
+      "cost_usd": 0.000279,
       "input_tokens_per_turn": [
         108,
         237,
@@ -407,7 +407,7 @@
       "input_tokens": 625,
       "output_tokens": 108,
       "reasoning_tokens": 13,
-      "cost_usd": 0.0014,
+      "cost_usd": 0.00028,
       "input_tokens_per_turn": [
         108,
         237,
@@ -427,7 +427,7 @@
       "input_tokens": 625,
       "output_tokens": 108,
       "reasoning_tokens": 13,
-      "cost_usd": 0.0014,
+      "cost_usd": 0.00028,
       "input_tokens_per_turn": [
         108,
         237,
@@ -447,7 +447,7 @@
       "input_tokens": 625,
       "output_tokens": 104,
       "reasoning_tokens": 9,
-      "cost_usd": 0.001374,
+      "cost_usd": 0.000275,
       "input_tokens_per_turn": [
         108,
         237,
@@ -467,7 +467,7 @@
       "input_tokens": 625,
       "output_tokens": 104,
       "reasoning_tokens": 9,
-      "cost_usd": 0.001374,
+      "cost_usd": 0.000275,
       "input_tokens_per_turn": [
         108,
         237,
@@ -487,7 +487,7 @@
       "input_tokens": 625,
       "output_tokens": 104,
       "reasoning_tokens": 9,
-      "cost_usd": 0.001374,
+      "cost_usd": 0.000275,
       "input_tokens_per_turn": [
         108,
         237,
@@ -507,7 +507,7 @@
       "input_tokens": 485,
       "output_tokens": 103,
       "reasoning_tokens": 9,
-      "cost_usd": 0.001213,
+      "cost_usd": 0.000243,
       "input_tokens_per_turn": [
         83,
         128,
@@ -527,7 +527,7 @@
       "input_tokens": 485,
       "output_tokens": 103,
       "reasoning_tokens": 9,
-      "cost_usd": 0.001213,
+      "cost_usd": 0.000243,
       "input_tokens_per_turn": [
         83,
         128,
@@ -547,7 +547,7 @@
       "input_tokens": 485,
       "output_tokens": 103,
       "reasoning_tokens": 9,
-      "cost_usd": 0.001213,
+      "cost_usd": 0.000243,
       "input_tokens_per_turn": [
         83,
         128,
@@ -567,7 +567,7 @@
       "input_tokens": 485,
       "output_tokens": 103,
       "reasoning_tokens": 9,
-      "cost_usd": 0.001213,
+      "cost_usd": 0.000243,
       "input_tokens_per_turn": [
         83,
         128,
@@ -587,7 +587,7 @@
       "input_tokens": 485,
       "output_tokens": 103,
       "reasoning_tokens": 9,
-      "cost_usd": 0.001213,
+      "cost_usd": 0.000243,
       "input_tokens_per_turn": [
         83,
         128,
@@ -607,7 +607,7 @@
       "input_tokens": 485,
       "output_tokens": 103,
       "reasoning_tokens": 9,
-      "cost_usd": 0.001213,
+      "cost_usd": 0.000243,
       "input_tokens_per_turn": [
         83,
         128,
@@ -627,7 +627,7 @@
       "input_tokens": 485,
       "output_tokens": 103,
       "reasoning_tokens": 9,
-      "cost_usd": 0.001213,
+      "cost_usd": 0.000243,
       "input_tokens_per_turn": [
         83,
         128,
@@ -647,7 +647,7 @@
       "input_tokens": 485,
       "output_tokens": 103,
       "reasoning_tokens": 9,
-      "cost_usd": 0.001213,
+      "cost_usd": 0.000243,
       "input_tokens_per_turn": [
         83,
         128,
@@ -667,7 +667,7 @@
       "input_tokens": 485,
       "output_tokens": 103,
       "reasoning_tokens": 9,
-      "cost_usd": 0.001213,
+      "cost_usd": 0.000243,
       "input_tokens_per_turn": [
         83,
         128,
@@ -687,7 +687,7 @@
       "input_tokens": 485,
       "output_tokens": 103,
       "reasoning_tokens": 9,
-      "cost_usd": 0.001213,
+      "cost_usd": 0.000243,
       "input_tokens_per_turn": [
         83,
         128,
@@ -707,7 +707,7 @@
       "input_tokens": 496,
       "output_tokens": 67,
       "reasoning_tokens": 11,
-      "cost_usd": 0.000988,
+      "cost_usd": 0.000198,
       "input_tokens_per_turn": [
         94,
         172,
@@ -727,7 +727,7 @@
       "input_tokens": 496,
       "output_tokens": 69,
       "reasoning_tokens": 11,
-      "cost_usd": 0.001001,
+      "cost_usd": 0.0002,
       "input_tokens_per_turn": [
         94,
         172,
@@ -747,7 +747,7 @@
       "input_tokens": 496,
       "output_tokens": 69,
       "reasoning_tokens": 11,
-      "cost_usd": 0.001001,
+      "cost_usd": 0.0002,
       "input_tokens_per_turn": [
         94,
         172,
@@ -767,7 +767,7 @@
       "input_tokens": 496,
       "output_tokens": 67,
       "reasoning_tokens": 11,
-      "cost_usd": 0.000988,
+      "cost_usd": 0.000198,
       "input_tokens_per_turn": [
         94,
         172,
@@ -787,7 +787,7 @@
       "input_tokens": 496,
       "output_tokens": 68,
       "reasoning_tokens": 10,
-      "cost_usd": 0.000994,
+      "cost_usd": 0.000199,
       "input_tokens_per_turn": [
         94,
         172,
@@ -807,7 +807,7 @@
       "input_tokens": 496,
       "output_tokens": 68,
       "reasoning_tokens": 10,
-      "cost_usd": 0.000994,
+      "cost_usd": 0.000199,
       "input_tokens_per_turn": [
         94,
         172,
@@ -827,7 +827,7 @@
       "input_tokens": 496,
       "output_tokens": 67,
       "reasoning_tokens": 11,
-      "cost_usd": 0.000988,
+      "cost_usd": 0.000198,
       "input_tokens_per_turn": [
         94,
         172,
@@ -847,7 +847,7 @@
       "input_tokens": 496,
       "output_tokens": 67,
       "reasoning_tokens": 11,
-      "cost_usd": 0.000988,
+      "cost_usd": 0.000198,
       "input_tokens_per_turn": [
         94,
         172,
@@ -867,7 +867,7 @@
       "input_tokens": 496,
       "output_tokens": 66,
       "reasoning_tokens": 10,
-      "cost_usd": 0.000981,
+      "cost_usd": 0.000196,
       "input_tokens_per_turn": [
         94,
         172,
@@ -887,7 +887,7 @@
       "input_tokens": 496,
       "output_tokens": 68,
       "reasoning_tokens": 10,
-      "cost_usd": 0.000994,
+      "cost_usd": 0.000199,
       "input_tokens_per_turn": [
         94,
         172,
@@ -907,7 +907,7 @@
       "input_tokens": 902,
       "output_tokens": 189,
       "reasoning_tokens": 60,
-      "cost_usd": 0.00224,
+      "cost_usd": 0.000448,
       "input_tokens_per_turn": [
         78,
         226,
@@ -928,7 +928,7 @@
       "input_tokens": 302,
       "output_tokens": 121,
       "reasoning_tokens": 39,
-      "cost_usd": 0.001131,
+      "cost_usd": 0.000226,
       "input_tokens_per_turn": [
         78,
         224
@@ -947,7 +947,7 @@
       "input_tokens": 805,
       "output_tokens": 203,
       "reasoning_tokens": 74,
-      "cost_usd": 0.002225,
+      "cost_usd": 0.000445,
       "input_tokens_per_turn": [
         78,
         129,
@@ -968,7 +968,7 @@
       "input_tokens": 728,
       "output_tokens": 202,
       "reasoning_tokens": 80,
-      "cost_usd": 0.002134,
+      "cost_usd": 0.000427,
       "input_tokens_per_turn": [
         78,
         134,
@@ -989,7 +989,7 @@
       "input_tokens": 699,
       "output_tokens": 193,
       "reasoning_tokens": 69,
-      "cost_usd": 0.002043,
+      "cost_usd": 0.000409,
       "input_tokens_per_turn": [
         78,
         128,
@@ -1010,7 +1010,7 @@
       "input_tokens": 432,
       "output_tokens": 158,
       "reasoning_tokens": 68,
-      "cost_usd": 0.001518,
+      "cost_usd": 0.000304,
       "input_tokens_per_turn": [
         78,
         129,
@@ -1030,7 +1030,7 @@
       "input_tokens": 714,
       "output_tokens": 176,
       "reasoning_tokens": 61,
-      "cost_usd": 0.001947,
+      "cost_usd": 0.000389,
       "input_tokens_per_turn": [
         78,
         130,
@@ -1051,7 +1051,7 @@
       "input_tokens": 673,
       "output_tokens": 230,
       "reasoning_tokens": 73,
-      "cost_usd": 0.002258,
+      "cost_usd": 0.000452,
       "input_tokens_per_turn": [
         78,
         226,
@@ -1071,7 +1071,7 @@
       "input_tokens": 608,
       "output_tokens": 118,
       "reasoning_tokens": 44,
-      "cost_usd": 0.001448,
+      "cost_usd": 0.00029,
       "input_tokens_per_turn": [
         78,
         128,
@@ -1092,7 +1092,7 @@
       "input_tokens": 726,
       "output_tokens": 181,
       "reasoning_tokens": 63,
-      "cost_usd": 0.001993,
+      "cost_usd": 0.000399,
       "input_tokens_per_turn": [
         78,
         134,
@@ -1113,7 +1113,7 @@
       "input_tokens": 377,
       "output_tokens": 63,
       "reasoning_tokens": 12,
-      "cost_usd": 0.000831,
+      "cost_usd": 0.000166,
       "input_tokens_per_turn": [
         78,
         125,
@@ -1133,7 +1133,7 @@
       "input_tokens": 377,
       "output_tokens": 64,
       "reasoning_tokens": 13,
-      "cost_usd": 0.000837,
+      "cost_usd": 0.000167,
       "input_tokens_per_turn": [
         78,
         125,
@@ -1153,7 +1153,7 @@
       "input_tokens": 377,
       "output_tokens": 63,
       "reasoning_tokens": 12,
-      "cost_usd": 0.000831,
+      "cost_usd": 0.000166,
       "input_tokens_per_turn": [
         78,
         125,
@@ -1173,7 +1173,7 @@
       "input_tokens": 377,
       "output_tokens": 73,
       "reasoning_tokens": 20,
-      "cost_usd": 0.000897,
+      "cost_usd": 0.000179,
       "input_tokens_per_turn": [
         78,
         125,
@@ -1193,7 +1193,7 @@
       "input_tokens": 377,
       "output_tokens": 63,
       "reasoning_tokens": 12,
-      "cost_usd": 0.000831,
+      "cost_usd": 0.000166,
       "input_tokens_per_turn": [
         78,
         125,
@@ -1213,7 +1213,7 @@
       "input_tokens": 377,
       "output_tokens": 64,
       "reasoning_tokens": 13,
-      "cost_usd": 0.000837,
+      "cost_usd": 0.000167,
       "input_tokens_per_turn": [
         78,
         125,
@@ -1233,7 +1233,7 @@
       "input_tokens": 377,
       "output_tokens": 64,
       "reasoning_tokens": 13,
-      "cost_usd": 0.000837,
+      "cost_usd": 0.000167,
       "input_tokens_per_turn": [
         78,
         125,
@@ -1253,7 +1253,7 @@
       "input_tokens": 377,
       "output_tokens": 64,
       "reasoning_tokens": 13,
-      "cost_usd": 0.000837,
+      "cost_usd": 0.000167,
       "input_tokens_per_turn": [
         78,
         125,
@@ -1273,7 +1273,7 @@
       "input_tokens": 377,
       "output_tokens": 64,
       "reasoning_tokens": 13,
-      "cost_usd": 0.000837,
+      "cost_usd": 0.000167,
       "input_tokens_per_turn": [
         78,
         125,
@@ -1293,7 +1293,7 @@
       "input_tokens": 377,
       "output_tokens": 64,
       "reasoning_tokens": 13,
-      "cost_usd": 0.000837,
+      "cost_usd": 0.000167,
       "input_tokens_per_turn": [
         78,
         125,
@@ -1313,7 +1313,7 @@
       "input_tokens": 5981,
       "output_tokens": 415,
       "reasoning_tokens": 28,
-      "cost_usd": 0.009318,
+      "cost_usd": 0.001864,
       "input_tokens_per_turn": [
         146,
         192,
@@ -1341,7 +1341,7 @@
       "input_tokens": 6437,
       "output_tokens": 398,
       "reasoning_tokens": 23,
-      "cost_usd": 0.009707,
+      "cost_usd": 0.001941,
       "input_tokens_per_turn": [
         146,
         192,
@@ -1370,7 +1370,7 @@
       "input_tokens": 5981,
       "output_tokens": 426,
       "reasoning_tokens": 39,
-      "cost_usd": 0.009391,
+      "cost_usd": 0.001878,
       "input_tokens_per_turn": [
         146,
         192,
@@ -1398,7 +1398,7 @@
       "input_tokens": 5981,
       "output_tokens": 453,
       "reasoning_tokens": 64,
-      "cost_usd": 0.009569,
+      "cost_usd": 0.001914,
       "input_tokens_per_turn": [
         146,
         192,
@@ -1426,7 +1426,7 @@
       "input_tokens": 5981,
       "output_tokens": 435,
       "reasoning_tokens": 47,
-      "cost_usd": 0.00945,
+      "cost_usd": 0.00189,
       "input_tokens_per_turn": [
         146,
         192,
@@ -1454,7 +1454,7 @@
       "input_tokens": 5981,
       "output_tokens": 465,
       "reasoning_tokens": 74,
-      "cost_usd": 0.009648,
+      "cost_usd": 0.00193,
       "input_tokens_per_turn": [
         146,
         192,
@@ -1482,7 +1482,7 @@
       "input_tokens": 5981,
       "output_tokens": 432,
       "reasoning_tokens": 46,
-      "cost_usd": 0.00943,
+      "cost_usd": 0.001886,
       "input_tokens_per_turn": [
         146,
         192,
@@ -1510,7 +1510,7 @@
       "input_tokens": 5981,
       "output_tokens": 459,
       "reasoning_tokens": 70,
-      "cost_usd": 0.009609,
+      "cost_usd": 0.001922,
       "input_tokens_per_turn": [
         146,
         192,
@@ -1538,7 +1538,7 @@
       "input_tokens": 5981,
       "output_tokens": 413,
       "reasoning_tokens": 25,
-      "cost_usd": 0.009305,
+      "cost_usd": 0.001861,
       "input_tokens_per_turn": [
         146,
         192,
@@ -1566,7 +1566,7 @@
       "input_tokens": 5981,
       "output_tokens": 410,
       "reasoning_tokens": 23,
-      "cost_usd": 0.009285,
+      "cost_usd": 0.001857,
       "input_tokens_per_turn": [
         146,
         192,
@@ -1594,7 +1594,7 @@
       "input_tokens": 8754,
       "output_tokens": 170,
       "reasoning_tokens": 9,
-      "cost_usd": 0.010751,
+      "cost_usd": 0.00215,
       "input_tokens_per_turn": [
         116,
         245,
@@ -1614,7 +1614,7 @@
       "input_tokens": 8754,
       "output_tokens": 186,
       "reasoning_tokens": 25,
-      "cost_usd": 0.010857,
+      "cost_usd": 0.002171,
       "input_tokens_per_turn": [
         116,
         245,
@@ -1634,7 +1634,7 @@
       "input_tokens": 8754,
       "output_tokens": 187,
       "reasoning_tokens": 26,
-      "cost_usd": 0.010864,
+      "cost_usd": 0.002173,
       "input_tokens_per_turn": [
         116,
         245,
@@ -1654,7 +1654,7 @@
       "input_tokens": 8754,
       "output_tokens": 178,
       "reasoning_tokens": 17,
-      "cost_usd": 0.010804,
+      "cost_usd": 0.002161,
       "input_tokens_per_turn": [
         116,
         245,
@@ -1674,7 +1674,7 @@
       "input_tokens": 8754,
       "output_tokens": 170,
       "reasoning_tokens": 9,
-      "cost_usd": 0.010751,
+      "cost_usd": 0.00215,
       "input_tokens_per_turn": [
         116,
         245,
@@ -1694,7 +1694,7 @@
       "input_tokens": 8754,
       "output_tokens": 170,
       "reasoning_tokens": 9,
-      "cost_usd": 0.010751,
+      "cost_usd": 0.00215,
       "input_tokens_per_turn": [
         116,
         245,
@@ -1714,7 +1714,7 @@
       "input_tokens": 8754,
       "output_tokens": 178,
       "reasoning_tokens": 17,
-      "cost_usd": 0.010804,
+      "cost_usd": 0.002161,
       "input_tokens_per_turn": [
         116,
         245,
@@ -1734,7 +1734,7 @@
       "input_tokens": 8754,
       "output_tokens": 170,
       "reasoning_tokens": 9,
-      "cost_usd": 0.010751,
+      "cost_usd": 0.00215,
       "input_tokens_per_turn": [
         116,
         245,
@@ -1754,7 +1754,7 @@
       "input_tokens": 8754,
       "output_tokens": 186,
       "reasoning_tokens": 25,
-      "cost_usd": 0.010857,
+      "cost_usd": 0.002171,
       "input_tokens_per_turn": [
         116,
         245,
@@ -1774,7 +1774,7 @@
       "input_tokens": 8754,
       "output_tokens": 185,
       "reasoning_tokens": 24,
-      "cost_usd": 0.01085,
+      "cost_usd": 0.00217,
       "input_tokens_per_turn": [
         116,
         245,
@@ -1794,7 +1794,7 @@
       "input_tokens": 740,
       "output_tokens": 154,
       "reasoning_tokens": 14,
-      "cost_usd": 0.00183,
+      "cost_usd": 0.000366,
       "input_tokens_per_turn": [
         116,
         165,
@@ -1814,7 +1814,7 @@
       "input_tokens": 740,
       "output_tokens": 187,
       "reasoning_tokens": 45,
-      "cost_usd": 0.002048,
+      "cost_usd": 0.00041,
       "input_tokens_per_turn": [
         116,
         165,
@@ -1834,7 +1834,7 @@
       "input_tokens": 740,
       "output_tokens": 185,
       "reasoning_tokens": 43,
-      "cost_usd": 0.002035,
+      "cost_usd": 0.000407,
       "input_tokens_per_turn": [
         116,
         165,
@@ -1854,7 +1854,7 @@
       "input_tokens": 740,
       "output_tokens": 185,
       "reasoning_tokens": 43,
-      "cost_usd": 0.002035,
+      "cost_usd": 0.000407,
       "input_tokens_per_turn": [
         116,
         165,
@@ -1874,7 +1874,7 @@
       "input_tokens": 740,
       "output_tokens": 185,
       "reasoning_tokens": 43,
-      "cost_usd": 0.002035,
+      "cost_usd": 0.000407,
       "input_tokens_per_turn": [
         116,
         165,
@@ -1894,7 +1894,7 @@
       "input_tokens": 740,
       "output_tokens": 155,
       "reasoning_tokens": 15,
-      "cost_usd": 0.001837,
+      "cost_usd": 0.000367,
       "input_tokens_per_turn": [
         116,
         165,
@@ -1914,7 +1914,7 @@
       "input_tokens": 740,
       "output_tokens": 154,
       "reasoning_tokens": 14,
-      "cost_usd": 0.00183,
+      "cost_usd": 0.000366,
       "input_tokens_per_turn": [
         116,
         165,
@@ -1934,7 +1934,7 @@
       "input_tokens": 740,
       "output_tokens": 187,
       "reasoning_tokens": 45,
-      "cost_usd": 0.002048,
+      "cost_usd": 0.00041,
       "input_tokens_per_turn": [
         116,
         165,
@@ -1954,7 +1954,7 @@
       "input_tokens": 740,
       "output_tokens": 155,
       "reasoning_tokens": 15,
-      "cost_usd": 0.001837,
+      "cost_usd": 0.000367,
       "input_tokens_per_turn": [
         116,
         165,
@@ -1974,7 +1974,7 @@
       "input_tokens": 740,
       "output_tokens": 186,
       "reasoning_tokens": 44,
-      "cost_usd": 0.002042,
+      "cost_usd": 0.000408,
       "input_tokens_per_turn": [
         116,
         165,
@@ -1985,5 +1985,11 @@
       "task": "inventory_audit",
       "repeat": 9
     }
-  ]
+  ],
+  "repriced": {
+    "date": "2026-07-31",
+    "note": "Costs rescaled to the 2026-07-30 list prices (Bedrock luna -80%, terra -20%; OpenAI 1P matched). Token counts unchanged; scaling is exact because input and output prices moved by the same factor.",
+    "factor": 0.2,
+    "fields_rescaled": 102
+  }
 }

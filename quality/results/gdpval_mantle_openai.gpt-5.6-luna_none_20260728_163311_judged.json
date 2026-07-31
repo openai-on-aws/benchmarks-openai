@@ -37,8 +37,8 @@
     "n_errors": 0,
     "mean_output_tokens": 4221.1,
     "mean_latency_s": 19.24,
-    "total_cost_usd": 0.684343,
-    "mean_cost_per_task_usd": 0.028514
+    "total_cost_usd": 0.136869,
+    "mean_cost_per_task_usd": 0.005703
   },
   "results": [
     {
@@ -51,7 +51,7 @@
       "output_tokens": 428,
       "reasoning_tokens": 0,
       "latency_s": 3.01,
-      "cost_usd": 0.003289,
+      "cost_usd": 0.000658,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.4872,
@@ -173,7 +173,7 @@
       "output_tokens": 2910,
       "reasoning_tokens": 0,
       "latency_s": 14.7,
-      "cost_usd": 0.019879,
+      "cost_usd": 0.003976,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.64,
@@ -435,7 +435,7 @@
       "output_tokens": 775,
       "reasoning_tokens": 0,
       "latency_s": 4.11,
-      "cost_usd": 0.005629,
+      "cost_usd": 0.001126,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.7917,
@@ -521,7 +521,7 @@
       "output_tokens": 4226,
       "reasoning_tokens": 0,
       "latency_s": 17.43,
-      "cost_usd": 0.028427,
+      "cost_usd": 0.005685,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.7358,
@@ -691,7 +691,7 @@
       "output_tokens": 2265,
       "reasoning_tokens": 0,
       "latency_s": 12.52,
-      "cost_usd": 0.015271,
+      "cost_usd": 0.003054,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.5658,
@@ -969,7 +969,7 @@
       "output_tokens": 3631,
       "reasoning_tokens": 0,
       "latency_s": 19.9,
-      "cost_usd": 0.02497,
+      "cost_usd": 0.004994,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.9516,
@@ -1131,7 +1131,7 @@
       "output_tokens": 8192,
       "reasoning_tokens": 0,
       "latency_s": 27.13,
-      "cost_usd": 0.054849,
+      "cost_usd": 0.01097,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.7162,
@@ -1353,7 +1353,7 @@
       "output_tokens": 5392,
       "reasoning_tokens": 0,
       "latency_s": 27.25,
-      "cost_usd": 0.036032,
+      "cost_usd": 0.007206,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.9231,
@@ -1707,7 +1707,7 @@
       "output_tokens": 3812,
       "reasoning_tokens": 0,
       "latency_s": 20.07,
-      "cost_usd": 0.025624,
+      "cost_usd": 0.005125,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.6038,
@@ -1897,7 +1897,7 @@
       "output_tokens": 8192,
       "reasoning_tokens": 0,
       "latency_s": 28.51,
-      "cost_usd": 0.054377,
+      "cost_usd": 0.010875,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.5472,
@@ -2091,7 +2091,7 @@
       "output_tokens": 1029,
       "reasoning_tokens": 0,
       "latency_s": 5.38,
-      "cost_usd": 0.007528,
+      "cost_usd": 0.001506,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.8806,
@@ -2281,7 +2281,7 @@
       "output_tokens": 5612,
       "reasoning_tokens": 0,
       "latency_s": 26.45,
-      "cost_usd": 0.037438,
+      "cost_usd": 0.007488,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.3818,
@@ -2427,7 +2427,7 @@
       "output_tokens": 8192,
       "reasoning_tokens": 0,
       "latency_s": 39.25,
-      "cost_usd": 0.054383,
+      "cost_usd": 0.010877,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.5072,
@@ -2665,7 +2665,7 @@
       "output_tokens": 5104,
       "reasoning_tokens": 0,
       "latency_s": 24.13,
-      "cost_usd": 0.035292,
+      "cost_usd": 0.007058,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.7733,
@@ -2887,7 +2887,7 @@
       "output_tokens": 2696,
       "reasoning_tokens": 0,
       "latency_s": 13.45,
-      "cost_usd": 0.018405,
+      "cost_usd": 0.003681,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.7407,
@@ -3069,7 +3069,7 @@
       "output_tokens": 2285,
       "reasoning_tokens": 0,
       "latency_s": 10.85,
-      "cost_usd": 0.015874,
+      "cost_usd": 0.003175,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.918,
@@ -3227,7 +3227,7 @@
       "output_tokens": 3365,
       "reasoning_tokens": 0,
       "latency_s": 15.25,
-      "cost_usd": 0.022708,
+      "cost_usd": 0.004542,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.7536,
@@ -3421,7 +3421,7 @@
       "output_tokens": 5803,
       "reasoning_tokens": 0,
       "latency_s": 28.91,
-      "cost_usd": 0.038688,
+      "cost_usd": 0.007738,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.8485,
@@ -3547,7 +3547,7 @@
       "output_tokens": 7815,
       "reasoning_tokens": 0,
       "latency_s": 32.15,
-      "cost_usd": 0.052114,
+      "cost_usd": 0.010423,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.9429,
@@ -3681,7 +3681,7 @@
       "output_tokens": 1714,
       "reasoning_tokens": 0,
       "latency_s": 6.78,
-      "cost_usd": 0.012138,
+      "cost_usd": 0.002428,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.6329,
@@ -3907,7 +3907,7 @@
       "output_tokens": 3496,
       "reasoning_tokens": 0,
       "latency_s": 11.25,
-      "cost_usd": 0.024407,
+      "cost_usd": 0.004881,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.7301,
@@ -4169,7 +4169,7 @@
       "output_tokens": 3726,
       "reasoning_tokens": 0,
       "latency_s": 18.95,
-      "cost_usd": 0.025535,
+      "cost_usd": 0.005107,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.7368,
@@ -4403,7 +4403,7 @@
       "output_tokens": 3654,
       "reasoning_tokens": 0,
       "latency_s": 18.92,
-      "cost_usd": 0.024975,
+      "cost_usd": 0.004995,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.8551,
@@ -4629,7 +4629,7 @@
       "output_tokens": 6992,
       "reasoning_tokens": 0,
       "latency_s": 35.38,
-      "cost_usd": 0.046511,
+      "cost_usd": 0.009302,
       "error": null,
       "judgment": {
         "rubric_fraction": 0.2,
@@ -4900,6 +4900,12 @@
     "n_graded": 24,
     "mean_rubric_fraction": 0.7027,
     "pass_rate": 0.625,
-    "cost_per_pass_usd": 0.045623
+    "cost_per_pass_usd": 0.009125
+  },
+  "repriced": {
+    "date": "2026-07-31",
+    "note": "Costs rescaled to the 2026-07-30 list prices (Bedrock luna -80%, terra -20%; OpenAI 1P matched). Token counts unchanged; scaling is exact because input and output prices moved by the same factor.",
+    "factor": 0.2,
+    "fields_rescaled": 27
   }
 }

@@ -18,28 +18,28 @@
     "mean_input_tokens": 5042.8,
     "mean_output_tokens": 216.5,
     "mean_wall_s": 4.51,
-    "total_cost_usd": 0.523214,
-    "mean_cost_per_run_usd": 0.01744,
-    "cost_per_success_usd": 0.026161,
+    "total_cost_usd": 0.418571,
+    "mean_cost_per_run_usd": 0.013952,
+    "cost_per_success_usd": 0.020929,
     "per_task": {
       "deploy_chain": {
         "success": "10/10",
         "mean_turns": 10.8,
-        "mean_cost_usd": 0.021268,
+        "mean_cost_usd": 0.017014,
         "mean_input_tokens": 5612.7,
         "context_growth_x": 5.81
       },
       "rag_research": {
         "success": "10/10",
         "mean_turns": 3.0,
-        "mean_cost_usd": 0.026742,
+        "mean_cost_usd": 0.021394,
         "mean_input_tokens": 8775.6,
         "context_growth_x": 72.45
       },
       "inventory_audit": {
         "success": "0/10",
         "mean_turns": 3.0,
-        "mean_cost_usd": 0.004312,
+        "mean_cost_usd": 0.00345,
         "mean_input_tokens": 740.0,
         "context_growth_x": 3.96
       }
@@ -55,7 +55,7 @@
       "input_tokens": 5743,
       "output_tokens": 350,
       "reasoning_tokens": 0,
-      "cost_usd": 0.021568,
+      "cost_usd": 0.017254,
       "input_tokens_per_turn": [
         146,
         192,
@@ -83,7 +83,7 @@
       "input_tokens": 5288,
       "output_tokens": 366,
       "reasoning_tokens": 0,
-      "cost_usd": 0.020581,
+      "cost_usd": 0.016465,
       "input_tokens_per_turn": [
         146,
         192,
@@ -110,7 +110,7 @@
       "input_tokens": 4983,
       "output_tokens": 363,
       "reasoning_tokens": 0,
-      "cost_usd": 0.019693,
+      "cost_usd": 0.015754,
       "input_tokens_per_turn": [
         146,
         192,
@@ -137,7 +137,7 @@
       "input_tokens": 5743,
       "output_tokens": 350,
       "reasoning_tokens": 0,
-      "cost_usd": 0.021568,
+      "cost_usd": 0.017254,
       "input_tokens_per_turn": [
         146,
         192,
@@ -165,7 +165,7 @@
       "input_tokens": 5743,
       "output_tokens": 350,
       "reasoning_tokens": 0,
-      "cost_usd": 0.021568,
+      "cost_usd": 0.017254,
       "input_tokens_per_turn": [
         146,
         192,
@@ -193,7 +193,7 @@
       "input_tokens": 5743,
       "output_tokens": 350,
       "reasoning_tokens": 0,
-      "cost_usd": 0.021568,
+      "cost_usd": 0.017254,
       "input_tokens_per_turn": [
         146,
         192,
@@ -221,7 +221,7 @@
       "input_tokens": 5743,
       "output_tokens": 353,
       "reasoning_tokens": 0,
-      "cost_usd": 0.021618,
+      "cost_usd": 0.017294,
       "input_tokens_per_turn": [
         146,
         192,
@@ -249,7 +249,7 @@
       "input_tokens": 6415,
       "output_tokens": 337,
       "reasoning_tokens": 0,
-      "cost_usd": 0.023202,
+      "cost_usd": 0.018562,
       "input_tokens_per_turn": [
         146,
         192,
@@ -278,7 +278,7 @@
       "input_tokens": 4983,
       "output_tokens": 363,
       "reasoning_tokens": 0,
-      "cost_usd": 0.019693,
+      "cost_usd": 0.015754,
       "input_tokens_per_turn": [
         146,
         192,
@@ -305,7 +305,7 @@
       "input_tokens": 5743,
       "output_tokens": 353,
       "reasoning_tokens": 0,
-      "cost_usd": 0.021618,
+      "cost_usd": 0.017294,
       "input_tokens_per_turn": [
         146,
         192,
@@ -333,7 +333,7 @@
       "input_tokens": 8742,
       "output_tokens": 153,
       "reasoning_tokens": 0,
-      "cost_usd": 0.026565,
+      "cost_usd": 0.021252,
       "input_tokens_per_turn": [
         116,
         239,
@@ -353,7 +353,7 @@
       "input_tokens": 8850,
       "output_tokens": 168,
       "reasoning_tokens": 0,
-      "cost_usd": 0.02711,
+      "cost_usd": 0.021688,
       "input_tokens_per_turn": [
         116,
         293,
@@ -373,7 +373,7 @@
       "input_tokens": 8742,
       "output_tokens": 153,
       "reasoning_tokens": 0,
-      "cost_usd": 0.026565,
+      "cost_usd": 0.021252,
       "input_tokens_per_turn": [
         116,
         239,
@@ -393,7 +393,7 @@
       "input_tokens": 8742,
       "output_tokens": 153,
       "reasoning_tokens": 0,
-      "cost_usd": 0.026565,
+      "cost_usd": 0.021252,
       "input_tokens_per_turn": [
         116,
         239,
@@ -413,7 +413,7 @@
       "input_tokens": 8742,
       "output_tokens": 153,
       "reasoning_tokens": 0,
-      "cost_usd": 0.026565,
+      "cost_usd": 0.021252,
       "input_tokens_per_turn": [
         116,
         239,
@@ -433,7 +433,7 @@
       "input_tokens": 8742,
       "output_tokens": 153,
       "reasoning_tokens": 0,
-      "cost_usd": 0.026565,
+      "cost_usd": 0.021252,
       "input_tokens_per_turn": [
         116,
         239,
@@ -453,7 +453,7 @@
       "input_tokens": 8850,
       "output_tokens": 168,
       "reasoning_tokens": 0,
-      "cost_usd": 0.02711,
+      "cost_usd": 0.021688,
       "input_tokens_per_turn": [
         116,
         293,
@@ -473,7 +473,7 @@
       "input_tokens": 8742,
       "output_tokens": 153,
       "reasoning_tokens": 0,
-      "cost_usd": 0.026565,
+      "cost_usd": 0.021252,
       "input_tokens_per_turn": [
         116,
         239,
@@ -493,7 +493,7 @@
       "input_tokens": 8754,
       "output_tokens": 159,
       "reasoning_tokens": 0,
-      "cost_usd": 0.026697,
+      "cost_usd": 0.021358,
       "input_tokens_per_turn": [
         116,
         245,
@@ -513,7 +513,7 @@
       "input_tokens": 8850,
       "output_tokens": 168,
       "reasoning_tokens": 0,
-      "cost_usd": 0.02711,
+      "cost_usd": 0.021688,
       "input_tokens_per_turn": [
         116,
         293,
@@ -533,7 +533,7 @@
       "input_tokens": 740,
       "output_tokens": 138,
       "reasoning_tokens": 0,
-      "cost_usd": 0.004312,
+      "cost_usd": 0.00345,
       "input_tokens_per_turn": [
         116,
         165,
@@ -553,7 +553,7 @@
       "input_tokens": 740,
       "output_tokens": 138,
       "reasoning_tokens": 0,
-      "cost_usd": 0.004312,
+      "cost_usd": 0.00345,
       "input_tokens_per_turn": [
         116,
         165,
@@ -573,7 +573,7 @@
       "input_tokens": 740,
       "output_tokens": 138,
       "reasoning_tokens": 0,
-      "cost_usd": 0.004312,
+      "cost_usd": 0.00345,
       "input_tokens_per_turn": [
         116,
         165,
@@ -593,7 +593,7 @@
       "input_tokens": 740,
       "output_tokens": 138,
       "reasoning_tokens": 0,
-      "cost_usd": 0.004312,
+      "cost_usd": 0.00345,
       "input_tokens_per_turn": [
         116,
         165,
@@ -613,7 +613,7 @@
       "input_tokens": 740,
       "output_tokens": 138,
       "reasoning_tokens": 0,
-      "cost_usd": 0.004312,
+      "cost_usd": 0.00345,
       "input_tokens_per_turn": [
         116,
         165,
@@ -633,7 +633,7 @@
       "input_tokens": 740,
       "output_tokens": 138,
       "reasoning_tokens": 0,
-      "cost_usd": 0.004312,
+      "cost_usd": 0.00345,
       "input_tokens_per_turn": [
         116,
         165,
@@ -653,7 +653,7 @@
       "input_tokens": 740,
       "output_tokens": 138,
       "reasoning_tokens": 0,
-      "cost_usd": 0.004312,
+      "cost_usd": 0.00345,
       "input_tokens_per_turn": [
         116,
         165,
@@ -673,7 +673,7 @@
       "input_tokens": 740,
       "output_tokens": 138,
       "reasoning_tokens": 0,
-      "cost_usd": 0.004312,
+      "cost_usd": 0.00345,
       "input_tokens_per_turn": [
         116,
         165,
@@ -693,7 +693,7 @@
       "input_tokens": 740,
       "output_tokens": 138,
       "reasoning_tokens": 0,
-      "cost_usd": 0.004312,
+      "cost_usd": 0.00345,
       "input_tokens_per_turn": [
         116,
         165,
@@ -713,7 +713,7 @@
       "input_tokens": 740,
       "output_tokens": 138,
       "reasoning_tokens": 0,
-      "cost_usd": 0.004312,
+      "cost_usd": 0.00345,
       "input_tokens_per_turn": [
         116,
         165,
@@ -724,5 +724,11 @@
       "task": "inventory_audit",
       "repeat": 9
     }
-  ]
+  ],
+  "repriced": {
+    "date": "2026-07-31",
+    "note": "Costs rescaled to the 2026-07-30 list prices (Bedrock luna -80%, terra -20%; OpenAI 1P matched). Token counts unchanged; scaling is exact because input and output prices moved by the same factor.",
+    "factor": 0.8,
+    "fields_rescaled": 36
+  }
 }
