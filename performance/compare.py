@@ -47,6 +47,10 @@ def load_results(results_dir):
                 runs[key] = candidate
     if skipped:
         print(f"(skipped {skipped} legacy result files without schema_version=2)")
+    other = sorted({r["backend"] for r in runs} - {"bedrock", "openai"})
+    if other:
+        print(f"(note: results from backends {other} are present but this tool "
+              f"compares only bedrock vs openai)")
     return runs
 
 

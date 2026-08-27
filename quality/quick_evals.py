@@ -58,6 +58,12 @@ PRICES = {
 
 
 def call_cost_usd(backend, model, input_tokens, output_tokens):
+    if backend == "runtime":
+        # bedrock-runtime addresses models by inference-profile id — a region
+        # scope (us. / global. / eu. / apac. / ...) prepended to the model id;
+        # profiles price as the underlying Bedrock model.
+        backend = "mantle"
+        model = re.sub(r"^[a-z-]+\.(?=openai\.)", "", model)
     price = PRICES.get((backend, model))
     if not price:
         return None
@@ -65,14 +71,23 @@ def call_cost_usd(backend, model, input_tokens, output_tokens):
 
 
 def make_client(backend):
-    if backend == "mantle":
+    if backend in ("mantle", "runtime"):
         token = os.environ.get("AWS_BEARER_TOKEN_BEDROCK")
         if not token:
             from aws_bedrock_token_generator import provide_token
             token = provide_token(region=os.environ.get("AWS_REGION", "us-west-2"))
-        base = os.environ.get(
-            "MANTLE_BASE_URL",
-            f"https://bedrock-mantle.{os.environ.get('AWS_REGION', 'us-west-2')}.api.aws/openai/v1")
+        region = os.environ.get("AWS_REGION", "us-west-2")
+        if backend == "runtime":
+            # bedrock-runtime's OpenAI-compatible endpoint. Same Responses API;
+            # model ids must be inference profiles (us./global. prefix) — bare
+            # openai.* ids are rejected with a 400.
+            base = os.environ.get(
+                "BEDROCK_RUNTIME_BASE_URL",
+                f"https://bedrock-runtime.{region}.amazonaws.com/openai/v1")
+        else:
+            base = os.environ.get(
+                "MANTLE_BASE_URL",
+                f"https://bedrock-mantle.{region}.api.aws/openai/v1")
         return OpenAI(api_key=token, base_url=base), base
     key = os.environ.get("OPENAI_API_KEY_SAAS") or os.environ["OPENAI_API_KEY"]
     return OpenAI(api_key=key), "https://api.openai.com/v1"
@@ -504,7 +519,7 @@ def main():
     if args_pre.rescore:
         rescore_all()
         return
-    p.add_argument("--backend", choices=["mantle", "saas"], required=True)
+    p.add_argument("--backend", choices=["mantle", "saas", "runtime"], required=True)
     p.add_argument("--model", required=True)
     p.add_argument("--effort", help="reasoning effort (e.g. none, low); omit for model default")
     p.add_argument("--tasks", default="aime,gpqa,mmlu_pro,math500,gsm8k,humaneval",

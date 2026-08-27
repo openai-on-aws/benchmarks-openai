@@ -156,7 +156,7 @@ def run_case(client, backend, model, effort, row, idx):
 
 def main():
     p = argparse.ArgumentParser(description="DeepSearchQA agentic web-research eval")
-    p.add_argument("--backend", choices=["mantle", "saas"], required=True)
+    p.add_argument("--backend", choices=["mantle", "saas", "runtime"], required=True)
     p.add_argument("--model", required=True)
     p.add_argument("--effort", help="reasoning effort (e.g. none); omit for default")
     p.add_argument("--indices", help="comma-separated dataset indices "

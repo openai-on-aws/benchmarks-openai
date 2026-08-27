@@ -33,6 +33,9 @@ RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
 
 DEFAULT_MODELS = {
     "bedrock": "openai.gpt-5.6-luna",
+    # bedrock-runtime addresses models by inference-profile id; bare
+    # openai.* ids are rejected with a 400.
+    "bedrock-runtime": "us.openai.gpt-5.6-luna",
     "openai": "gpt-5.6-luna",
 }
 
@@ -63,8 +66,13 @@ def bedrock_base_url():
     return f"https://bedrock-mantle.{region}.api.aws/openai/v1"
 
 
+def bedrock_runtime_base_url():
+    region = os.environ.get("AWS_REGION", "us-west-2")
+    return f"https://bedrock-runtime.{region}.amazonaws.com/openai/v1"
+
+
 def make_client(backend, base_url):
-    if backend == "bedrock":
+    if backend in ("bedrock", "bedrock-runtime"):
         token = os.environ.get("AWS_BEARER_TOKEN_BEDROCK")
         if not token:
             from aws_bedrock_token_generator import provide_token
@@ -77,7 +85,21 @@ def make_client(backend, base_url):
 
 
 def list_models(backend, base_url):
-    # The Bedrock endpoint serves models.list from /v1, not /openai/v1.
+    # bedrock-runtime has no OpenAI-compatible models endpoint; the ids it
+    # accepts are the ACTIVE inference profiles (us.* / global.*).
+    if backend == "bedrock-runtime":
+        import boto3
+        b = boto3.client("bedrock", region_name=os.environ.get("AWS_REGION", "us-west-2"))
+        profs, resp = [], b.list_inference_profiles(maxResults=1000)
+        profs += resp["inferenceProfileSummaries"]
+        while resp.get("nextToken"):
+            resp = b.list_inference_profiles(maxResults=1000, nextToken=resp["nextToken"])
+            profs += resp["inferenceProfileSummaries"]
+        ids = sorted(p["inferenceProfileId"] for p in profs if p.get("status") == "ACTIVE")
+        for mid in ids:
+            print(mid)
+        return ids
+    # The bedrock-mantle endpoint serves models.list from /v1, not /openai/v1.
     if backend == "bedrock":
         base_url = base_url.replace("/openai/v1", "/v1")
     client = make_client(backend, base_url)
@@ -341,7 +363,9 @@ def main():
     p = argparse.ArgumentParser(description="Latency benchmark: Bedrock vs OpenAI 1P (Responses API, streaming)")
     p.add_argument("sizes", nargs="*", metavar="SIZE",
                    help="input sizes to run: 1k 5k 10k 20k (default: all)")
-    p.add_argument("--backend", choices=["bedrock", "openai"], required=True)
+    p.add_argument("--backend", choices=["bedrock", "bedrock-runtime", "openai"], required=True,
+                   help="bedrock = bedrock-mantle OpenAI-compatible endpoint; "
+                        "bedrock-runtime = bedrock-runtime endpoint (inference-profile model ids)")
     p.add_argument("--model", help=f"model id (defaults: {DEFAULT_MODELS})")
     p.add_argument("--runs", type=int, default=25, help="runs per output config (default 25)")
     p.add_argument("--outputs", help="comma-separated max_output_tokens overriding the per-size defaults, e.g. 100,1000")
@@ -354,6 +378,8 @@ def main():
 
     base_url = args.base_url or (
         os.environ.get("MANTLE_BASE_URL", bedrock_base_url()) if args.backend == "bedrock"
+        else os.environ.get("BEDROCK_RUNTIME_BASE_URL", bedrock_runtime_base_url())
+        if args.backend == "bedrock-runtime"
         else "https://api.openai.com/v1"
     )
 

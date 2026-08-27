@@ -31,7 +31,12 @@ MODELS = [
     ("gpt-5.6-terra", "openai.gpt-5.6-terra", "gpt-5.6-terra"),
     ("gpt-5.6-sol", "openai.gpt-5.6-sol", "gpt-5.6-sol"),
 ]
+# the latency sections compare exactly these two backends; other backends'
+# result files (e.g. bedrock-runtime) are skipped in load_results
 BACKEND_LABEL = {"bedrock": "Bedrock", "openai": "OpenAI 1P"}
+# quality result files use different backend keys than the perf harness
+QUALITY_BACKEND_LABEL = {"mantle": "Bedrock", "runtime": "Bedrock runtime",
+                         "saas": "OpenAI 1P"}
 
 # Categorical palette (validated: CVD dE 24.7, normal dE 33.6, both >=3:1 on #fcfcfb)
 C_BEDROCK = "#2a78d6"
@@ -44,18 +49,24 @@ SURFACE = "#fcfcfb"
 
 def load_results():
     """out[(backend, family)][size] = latest payload for that cell."""
-    out = {}
+    out, skipped_backends = {}, {}
     for path in sorted(glob.glob(os.path.join(RESULTS_DIR, "results_*.json"))):
         with open(path) as f:
             d = json.load(f)
         if d.get("schema_version") != 2 or d.get("concurrency", 1) != 1 or d.get("reasoning_effort"):
             continue
+        if d["backend"] not in BACKEND_LABEL:
+            skipped_backends[d["backend"]] = skipped_backends.get(d["backend"], 0) + 1
+            continue  # e.g. bedrock-runtime — not part of this report's comparison
         family = d["model"].replace("openai.", "")
         key = (d["backend"], family)
         cell = out.setdefault(key, {})
         prev = cell.get(d["input_label"])
         if prev is None or d["started_at"] > prev["started_at"]:
             cell[d["input_label"]] = d
+    for b, n in sorted(skipped_backends.items()):
+        print(f"(note: {n} result files from backend '{b}' skipped — the latency "
+              f"report compares bedrock vs openai only)")
     return out
 
 
@@ -394,8 +405,8 @@ def load_quickevals():
     for path in sorted(glob.glob(os.path.join(QUALITY_RESULTS_DIR, "quickeval_*.json"))):
         with open(path) as f:
             d = json.load(f)
-        backend = "Bedrock" if d["backend"] == "mantle" else "OpenAI 1P"
-        model = d["model"].replace("openai.", "")
+        backend = QUALITY_BACKEND_LABEL.get(d["backend"], d["backend"])
+        model = d["model"].removeprefix("us.").removeprefix("global.").removeprefix("openai.")
         label = f"{model} ({backend}" + (f", effort={d['reasoning_effort']}" if d["reasoning_effort"] else "") + ")"
         key = (label, d["task"])
         if key not in latest or d["timestamp"] > latest[key]["_ts"]:
@@ -407,7 +418,8 @@ def _short_model_label(label):
     """'gpt-5.6-luna (Bedrock, effort=none)' -> 'luna (BR)'; mini/nano -> 'mini (1P)'."""
     name = label.split(" ")[0]
     short = name.replace("gpt-5.6-", "").replace("gpt-5.4-", "")
-    backend = "BR" if "Bedrock" in label else "1P"
+    backend = ("BR-rt" if "Bedrock runtime" in label
+               else "BR" if "Bedrock" in label else "1P")
     return f"{short} ({backend})"
 
 
@@ -547,8 +559,8 @@ def load_deepsearchqa():
             d = json.load(f)
         if not d.get("judge_summary") or d["judge_summary"].get("mean_f1") is None:
             continue
-        backend = "Bedrock" if d["backend"] == "mantle" else "OpenAI 1P"
-        model = d["model"].replace("openai.", "")
+        backend = QUALITY_BACKEND_LABEL.get(d["backend"], d["backend"])
+        model = d["model"].removeprefix("us.").removeprefix("global.").removeprefix("openai.")
         label = f"{model} ({backend}" + (f", effort={d['reasoning_effort']}" if d.get("reasoning_effort") else "") + ")"
         if label not in latest or d["timestamp"] > latest[label]["timestamp"]:
             latest[label] = d
@@ -628,8 +640,8 @@ def load_gdpval():
             d = json.load(f)
         if not d.get("judge_summary") or d["judge_summary"].get("mean_rubric_fraction") is None:
             continue
-        backend = "Bedrock" if d["backend"] == "mantle" else "OpenAI 1P"
-        model = d["model"].replace("openai.", "")
+        backend = QUALITY_BACKEND_LABEL.get(d["backend"], d["backend"])
+        model = d["model"].removeprefix("us.").removeprefix("global.").removeprefix("openai.")
         label = f"{model} ({backend}" + (f", effort={d['reasoning_effort']}" if d.get("reasoning_effort") else "") + ")"
         if label not in latest or d["timestamp"] > latest[label]["timestamp"]:
             latest[label] = d

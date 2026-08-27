@@ -423,7 +423,7 @@ def run_trajectory(client, backend_label, model, effort, task):
 
 def main():
     p = argparse.ArgumentParser(description="Multi-turn agentic task evals")
-    p.add_argument("--backend", choices=["mantle", "saas"], required=True)
+    p.add_argument("--backend", choices=["mantle", "saas", "runtime"], required=True)
     p.add_argument("--model", required=True)
     p.add_argument("--effort", help="reasoning effort (e.g. none); omit for default")
     p.add_argument("--repeats", type=int, default=5)
