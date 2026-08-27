@@ -8,8 +8,10 @@
 flowchart LR
     H["🔬 One harness<br/>(Responses API, streaming)"]
     H -->|"--backend bedrock"| BR["🟠 Amazon Bedrock<br/>bedrock-mantle.&lt;region&gt;.api.aws"]
+    H -->|"--backend bedrock-runtime"| BRT["🟠 Amazon Bedrock<br/>bedrock-runtime.&lt;region&gt;.amazonaws.com"]
     H -->|"--backend openai"| OP["⚪ OpenAI 1P<br/>api.openai.com"]
     BR --> R["📊 Timestamped result JSONs"]
+    BRT --> R
     OP --> R
     R --> REP["📄 REPORT.md / .html / .docx<br/>charts + percentile tables"]
 ```
@@ -75,7 +77,7 @@ flowchart TD
     end
 ```
 
-Both backends run through the **same Responses-API streaming code path** — same prompts, same token budgets, same retry logic — so any difference you see is the platform, not the harness. Every run records per-call raw measurements (including reasoning-token and cached-token counts, which matter a lot for reasoning models) alongside mean/stddev/p50/p95/p99/min/max summaries.
+Every backend runs through the **same Responses-API streaming code path** — same prompts, same token budgets, same retry logic — so any difference you see is the platform, not the harness. Every run records per-call raw measurements (including reasoning-token and cached-token counts, which matter a lot for reasoning models) alongside mean/stddev/p50/p95/p99/min/max summaries.
 
 ## ⏱️ Performance suite
 
@@ -95,9 +97,9 @@ python performance/benchmark.py --backend openai --model gpt-5.6-luna 1k --runs=
 | Flag | What it does |
 |---|---|
 | `--outputs 100,1000` | Override the per-size `max_output_tokens` sweep |
-| `--effort none\|low\|medium\|high` | Set reasoning effort (gpt-5.6 accepts it on both backends) |
+| `--effort none\|low\|medium\|high` | Set reasoning effort (gpt-5.6 accepts it on every backend) |
 | `--concurrency N` | Fire N parallel requests to probe throughput under load |
-| `--list-models` | Print the model ids your credentials can reach |
+| `--list-models` | Print the backend's model ids (for `bedrock-runtime`: all ACTIVE inference profiles in the region, regardless of access grants) |
 | `--tag smoke` | Label the results filename |
 
 Compare any two runs that share a config:
@@ -114,7 +116,7 @@ Legacy single-backend scripts (`benchmark_bedrock.py`, `benchmark_openai_saas.py
 
 ## 🎯 Quality suite
 
-All quality harnesses switch backends with `--backend mantle|saas` and emit timestamped result JSONs with per-attempt token usage, so cost-per-success falls out of every run.
+The quick-eval, agentic, DeepSearchQA, and GDPval harnesses switch backends with `--backend mantle|saas|runtime` (the legacy full-eval scripts — `gpqa_diamond.py`, `hle.py`, `aime_2025.py` — support `mantle|saas` only) and emit timestamped result JSONs with per-attempt token usage, so cost-per-success falls out of every run. `mantle` is the `bedrock-mantle` OpenAI-compatible endpoint; `runtime` is the `bedrock-runtime` endpoint — same Responses API and auth, but model ids must be **inference profiles** (e.g. `--backend runtime --model us.openai.gpt-5.6-luna`; bare `openai.*` ids are rejected).
 
 **Quick evals** — fixed-seed samples of six community benchmarks (AIME 2022–24, GPQA Diamond via ungated mirror, MMLU-Pro, MATH-500, GSM8K, HumanEval with official tests executed), exact-match scoring, every model sees the same questions:
 
@@ -174,20 +176,23 @@ python performance/benchmark.py --backend bedrock --list-models   # source of tr
 
 | Env var / flag | Used by | Default |
 |---|---|---|
-| `--model` | `performance/benchmark.py`, `quality/quick_evals.py` | `openai.gpt-5.6-luna` / `gpt-5.6-luna` |
+| `--model` | `performance/benchmark.py` (required for quality scripts) | `openai.gpt-5.6-luna` (bedrock) / `us.openai.gpt-5.6-luna` (bedrock-runtime) / `gpt-5.6-luna` (openai) |
 | `BEDROCK_MODEL` / `OPENAI_MODEL` | `performance/run_all.sh` | `openai.gpt-5.6-luna` / `gpt-5.6-luna` |
 | `MANTLE_MODEL` / `SAAS_MODEL` | full quality scripts, legacy benchmarks | `openai.gpt-5.4` / `gpt-5.4` |
 | `AWS_REGION` | all Bedrock calls | `us-west-2` |
 | `MANTLE_BASE_URL` | override the Bedrock endpoint | `https://bedrock-mantle.<AWS_REGION>.api.aws/openai/v1` |
+| `BEDROCK_RUNTIME_BASE_URL` | override the bedrock-runtime endpoint | `https://bedrock-runtime.<AWS_REGION>.amazonaws.com/openai/v1` |
 
-OpenAI model ids on Bedrock (newest first): `openai.gpt-5.6-luna`, `-terra`, `-sol`, `openai.gpt-5.5`, `openai.gpt-5.4`, `openai.gpt-oss-120b`/`-20b`. ⚠️ **Availability varies by region** — e.g. as of July 2026, us-west-2 serves luna/terra but *not* sol (use us-east-1 for sol); `--list-models` is always the source of truth. The gpt-5.6 family rejects `temperature`/`top_p` but accepts `reasoning: {effort: ...}` including `none`.
+OpenAI model ids on Bedrock (newest first): `openai.gpt-5.6-luna`, `-terra`, `-sol`, `openai.gpt-5.5`, `openai.gpt-5.4`, `openai.gpt-oss-120b`/`-20b`. ⚠️ **Availability varies by region** — e.g. as of July 2026, the bedrock-mantle endpoint in us-west-2 serves luna/terra but *not* sol (use us-east-1 for sol); `--list-models` is always the source of truth. The gpt-5.6 family rejects `temperature`/`top_p` but accepts `reasoning: {effort: ...}` including `none` — on both Bedrock endpoints.
+
+**bedrock-runtime backend** (`--backend bedrock-runtime` for performance, `--backend runtime` for quality): the same models addressed by **inference-profile id** — `us.openai.gpt-5.6-luna`/`-terra`/`-sol` (US cross-region) or `global.openai.gpt-5.6-*`. Bare `openai.*` ids return a 400 here. Cross-region profiles also mean all three gpt-5.6 models are reachable from us-west-2 on this backend, unlike mantle. `--backend bedrock-runtime --list-models` prints the ACTIVE profiles for your region (the runtime endpoint itself has no models API). gpt-5.5 has no inference profile, so the GDPval judge stays on `mantle`/`saas`.
 
 ## 🔐 Auth reference
 
 <details>
 <summary><b>Bedrock and OpenAI credential options</b></summary>
 
-**Bedrock ("Mantle")** — two options:
+**Bedrock (both the "Mantle" and `bedrock-runtime` endpoints)** — two options:
 
 1. Standard IAM credentials (env vars, profile, or instance role) — scripts mint short-lived tokens automatically via `aws-bedrock-token-generator`.
 2. `AWS_BEARER_TOKEN_BEDROCK` — a pre-issued bearer token; quality scripts check this first, then fall back to IAM.

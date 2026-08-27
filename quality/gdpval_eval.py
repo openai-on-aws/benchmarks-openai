@@ -216,7 +216,7 @@ def judge_file(path, tasks_by_id, backend="saas"):
 
 def main():
     p = argparse.ArgumentParser(description="GDPval text-only slice, rubric-judged")
-    p.add_argument("--backend", choices=["mantle", "saas"])
+    p.add_argument("--backend", choices=["mantle", "saas", "runtime"])
     p.add_argument("--model")
     p.add_argument("--effort")
     p.add_argument("--n", type=int, default=N_TASKS)
