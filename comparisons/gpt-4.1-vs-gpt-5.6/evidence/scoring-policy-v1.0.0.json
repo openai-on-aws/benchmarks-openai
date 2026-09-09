@@ -1,0 +1,27 @@
+{
+  "artifact_scope": "These definitions describe measurement corrections to saved responses. This package regenerates aggregate reports; it does not redistribute the execution harness, grading implementation, or individual response records.",
+  "attribution": "Score changes reflect corrected measurement of saved outputs, not new model performance, prompt tuning, or independent human adjudication.",
+  "comparison": "Keep GPT-4.1 omitted versus GPT-5.6 none separate from low/high sensitivity; do not pool repeated stages.",
+  "denominators": "Every planned full-stage observation remains included; noncompleted responses receive no task-success credit.",
+  "inference": false,
+  "math_rules": [
+    "Keep the final boxed-answer extraction for MATH-500.",
+    "Recognize complete thousands-separated numbers without treating them as lists.",
+    "Preserve nonempty textual answers; never delete arbitrary text commands.",
+    "Compare numeric arithmetic and square roots with a bounded non-executing AST interpreter, Decimal precision 120 and absolute/relative tolerance 1e-70.",
+    "Arithmetic limits: 512 expression characters, 96 tokens/AST nodes, nesting at most 20, literal length 40, integer exponent magnitude at most 12, intermediate magnitude at most 1e30.",
+    "Preserve exact normalized symbolic/base-notation matches; flag unsupported nonmatching expressions without granting success.",
+    "Treat explicit sets and bare multi-answer lists as unordered; preserve order for explicit tuples and bracketed lists.",
+    "Recognize valid ordinal suffixes only in grade questions.",
+    "Allow trailing noun/unit phrases only when their words occur in the task context; reject qualifiers and conflicting explicit units.",
+    "Decode AIME presentation wrappers, select the last declared final-answer line or terminal boxed answer, and require a complete integer token from 0 through 999, without decimal truncation or last-number guessing."
+  ],
+  "reference_change": "Only supplier/customer address newline-to-comma substitutions introduced by compact invoice rendering; require the corrected reference to occur in the source input.",
+  "reference_revision": "invoice-reference-correction-1.0.0",
+  "scope": [
+    "structured-document-extraction",
+    "math500",
+    "aime"
+  ],
+  "version": "benchmark-scorecard-1.0.0"
+}

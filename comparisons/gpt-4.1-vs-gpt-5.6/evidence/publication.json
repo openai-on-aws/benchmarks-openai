@@ -1,0 +1,51 @@
+{
+  "candidate_date": "2026-09-01",
+  "files": {
+    "BENCHMARK_SOURCES.md": {
+      "bytes": 2460,
+      "sha256": "b8c94e1d85f81b3ccc4b0161d98926633bc5c59ada6934be74e284b9995307cd"
+    },
+    "README.md": {
+      "bytes": 5684,
+      "sha256": "3cce0a7744df773084f61254a7de7ace056fc13bad213ddbc8d1b0413e9f2713"
+    },
+    "RESULTS.md": {
+      "bytes": 22702,
+      "sha256": "a4c037845201abe148f2cb991363599d3942b38cb8f783aa12ed109316971fd0"
+    },
+    "evidence/comparison-evidence-map.json": {
+      "bytes": 6529,
+      "sha256": "e3a5f5fab6c6786a1bf62f138c7201e9e50bee21ae3096ddfeda6951d34c5fee"
+    },
+    "evidence/scoring-policy-v1.0.0.json": {
+      "bytes": 2334,
+      "sha256": "9f0980f53cad9d017557d2d9aef591b0a5a361e3a4502763f708e96c0eaadd3e"
+    },
+    "evidence/scoring-policy-v1.1.0.json": {
+      "bytes": 2668,
+      "sha256": "79e9dd0eb0a0dcbf61444142025d650926e8cf3cf98be915b89e0a00a8337aca"
+    },
+    "render_report.py": {
+      "bytes": 17625,
+      "sha256": "3c7e1514135d311351bfdf08a94c998cc01f3e78457f854f5ae7509711dc1ecb"
+    },
+    "results/2026-08-30/scorecard.csv": {
+      "bytes": 23847,
+      "sha256": "f2e769c69c5e9b37ed436e970764f07e1c64c22f11dba9c4276a677e1fdb447e"
+    },
+    "results/2026-08-30/scorecard.json": {
+      "bytes": 375386,
+      "sha256": "1fc8900b08ef308b1f5ed1e1a36df28685d7395a1f61fe07a196a425c811aa37"
+    }
+  },
+  "inference_calls_during_packaging": 0,
+  "manifest_version": "benchmark-publication-manifest-1.0",
+  "measurement_version": "1.1.0",
+  "package": "gpt-4.1-vs-gpt-5.6",
+  "package_version": "1.0.0-rc2",
+  "path_scope": "Every path is relative to this comparison package. This manifest does not hash itself.",
+  "provenance_scope": "Only shipped-file hashes are listed. Full execution/source provenance is retained in the internal review record.",
+  "reproduction_scope": "File-integrity verification and offline report regeneration; not independent inference or grading replication.",
+  "scope": "Aggregate measurements, public-facing comparison/scoring metadata, source references, and deterministic report generation. No per-case logs, datasets, or inference/grading harness are included.",
+  "status": "release-candidate; approval pending"
+}

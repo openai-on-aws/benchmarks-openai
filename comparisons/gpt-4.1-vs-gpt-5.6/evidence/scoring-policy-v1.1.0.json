@@ -1,0 +1,21 @@
+{
+  "address_paths": [
+    "supplier.address",
+    "customer.address"
+  ],
+  "address_rule": "Retain every strict field match. For a mismatched address string, compare both sides after replacing each LF newline with comma-space and collapsing whitespace. Accept only exact equality of these canonical strings. Retain all other characters, digits, case, punctuation, and component order. This is a narrow formatting equivalence, not general semantic address matching.",
+  "attribution": "Offline metric revision on the same saved responses. This is a change in measurement, not a model or prompt improvement or proof of production migration readiness.",
+  "complete_document_success": "Response status is completed, original JSON/schema checks pass, and every field matches under its existing rule or the additional address rule. All planned observations remain in the denominator.",
+  "cost": "Retain metered spend including all attempts; divide by strict and normalized successful-document counts separately. Token, timing, attempt and total-spend records remain unchanged.",
+  "evidence": "Original measurement artifacts and the full source-to-release audit trail are retained in the internal review record. This package verifies the shipped aggregate files and regenerates reports; it does not reproduce individual inference calls or per-case grading.",
+  "inference_calls": 0,
+  "paired_statistics": "Use matched task outcomes, exact two-sided McNemar p-values, and a deterministic stratified task bootstrap with 10000 resamples. Apply Holm within each three-model comparison family and scoring rule. Preserve GPT-4.1 versus none and low versus high as separate comparison families. None versus high is descriptive across runs with timing/output-ceiling differences.",
+  "parent_version": "benchmark-scorecard-1.0.0",
+  "primary_metric": "address-normalized document accuracy",
+  "scope": "Apply the same rule to all 192 saved evaluation documents in each of 10 saved model/effort conditions: GPT-4.1 omitted and GPT-5.6 Luna/Terra/Sol none/low/high. All 110 other workload/model/effort cells retain v1.0.0 corrected scores.",
+  "secondary_metric": "strict document accuracy",
+  "strict_baseline": "v1.0.0 corrected invoice references; strict scoring collapses whitespace, normalizes currency case, and compares money at cent precision.",
+  "validation": "Validate original JSON and schema before applying address equivalence. No JSON repair, missing-field insertion, type coercion, case folding, abbreviation expansion, punctuation deletion, or fuzzy matching is added.",
+  "version": "benchmark-scorecard-1.1.0",
+  "workload": "structured-document-extraction"
+}
