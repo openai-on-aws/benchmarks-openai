@@ -25,6 +25,7 @@ flowchart LR
 | 🤖 **quality/ (agentic)** | How do multi-turn agents behave? Turn counts, trajectory cost, live web research | `agentic_evals.py` · `deepsearchqa/` |
 | 📝 **quality/ (deliverables)** | Can it produce professional work products? Rubric-judged GDPval slice | `gdpval_eval.py` |
 | 🧩 **parity/** | Which Responses-API features work on Bedrock? 34 live checks | `run_parity.py` |
+| 📊 **[GPT-4.1 vs GPT-5.6 comparison](comparisons/gpt-4.1-vs-gpt-5.6/)** | How do quality, recorded cost, and latency compare across 12 workloads and reasoning settings? Cross-platform saved-run evidence | [Results](comparisons/gpt-4.1-vs-gpt-5.6/RESULTS.md) · [Offline verification](comparisons/gpt-4.1-vs-gpt-5.6/README.md#reproduce-the-report) |
 | 📄 **report** | One shareable document from all results | `performance/report.py` |
 
 ## 🚀 Quick start

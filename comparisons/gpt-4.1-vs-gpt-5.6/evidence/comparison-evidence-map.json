@@ -1,0 +1,172 @@
+{
+  "comparison_boundaries": {
+    "gpt41_vs_gpt56_none": "Descriptive cross-platform comparison. GPT-4.1 omits reasoning effort; GPT-5.6 uses none. Model, provider, endpoint, serving path, context limits, cache implementation, and price differ.",
+    "gpt56_low_vs_high": "Reasoning-effort sensitivity on the same Bedrock Mantle path, with frozen tasks, common prompts, graders, output ceilings, and other request controls. Run-window/service variation and sample uncertainty still limit generalization.",
+    "gpt56_none_vs_low_high": "Descriptive: these runs also differ in timing, some output ceilings, and overlapping suite execution. The same GPT-4.1 baseline is repeated only for reference. See the executed settings for per-process and observed cross-suite concurrency."
+  },
+  "configurations": [
+    {
+      "model_id": "gpt-4.1-2025-04-14",
+      "reasoning_settings": [
+        "omitted"
+      ],
+      "region": null,
+      "service_tier": "default",
+      "serving_path": "OpenAI Responses API"
+    },
+    {
+      "model_id": "openai.gpt-5.6-luna",
+      "reasoning_settings": [
+        "none",
+        "low",
+        "high"
+      ],
+      "region": "us-east-1",
+      "service_tier": "default",
+      "serving_path": "Amazon Bedrock Mantle Responses API"
+    },
+    {
+      "model_id": "openai.gpt-5.6-terra",
+      "reasoning_settings": [
+        "none",
+        "low",
+        "high"
+      ],
+      "region": "us-east-1",
+      "service_tier": "default",
+      "serving_path": "Amazon Bedrock Mantle Responses API"
+    },
+    {
+      "model_id": "openai.gpt-5.6-sol",
+      "reasoning_settings": [
+        "none",
+        "low",
+        "high"
+      ],
+      "region": "us-east-1",
+      "service_tier": "default",
+      "serving_path": "Amazon Bedrock Mantle Responses API"
+    }
+  ],
+  "coverage": {
+    "api_completed_observations": 47795,
+    "configurations": 10,
+    "planned_observations": 47960,
+    "result_cells": 120,
+    "workloads": 12
+  },
+  "full_run_dates_utc": [
+    "2026-08-26",
+    "2026-08-30"
+  ],
+  "low_high_output_token_ceiling": 16384,
+  "measurement_version": "1.1.0",
+  "methodology_files": {
+    "overview": "METHODOLOGY.md",
+    "executed_settings": "evidence/run-settings.json",
+    "dataset_selection": "evidence/dataset-selection.json"
+  },
+  "metric_treatment": "All planned cases stay in their denominators. F1 is not a count of successful documents. Unlike quality metrics are not averaged.",
+  "reference_scope": "Links identify public benchmark sources, not redistribution rights or the exact selected inputs. This export contains no source examples or per-case logs.",
+  "reproduction_scope": "Offline aggregate-report reproduction only. Full source/run identifiers remain in the internal review record.",
+  "schema_version": "benchmark-comparison-metadata-1.0",
+  "stage_treatment": "Only full-stage observations are scored; smoke, pilot, and development runs are not pooled.",
+  "workloads": [
+    {
+      "benchmark": "classification-routing",
+      "name": "Synthetic classification/routing",
+      "planned_per_configuration": 192,
+      "primary_metric": "task success",
+      "reference_note": "Project-authored synthetic evaluation; source examples are outside this package.",
+      "reference_url": null
+    },
+    {
+      "benchmark": "structured-document-extraction",
+      "name": "Synthetic invoice extraction",
+      "planned_per_configuration": 192,
+      "primary_metric": "address-normalized document accuracy",
+      "reference_note": "Project-authored synthetic evaluation; source examples are outside this package.",
+      "reference_url": null
+    },
+    {
+      "benchmark": "banking77",
+      "name": "Banking77",
+      "planned_per_configuration": 3080,
+      "primary_metric": "exact-match accuracy",
+      "reference_note": "PolyAI public dataset repository; official test split.",
+      "reference_url": "https://github.com/PolyAI-LDN/task-specific-datasets"
+    },
+    {
+      "benchmark": "cord-image",
+      "name": "CORD v2 original images",
+      "planned_per_configuration": 100,
+      "primary_metric": "entity F1",
+      "reference_note": "CORD public dataset repository; image input arm.",
+      "reference_url": "https://github.com/clovaai/cord"
+    },
+    {
+      "benchmark": "cord-ocr",
+      "name": "CORD v2 provided OCR",
+      "planned_per_configuration": 100,
+      "primary_metric": "entity F1",
+      "reference_note": "Same receipt benchmark; provided-OCR input arm.",
+      "reference_url": "https://github.com/clovaai/cord"
+    },
+    {
+      "benchmark": "extractbench",
+      "name": "ExtractBench",
+      "planned_per_configuration": 370,
+      "primary_metric": "mean unified-value F1",
+      "reference_note": "LlamaIndex ExtractBench dataset; all 370 selected PDFs.",
+      "reference_url": "https://huggingface.co/datasets/llamaindex/ExtractBench"
+    },
+    {
+      "benchmark": "gsm8k",
+      "name": "GSM8K",
+      "planned_per_configuration": 100,
+      "primary_metric": "task success",
+      "reference_note": "Evaluated subset; the reported N is not the complete dataset size.",
+      "reference_url": "https://huggingface.co/datasets/openai/gsm8k"
+    },
+    {
+      "benchmark": "math500",
+      "name": "MATH-500",
+      "planned_per_configuration": 100,
+      "primary_metric": "task success",
+      "reference_note": "Evaluated subset; the reported N is not the complete dataset size.",
+      "reference_url": "https://huggingface.co/datasets/HuggingFaceH4/MATH-500"
+    },
+    {
+      "benchmark": "aime",
+      "name": "AIME 1983–2024 mirror",
+      "planned_per_configuration": 60,
+      "primary_metric": "task success",
+      "reference_note": "Evaluated subset from the mirror; the link does not establish underlying contest-content rights.",
+      "reference_url": "https://huggingface.co/datasets/qq8933/AIME_1983_2024"
+    },
+    {
+      "benchmark": "gpqa",
+      "name": "GPQA Diamond",
+      "planned_per_configuration": 198,
+      "primary_metric": "task success",
+      "reference_note": "GPQA Diamond evaluation; source access terms apply.",
+      "reference_url": "https://huggingface.co/datasets/Idavidrein/gpqa"
+    },
+    {
+      "benchmark": "mmlu_pro",
+      "name": "MMLU-Pro",
+      "planned_per_configuration": 140,
+      "primary_metric": "task success",
+      "reference_note": "Evaluated subset; the reported N is not the complete dataset size.",
+      "reference_url": "https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro"
+    },
+    {
+      "benchmark": "humaneval",
+      "name": "HumanEval",
+      "planned_per_configuration": 164,
+      "primary_metric": "task success",
+      "reference_note": "Small-function coding evaluation; not repository-scale engineering.",
+      "reference_url": "https://huggingface.co/datasets/openai/openai_humaneval"
+    }
+  ]
+}
