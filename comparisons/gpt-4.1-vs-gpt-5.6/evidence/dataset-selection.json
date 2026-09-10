@@ -1,0 +1,2623 @@
+{
+  "schema_version": "1.0",
+  "scope": "Dataset identity and full-stage membership for the published comparison. Counts are per model/reasoning condition.",
+  "verification": "Every published condition uses the same case IDs per workload. Full-stage execution membership was checked against frozen selection records.",
+  "reproduction_boundary": "This metadata identifies exact public benchmark inputs where access permits. It does not include benchmark problems, labels, prompts, PDFs/images, model outputs, or the original inference/grading harness. Synthetic IDs identify the tested records but cannot recreate their content without the generator; the package reproduces aggregate reporting only.",
+  "seeds": {
+    "public_sampling_and_gpqa_option_order": 42,
+    "core_development_selection": 770056,
+    "operational_stage_membership": 5602026,
+    "execution_order": 41056026,
+    "note": "These seeds control different operations. No model sampling seed was supplied. Workloads using complete splits or deterministic generation do not have a subset sampling seed."
+  },
+  "workloads": [
+    {
+      "workload": "gsm8k",
+      "source_url": "https://huggingface.co/datasets/openai/gsm8k",
+      "source_revision": "740312add88f781978c0658806c59bc2815b9866",
+      "configuration": "main",
+      "split": "test",
+      "evaluated_n": 100,
+      "selection_procedure": "Python random.Random(42).sample over zero-based test row indices, without replacement.",
+      "selection_seed": 42,
+      "source_membership": [
+        {
+          "case_id": "gsm8k_0",
+          "source_row_index_zero_based": 1309
+        },
+        {
+          "case_id": "gsm8k_1",
+          "source_row_index_zero_based": 228
+        },
+        {
+          "case_id": "gsm8k_2",
+          "source_row_index_zero_based": 51
+        },
+        {
+          "case_id": "gsm8k_3",
+          "source_row_index_zero_based": 563
+        },
+        {
+          "case_id": "gsm8k_4",
+          "source_row_index_zero_based": 501
+        },
+        {
+          "case_id": "gsm8k_5",
+          "source_row_index_zero_based": 457
+        },
+        {
+          "case_id": "gsm8k_6",
+          "source_row_index_zero_based": 285
+        },
+        {
+          "case_id": "gsm8k_7",
+          "source_row_index_zero_based": 209
+        },
+        {
+          "case_id": "gsm8k_8",
+          "source_row_index_zero_based": 1116
+        },
+        {
+          "case_id": "gsm8k_9",
+          "source_row_index_zero_based": 178
+        },
+        {
+          "case_id": "gsm8k_10",
+          "source_row_index_zero_based": 1209
+        },
+        {
+          "case_id": "gsm8k_11",
+          "source_row_index_zero_based": 864
+        },
+        {
+          "case_id": "gsm8k_12",
+          "source_row_index_zero_based": 65
+        },
+        {
+          "case_id": "gsm8k_13",
+          "source_row_index_zero_based": 61
+        },
+        {
+          "case_id": "gsm8k_14",
+          "source_row_index_zero_based": 191
+        },
+        {
+          "case_id": "gsm8k_15",
+          "source_row_index_zero_based": 447
+        },
+        {
+          "case_id": "gsm8k_16",
+          "source_row_index_zero_based": 476
+        },
+        {
+          "case_id": "gsm8k_17",
+          "source_row_index_zero_based": 1034
+        },
+        {
+          "case_id": "gsm8k_18",
+          "source_row_index_zero_based": 1232
+        },
+        {
+          "case_id": "gsm8k_19",
+          "source_row_index_zero_based": 54
+        },
+        {
+          "case_id": "gsm8k_20",
+          "source_row_index_zero_based": 1149
+        },
+        {
+          "case_id": "gsm8k_21",
+          "source_row_index_zero_based": 407
+        },
+        {
+          "case_id": "gsm8k_22",
+          "source_row_index_zero_based": 859
+        },
+        {
+          "case_id": "gsm8k_23",
+          "source_row_index_zero_based": 451
+        },
+        {
+          "case_id": "gsm8k_24",
+          "source_row_index_zero_based": 919
+        },
+        {
+          "case_id": "gsm8k_25",
+          "source_row_index_zero_based": 1206
+        },
+        {
+          "case_id": "gsm8k_26",
+          "source_row_index_zero_based": 569
+        },
+        {
+          "case_id": "gsm8k_27",
+          "source_row_index_zero_based": 13
+        },
+        {
+          "case_id": "gsm8k_28",
+          "source_row_index_zero_based": 326
+        },
+        {
+          "case_id": "gsm8k_29",
+          "source_row_index_zero_based": 865
+        },
+        {
+          "case_id": "gsm8k_30",
+          "source_row_index_zero_based": 696
+        },
+        {
+          "case_id": "gsm8k_31",
+          "source_row_index_zero_based": 318
+        },
+        {
+          "case_id": "gsm8k_32",
+          "source_row_index_zero_based": 440
+        },
+        {
+          "case_id": "gsm8k_33",
+          "source_row_index_zero_based": 689
+        },
+        {
+          "case_id": "gsm8k_34",
+          "source_row_index_zero_based": 189
+        },
+        {
+          "case_id": "gsm8k_35",
+          "source_row_index_zero_based": 778
+        },
+        {
+          "case_id": "gsm8k_36",
+          "source_row_index_zero_based": 198
+        },
+        {
+          "case_id": "gsm8k_37",
+          "source_row_index_zero_based": 735
+        },
+        {
+          "case_id": "gsm8k_38",
+          "source_row_index_zero_based": 704
+        },
+        {
+          "case_id": "gsm8k_39",
+          "source_row_index_zero_based": 1236
+        },
+        {
+          "case_id": "gsm8k_40",
+          "source_row_index_zero_based": 541
+        },
+        {
+          "case_id": "gsm8k_41",
+          "source_row_index_zero_based": 88
+        },
+        {
+          "case_id": "gsm8k_42",
+          "source_row_index_zero_based": 940
+        },
+        {
+          "case_id": "gsm8k_43",
+          "source_row_index_zero_based": 1098
+        },
+        {
+          "case_id": "gsm8k_44",
+          "source_row_index_zero_based": 255
+        },
+        {
+          "case_id": "gsm8k_45",
+          "source_row_index_zero_based": 775
+        },
+        {
+          "case_id": "gsm8k_46",
+          "source_row_index_zero_based": 161
+        },
+        {
+          "case_id": "gsm8k_47",
+          "source_row_index_zero_based": 1130
+        },
+        {
+          "case_id": "gsm8k_48",
+          "source_row_index_zero_based": 600
+        },
+        {
+          "case_id": "gsm8k_49",
+          "source_row_index_zero_based": 1287
+        },
+        {
+          "case_id": "gsm8k_50",
+          "source_row_index_zero_based": 1266
+        },
+        {
+          "case_id": "gsm8k_51",
+          "source_row_index_zero_based": 740
+        },
+        {
+          "case_id": "gsm8k_52",
+          "source_row_index_zero_based": 1182
+        },
+        {
+          "case_id": "gsm8k_53",
+          "source_row_index_zero_based": 393
+        },
+        {
+          "case_id": "gsm8k_54",
+          "source_row_index_zero_based": 142
+        },
+        {
+          "case_id": "gsm8k_55",
+          "source_row_index_zero_based": 93
+        },
+        {
+          "case_id": "gsm8k_56",
+          "source_row_index_zero_based": 466
+        },
+        {
+          "case_id": "gsm8k_57",
+          "source_row_index_zero_based": 592
+        },
+        {
+          "case_id": "gsm8k_58",
+          "source_row_index_zero_based": 163
+        },
+        {
+          "case_id": "gsm8k_59",
+          "source_row_index_zero_based": 206
+        },
+        {
+          "case_id": "gsm8k_60",
+          "source_row_index_zero_based": 928
+        },
+        {
+          "case_id": "gsm8k_61",
+          "source_row_index_zero_based": 1301
+        },
+        {
+          "case_id": "gsm8k_62",
+          "source_row_index_zero_based": 747
+        },
+        {
+          "case_id": "gsm8k_63",
+          "source_row_index_zero_based": 333
+        },
+        {
+          "case_id": "gsm8k_64",
+          "source_row_index_zero_based": 758
+        },
+        {
+          "case_id": "gsm8k_65",
+          "source_row_index_zero_based": 727
+        },
+        {
+          "case_id": "gsm8k_66",
+          "source_row_index_zero_based": 429
+        },
+        {
+          "case_id": "gsm8k_67",
+          "source_row_index_zero_based": 546
+        },
+        {
+          "case_id": "gsm8k_68",
+          "source_row_index_zero_based": 146
+        },
+        {
+          "case_id": "gsm8k_69",
+          "source_row_index_zero_based": 1247
+        },
+        {
+          "case_id": "gsm8k_70",
+          "source_row_index_zero_based": 1300
+        },
+        {
+          "case_id": "gsm8k_71",
+          "source_row_index_zero_based": 350
+        },
+        {
+          "case_id": "gsm8k_72",
+          "source_row_index_zero_based": 1093
+        },
+        {
+          "case_id": "gsm8k_73",
+          "source_row_index_zero_based": 334
+        },
+        {
+          "case_id": "gsm8k_74",
+          "source_row_index_zero_based": 946
+        },
+        {
+          "case_id": "gsm8k_75",
+          "source_row_index_zero_based": 777
+        },
+        {
+          "case_id": "gsm8k_76",
+          "source_row_index_zero_based": 552
+        },
+        {
+          "case_id": "gsm8k_77",
+          "source_row_index_zero_based": 1310
+        },
+        {
+          "case_id": "gsm8k_78",
+          "source_row_index_zero_based": 1140
+        },
+        {
+          "case_id": "gsm8k_79",
+          "source_row_index_zero_based": 449
+        },
+        {
+          "case_id": "gsm8k_80",
+          "source_row_index_zero_based": 664
+        },
+        {
+          "case_id": "gsm8k_81",
+          "source_row_index_zero_based": 114
+        },
+        {
+          "case_id": "gsm8k_82",
+          "source_row_index_zero_based": 469
+        },
+        {
+          "case_id": "gsm8k_83",
+          "source_row_index_zero_based": 646
+        },
+        {
+          "case_id": "gsm8k_84",
+          "source_row_index_zero_based": 821
+        },
+        {
+          "case_id": "gsm8k_85",
+          "source_row_index_zero_based": 548
+        },
+        {
+          "case_id": "gsm8k_86",
+          "source_row_index_zero_based": 135
+        },
+        {
+          "case_id": "gsm8k_87",
+          "source_row_index_zero_based": 432
+        },
+        {
+          "case_id": "gsm8k_88",
+          "source_row_index_zero_based": 1161
+        },
+        {
+          "case_id": "gsm8k_89",
+          "source_row_index_zero_based": 644
+        },
+        {
+          "case_id": "gsm8k_90",
+          "source_row_index_zero_based": 435
+        },
+        {
+          "case_id": "gsm8k_91",
+          "source_row_index_zero_based": 1022
+        },
+        {
+          "case_id": "gsm8k_92",
+          "source_row_index_zero_based": 810
+        },
+        {
+          "case_id": "gsm8k_93",
+          "source_row_index_zero_based": 1316
+        },
+        {
+          "case_id": "gsm8k_94",
+          "source_row_index_zero_based": 939
+        },
+        {
+          "case_id": "gsm8k_95",
+          "source_row_index_zero_based": 292
+        },
+        {
+          "case_id": "gsm8k_96",
+          "source_row_index_zero_based": 542
+        },
+        {
+          "case_id": "gsm8k_97",
+          "source_row_index_zero_based": 505
+        },
+        {
+          "case_id": "gsm8k_98",
+          "source_row_index_zero_based": 1103
+        },
+        {
+          "case_id": "gsm8k_99",
+          "source_row_index_zero_based": 538
+        }
+      ],
+      "case_id_mapping": "case_id is the evaluation sample ordinal; source_row_index_zero_based identifies the row at the pinned revision.",
+      "category_counts": {
+        "gsm8k": 100
+      }
+    },
+    {
+      "workload": "math500",
+      "source_url": "https://huggingface.co/datasets/HuggingFaceH4/MATH-500",
+      "source_revision": "6e4ed1a2a79af7d8630a6b768ec859cb5af4d3be",
+      "configuration": null,
+      "split": "test",
+      "evaluated_n": 100,
+      "selection_procedure": "Python random.Random(42).sample over rows of the pinned test split, without replacement.",
+      "selection_seed": 42,
+      "source_membership": [
+        {
+          "case_id": "test/intermediate_algebra/117.json"
+        },
+        {
+          "case_id": "test/intermediate_algebra/1168.json"
+        },
+        {
+          "case_id": "test/number_theory/737.json"
+        },
+        {
+          "case_id": "test/prealgebra/1865.json"
+        },
+        {
+          "case_id": "test/number_theory/156.json"
+        },
+        {
+          "case_id": "test/algebra/2232.json"
+        },
+        {
+          "case_id": "test/intermediate_algebra/1898.json"
+        },
+        {
+          "case_id": "test/number_theory/516.json"
+        },
+        {
+          "case_id": "test/number_theory/1185.json"
+        },
+        {
+          "case_id": "test/prealgebra/951.json"
+        },
+        {
+          "case_id": "test/algebra/1338.json"
+        },
+        {
+          "case_id": "test/intermediate_algebra/1232.json"
+        },
+        {
+          "case_id": "test/intermediate_algebra/1102.json"
+        },
+        {
+          "case_id": "test/prealgebra/1512.json"
+        },
+        {
+          "case_id": "test/prealgebra/1558.json"
+        },
+        {
+          "case_id": "test/prealgebra/465.json"
+        },
+        {
+          "case_id": "test/prealgebra/1436.json"
+        },
+        {
+          "case_id": "test/intermediate_algebra/134.json"
+        },
+        {
+          "case_id": "test/precalculus/990.json"
+        },
+        {
+          "case_id": "test/algebra/305.json"
+        },
+        {
+          "case_id": "test/counting_and_probability/23957.json"
+        },
+        {
+          "case_id": "test/prealgebra/1733.json"
+        },
+        {
+          "case_id": "test/algebra/694.json"
+        },
+        {
+          "case_id": "test/geometry/711.json"
+        },
+        {
+          "case_id": "test/geometry/248.json"
+        },
+        {
+          "case_id": "test/number_theory/631.json"
+        },
+        {
+          "case_id": "test/intermediate_algebra/582.json"
+        },
+        {
+          "case_id": "test/number_theory/109.json"
+        },
+        {
+          "case_id": "test/intermediate_algebra/190.json"
+        },
+        {
+          "case_id": "test/intermediate_algebra/1407.json"
+        },
+        {
+          "case_id": "test/geometry/477.json"
+        },
+        {
+          "case_id": "test/counting_and_probability/765.json"
+        },
+        {
+          "case_id": "test/algebra/2058.json"
+        },
+        {
+          "case_id": "test/prealgebra/2057.json"
+        },
+        {
+          "case_id": "test/prealgebra/1044.json"
+        },
+        {
+          "case_id": "test/counting_and_probability/159.json"
+        },
+        {
+          "case_id": "test/algebra/2391.json"
+        },
+        {
+          "case_id": "test/intermediate_algebra/1779.json"
+        },
+        {
+          "case_id": "test/number_theory/572.json"
+        },
+        {
+          "case_id": "test/algebra/1031.json"
+        },
+        {
+          "case_id": "test/intermediate_algebra/2146.json"
+        },
+        {
+          "case_id": "test/algebra/1035.json"
+        },
+        {
+          "case_id": "test/prealgebra/1353.json"
+        },
+        {
+          "case_id": "test/precalculus/1082.json"
+        },
+        {
+          "case_id": "test/algebra/351.json"
+        },
+        {
+          "case_id": "test/intermediate_algebra/834.json"
+        },
+        {
+          "case_id": "test/prealgebra/192.json"
+        },
+        {
+          "case_id": "test/intermediate_algebra/345.json"
+        },
+        {
+          "case_id": "test/algebra/853.json"
+        },
+        {
+          "case_id": "test/algebra/841.json"
+        },
+        {
+          "case_id": "test/intermediate_algebra/1350.json"
+        },
+        {
+          "case_id": "test/precalculus/1252.json"
+        },
+        {
+          "case_id": "test/intermediate_algebra/2196.json"
+        },
+        {
+          "case_id": "test/prealgebra/1388.json"
+        },
+        {
+          "case_id": "test/algebra/1082.json"
+        },
+        {
+          "case_id": "test/number_theory/410.json"
+        },
+        {
+          "case_id": "test/number_theory/598.json"
+        },
+        {
+          "case_id": "test/number_theory/203.json"
+        },
+        {
+          "case_id": "test/prealgebra/1297.json"
+        },
+        {
+          "case_id": "test/algebra/2680.json"
+        },
+        {
+          "case_id": "test/algebra/1837.json"
+        },
+        {
+          "case_id": "test/algebra/2264.json"
+        },
+        {
+          "case_id": "test/prealgebra/153.json"
+        },
+        {
+          "case_id": "test/geometry/686.json"
+        },
+        {
+          "case_id": "test/intermediate_algebra/279.json"
+        },
+        {
+          "case_id": "test/intermediate_algebra/1422.json"
+        },
+        {
+          "case_id": "test/prealgebra/930.json"
+        },
+        {
+          "case_id": "test/algebra/1184.json"
+        },
+        {
+          "case_id": "test/intermediate_algebra/964.json"
+        },
+        {
+          "case_id": "test/algebra/1339.json"
+        },
+        {
+          "case_id": "test/prealgebra/954.json"
+        },
+        {
+          "case_id": "test/algebra/276.json"
+        },
+        {
+          "case_id": "test/algebra/1214.json"
+        },
+        {
+          "case_id": "test/precalculus/1201.json"
+        },
+        {
+          "case_id": "test/prealgebra/1924.json"
+        },
+        {
+          "case_id": "test/precalculus/96.json"
+        },
+        {
+          "case_id": "test/number_theory/627.json"
+        },
+        {
+          "case_id": "test/algebra/2193.json"
+        },
+        {
+          "case_id": "test/number_theory/368.json"
+        },
+        {
+          "case_id": "test/algebra/2157.json"
+        },
+        {
+          "case_id": "test/algebra/114.json"
+        },
+        {
+          "case_id": "test/algebra/988.json"
+        },
+        {
+          "case_id": "test/counting_and_probability/731.json"
+        },
+        {
+          "case_id": "test/intermediate_algebra/1279.json"
+        },
+        {
+          "case_id": "test/intermediate_algebra/1217.json"
+        },
+        {
+          "case_id": "test/prealgebra/996.json"
+        },
+        {
+          "case_id": "test/precalculus/323.json"
+        },
+        {
+          "case_id": "test/intermediate_algebra/1354.json"
+        },
+        {
+          "case_id": "test/geometry/73.json"
+        },
+        {
+          "case_id": "test/number_theory/978.json"
+        },
+        {
+          "case_id": "test/intermediate_algebra/2046.json"
+        },
+        {
+          "case_id": "test/geometry/702.json"
+        },
+        {
+          "case_id": "test/algebra/1275.json"
+        },
+        {
+          "case_id": "test/number_theory/914.json"
+        },
+        {
+          "case_id": "test/counting_and_probability/737.json"
+        },
+        {
+          "case_id": "test/intermediate_algebra/2022.json"
+        },
+        {
+          "case_id": "test/intermediate_algebra/158.json"
+        },
+        {
+          "case_id": "test/counting_and_probability/238.json"
+        },
+        {
+          "case_id": "test/algebra/509.json"
+        },
+        {
+          "case_id": "test/intermediate_algebra/428.json"
+        }
+      ],
+      "case_id_mapping": "case_id is upstream unique_id.",
+      "category_counts": {
+        "Algebra": 25,
+        "Counting & Probability": 6,
+        "Geometry": 6,
+        "Intermediate Algebra": 25,
+        "Number Theory": 14,
+        "Prealgebra": 18,
+        "Precalculus": 6
+      }
+    },
+    {
+      "workload": "aime",
+      "source_url": "https://huggingface.co/datasets/qq8933/AIME_1983_2024",
+      "source_revision": "3e2cc86390666c5c756622afc0eeb9e6194496bc",
+      "configuration": null,
+      "split": "train",
+      "evaluated_n": 60,
+      "selection_procedure": "Sort the pinned train split descending by (Year, Problem Number), preserving upstream order for ties. Traverse that order, skip rows whose stripped Answer cannot be parsed by int(), and stop after 60 parseable records.",
+      "selection_seed": null,
+      "source_membership": [
+        {
+          "case_id": "aime_2024_II_15"
+        },
+        {
+          "case_id": "aime_2024_II_14"
+        },
+        {
+          "case_id": "aime_2024_II_13"
+        },
+        {
+          "case_id": "aime_2024_II_12"
+        },
+        {
+          "case_id": "aime_2024_II_11"
+        },
+        {
+          "case_id": "aime_2024_II_10"
+        },
+        {
+          "case_id": "aime_2024_II_8"
+        },
+        {
+          "case_id": "aime_2024_II_7"
+        },
+        {
+          "case_id": "aime_2024_II_6"
+        },
+        {
+          "case_id": "aime_2024_II_5"
+        },
+        {
+          "case_id": "aime_2024_II_4"
+        },
+        {
+          "case_id": "aime_2024_II_3"
+        },
+        {
+          "case_id": "aime_2024_II_2"
+        },
+        {
+          "case_id": "aime_2024_II_1"
+        },
+        {
+          "case_id": "aime_2023_II_15"
+        },
+        {
+          "case_id": "aime_2023_I_14"
+        },
+        {
+          "case_id": "aime_2023_II_14"
+        },
+        {
+          "case_id": "aime_2023_I_13"
+        },
+        {
+          "case_id": "aime_2023_II_13"
+        },
+        {
+          "case_id": "aime_2023_I_12"
+        },
+        {
+          "case_id": "aime_2023_II_12"
+        },
+        {
+          "case_id": "aime_2023_I_11"
+        },
+        {
+          "case_id": "aime_2023_II_11"
+        },
+        {
+          "case_id": "aime_2023_I_10"
+        },
+        {
+          "case_id": "aime_2023_II_10"
+        },
+        {
+          "case_id": "aime_2023_I_9"
+        },
+        {
+          "case_id": "aime_2023_II_9"
+        },
+        {
+          "case_id": "aime_2023_I_8"
+        },
+        {
+          "case_id": "aime_2023_II_8"
+        },
+        {
+          "case_id": "aime_2023_I_7"
+        },
+        {
+          "case_id": "aime_2023_II_7"
+        },
+        {
+          "case_id": "aime_2023_I_6"
+        },
+        {
+          "case_id": "aime_2023_II_6"
+        },
+        {
+          "case_id": "aime_2023_I_5"
+        },
+        {
+          "case_id": "aime_2023_II_5"
+        },
+        {
+          "case_id": "aime_2023_I_4"
+        },
+        {
+          "case_id": "aime_2023_II_4"
+        },
+        {
+          "case_id": "aime_2023_I_3"
+        },
+        {
+          "case_id": "aime_2023_II_3"
+        },
+        {
+          "case_id": "aime_2023_I_2"
+        },
+        {
+          "case_id": "aime_2023_II_2"
+        },
+        {
+          "case_id": "aime_2023_I_1"
+        },
+        {
+          "case_id": "aime_2023_II_1"
+        },
+        {
+          "case_id": "aime_2022_I_15"
+        },
+        {
+          "case_id": "aime_2022_II_15"
+        },
+        {
+          "case_id": "aime_2022_I_14"
+        },
+        {
+          "case_id": "aime_2022_II_14"
+        },
+        {
+          "case_id": "aime_2022_I_13"
+        },
+        {
+          "case_id": "aime_2022_II_13"
+        },
+        {
+          "case_id": "aime_2022_I_12"
+        },
+        {
+          "case_id": "aime_2022_II_12"
+        },
+        {
+          "case_id": "aime_2022_I_11"
+        },
+        {
+          "case_id": "aime_2022_II_11"
+        },
+        {
+          "case_id": "aime_2022_I_10"
+        },
+        {
+          "case_id": "aime_2022_II_10"
+        },
+        {
+          "case_id": "aime_2022_I_9"
+        },
+        {
+          "case_id": "aime_2022_II_9"
+        },
+        {
+          "case_id": "aime_2022_I_8"
+        },
+        {
+          "case_id": "aime_2022_I_7"
+        },
+        {
+          "case_id": "aime_2022_II_7"
+        }
+      ],
+      "case_id_mapping": "case_id is aime_{Year}_{Part or I}_{Problem Number}.",
+      "category_counts": {
+        "aime_2022": 17,
+        "aime_2023": 29,
+        "aime_2024": 14
+      }
+    },
+    {
+      "workload": "mmlu_pro",
+      "source_url": "https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro",
+      "source_revision": "b189ec765aa7ed75c8acfea42df31fdae71f97be",
+      "configuration": null,
+      "split": "test",
+      "evaluated_n": 140,
+      "selection_procedure": "Group the pinned test split by category; traverse categories in sorted order and sample 10 rows per category using one Python random.Random(42) instance.",
+      "selection_seed": 42,
+      "source_membership": [
+        {
+          "case_id": "3463"
+        },
+        {
+          "case_id": "2920"
+        },
+        {
+          "case_id": "2830"
+        },
+        {
+          "case_id": "3087"
+        },
+        {
+          "case_id": "3056"
+        },
+        {
+          "case_id": "3034"
+        },
+        {
+          "case_id": "2948"
+        },
+        {
+          "case_id": "2910"
+        },
+        {
+          "case_id": "3501"
+        },
+        {
+          "case_id": "3367"
+        },
+        {
+          "case_id": "160"
+        },
+        {
+          "case_id": "680"
+        },
+        {
+          "case_id": "506"
+        },
+        {
+          "case_id": "102"
+        },
+        {
+          "case_id": "100"
+        },
+        {
+          "case_id": "166"
+        },
+        {
+          "case_id": "295"
+        },
+        {
+          "case_id": "310"
+        },
+        {
+          "case_id": "592"
+        },
+        {
+          "case_id": "693"
+        },
+        {
+          "case_id": "3580"
+        },
+        {
+          "case_id": "3935"
+        },
+        {
+          "case_id": "4653"
+        },
+        {
+          "case_id": "4391"
+        },
+        {
+          "case_id": "3979"
+        },
+        {
+          "case_id": "4455"
+        },
+        {
+          "case_id": "4100"
+        },
+        {
+          "case_id": "3539"
+        },
+        {
+          "case_id": "3854"
+        },
+        {
+          "case_id": "4398"
+        },
+        {
+          "case_id": "10534"
+        },
+        {
+          "case_id": "10501"
+        },
+        {
+          "case_id": "10438"
+        },
+        {
+          "case_id": "10469"
+        },
+        {
+          "case_id": "10754"
+        },
+        {
+          "case_id": "10532"
+        },
+        {
+          "case_id": "10410"
+        },
+        {
+          "case_id": "10405"
+        },
+        {
+          "case_id": "10554"
+        },
+        {
+          "case_id": "10407"
+        },
+        {
+          "case_id": "7199"
+        },
+        {
+          "case_id": "7183"
+        },
+        {
+          "case_id": "7458"
+        },
+        {
+          "case_id": "7100"
+        },
+        {
+          "case_id": "7669"
+        },
+        {
+          "case_id": "6871"
+        },
+        {
+          "case_id": "7590"
+        },
+        {
+          "case_id": "7304"
+        },
+        {
+          "case_id": "7389"
+        },
+        {
+          "case_id": "6954"
+        },
+        {
+          "case_id": "12232"
+        },
+        {
+          "case_id": "11674"
+        },
+        {
+          "case_id": "11365"
+        },
+        {
+          "case_id": "11852"
+        },
+        {
+          "case_id": "11587"
+        },
+        {
+          "case_id": "12137"
+        },
+        {
+          "case_id": "11931"
+        },
+        {
+          "case_id": "11921"
+        },
+        {
+          "case_id": "12194"
+        },
+        {
+          "case_id": "12170"
+        },
+        {
+          "case_id": "6376"
+        },
+        {
+          "case_id": "6598"
+        },
+        {
+          "case_id": "6200"
+        },
+        {
+          "case_id": "6729"
+        },
+        {
+          "case_id": "6073"
+        },
+        {
+          "case_id": "6048"
+        },
+        {
+          "case_id": "6684"
+        },
+        {
+          "case_id": "6237"
+        },
+        {
+          "case_id": "6799"
+        },
+        {
+          "case_id": "6301"
+        },
+        {
+          "case_id": "4709"
+        },
+        {
+          "case_id": "4792"
+        },
+        {
+          "case_id": "4720"
+        },
+        {
+          "case_id": "4870"
+        },
+        {
+          "case_id": "4817"
+        },
+        {
+          "case_id": "4908"
+        },
+        {
+          "case_id": "5001"
+        },
+        {
+          "case_id": "4862"
+        },
+        {
+          "case_id": "4752"
+        },
+        {
+          "case_id": "4865"
+        },
+        {
+          "case_id": "1608"
+        },
+        {
+          "case_id": "1302"
+        },
+        {
+          "case_id": "1425"
+        },
+        {
+          "case_id": "1014"
+        },
+        {
+          "case_id": "1222"
+        },
+        {
+          "case_id": "1978"
+        },
+        {
+          "case_id": "1375"
+        },
+        {
+          "case_id": "1206"
+        },
+        {
+          "case_id": "1830"
+        },
+        {
+          "case_id": "1659"
+        },
+        {
+          "case_id": "8241"
+        },
+        {
+          "case_id": "9003"
+        },
+        {
+          "case_id": "8832"
+        },
+        {
+          "case_id": "8137"
+        },
+        {
+          "case_id": "8355"
+        },
+        {
+          "case_id": "7801"
+        },
+        {
+          "case_id": "8157"
+        },
+        {
+          "case_id": "7752"
+        },
+        {
+          "case_id": "8336"
+        },
+        {
+          "case_id": "8512"
+        },
+        {
+          "case_id": "5334"
+        },
+        {
+          "case_id": "5127"
+        },
+        {
+          "case_id": "5276"
+        },
+        {
+          "case_id": "5649"
+        },
+        {
+          "case_id": "5974"
+        },
+        {
+          "case_id": "5810"
+        },
+        {
+          "case_id": "5383"
+        },
+        {
+          "case_id": "5277"
+        },
+        {
+          "case_id": "5744"
+        },
+        {
+          "case_id": "5578"
+        },
+        {
+          "case_id": "10981"
+        },
+        {
+          "case_id": "11237"
+        },
+        {
+          "case_id": "11253"
+        },
+        {
+          "case_id": "11111"
+        },
+        {
+          "case_id": "11014"
+        },
+        {
+          "case_id": "10850"
+        },
+        {
+          "case_id": "10912"
+        },
+        {
+          "case_id": "10848"
+        },
+        {
+          "case_id": "10903"
+        },
+        {
+          "case_id": "11166"
+        },
+        {
+          "case_id": "10204"
+        },
+        {
+          "case_id": "10156"
+        },
+        {
+          "case_id": "9582"
+        },
+        {
+          "case_id": "10253"
+        },
+        {
+          "case_id": "9924"
+        },
+        {
+          "case_id": "10251"
+        },
+        {
+          "case_id": "9863"
+        },
+        {
+          "case_id": "9786"
+        },
+        {
+          "case_id": "9493"
+        },
+        {
+          "case_id": "9327"
+        },
+        {
+          "case_id": "2514"
+        },
+        {
+          "case_id": "2498"
+        },
+        {
+          "case_id": "2082"
+        },
+        {
+          "case_id": "2779"
+        },
+        {
+          "case_id": "2036"
+        },
+        {
+          "case_id": "2102"
+        },
+        {
+          "case_id": "2146"
+        },
+        {
+          "case_id": "2639"
+        },
+        {
+          "case_id": "2153"
+        },
+        {
+          "case_id": "2696"
+        }
+      ],
+      "case_id_mapping": "case_id is upstream question_id represented as a string.",
+      "category_counts": {
+        "biology": 10,
+        "business": 10,
+        "chemistry": 10,
+        "computer science": 10,
+        "economics": 10,
+        "engineering": 10,
+        "health": 10,
+        "history": 10,
+        "law": 10,
+        "math": 10,
+        "other": 10,
+        "philosophy": 10,
+        "physics": 10,
+        "psychology": 10
+      }
+    },
+    {
+      "workload": "banking77",
+      "source_url": "https://github.com/PolyAI-LDN/task-specific-datasets",
+      "source_revision": "57ec275d8078af65b7731c2a98be812d844a6d6b",
+      "split": "test",
+      "evaluated_n": 3080,
+      "selection_procedure": "Complete official test split, retaining upstream ordering and duplicates.",
+      "selection_seed": null,
+      "case_id_mapping": "banking77/test/{index:05d}, for every zero-based test row index 0 through 3079.",
+      "development_separation": "Development gates used one training example per Banking77 class and CORD validation receipts; the full stage uses the official test split.",
+      "input_representation": "Original text and fixed 77-label taxonomy."
+    },
+    {
+      "workload": "cord-image",
+      "source_url": "https://huggingface.co/datasets/naver-clova-ix/cord-v2",
+      "source_revision": "7f0115a4b758a71d6473b8d085751692da2fef98",
+      "split": "test",
+      "evaluated_n": 100,
+      "selection_procedure": "Complete official test split, retaining upstream ordering and duplicates.",
+      "selection_seed": null,
+      "case_id_mapping": "cord-v2/test/{index:05d}/image, for every zero-based test shard row index 0 through 99.",
+      "development_separation": "Development gates used one training example per Banking77 class and CORD validation receipts; the full stage uses the official test split.",
+      "input_representation": "Original pinned image bytes with image detail high."
+    },
+    {
+      "workload": "cord-ocr",
+      "source_url": "https://huggingface.co/datasets/naver-clova-ix/cord-v2",
+      "source_revision": "7f0115a4b758a71d6473b8d085751692da2fef98",
+      "split": "test",
+      "evaluated_n": 100,
+      "selection_procedure": "Complete official test split, retaining upstream ordering and duplicates.",
+      "selection_seed": null,
+      "case_id_mapping": "cord-v2/test/{index:05d}/ocr, for the same receipts and gold documents as the image arm.",
+      "development_separation": "Development gates used one training example per Banking77 class and CORD validation receipts; the full stage uses the official test split.",
+      "input_representation": "Upstream OCR words, row IDs and quadrilaterals; gold category/group/subgroup/is_key annotations excluded."
+    },
+    {
+      "workload": "gpqa",
+      "source_url": "https://huggingface.co/datasets/Idavidrein/gpqa",
+      "source_revision": "633f5ee89ab8ad4522a9f850766b73f62147ffdd",
+      "configuration": "gpqa_diamond",
+      "split": "train",
+      "evaluated_n": 198,
+      "selection_procedure": "Complete pinned split. Rows and multiple-choice options are deterministically permuted with Python seed 42.",
+      "selection_seed": 42,
+      "case_id_mapping": "All record IDs from the pinned gpqa_diamond train configuration; individual IDs are retained outside this export alongside the access-controlled source mapping.",
+      "development_separation": "Smoke/pilot gates are nested subsets of the full set, not independent holdouts or additional statistical samples."
+    },
+    {
+      "workload": "humaneval",
+      "source_url": "https://huggingface.co/datasets/openai/openai_humaneval",
+      "source_revision": "7dce6050a7d6d172f3cc5c32aa97f52fa1a2e544",
+      "configuration": null,
+      "split": "test",
+      "evaluated_n": 164,
+      "selection_procedure": "Complete pinned split. Preserve upstream task order.",
+      "selection_seed": null,
+      "case_id_mapping": "HumanEval/{index}, for every integer index 0 through 163.",
+      "development_separation": "Smoke/pilot gates are nested subsets of the full set, not independent holdouts or additional statistical samples."
+    },
+    {
+      "workload": "extractbench",
+      "source_url": "https://huggingface.co/datasets/llamaindex/ExtractBench",
+      "source_revision": "f6180e917a050a84582e6366cff85b7dc1e84e58",
+      "split": "All main-set short, medium and long task groups",
+      "evaluated_n": 370,
+      "selection_procedure": "Complete pinned main set; no length-based subsampling or silent exclusion of ineligible file input.",
+      "selection_seed": null,
+      "source_membership": [
+        {
+          "case_id": "long/dd1155_schedule_continuation_0011"
+        },
+        {
+          "case_id": "long/dd1155_schedule_continuation_0012"
+        },
+        {
+          "case_id": "long/gov_clin_schedule_0005"
+        },
+        {
+          "case_id": "long/gov_clin_schedule_0031"
+        },
+        {
+          "case_id": "long/real_credit_strategies_full"
+        },
+        {
+          "case_id": "long/real_freer_register_full"
+        },
+        {
+          "case_id": "long/real_ftx_full"
+        },
+        {
+          "case_id": "long/real_ftx_full_corrupted"
+        },
+        {
+          "case_id": "long/real_imedia_full"
+        },
+        {
+          "case_id": "long/real_imedia_full_corrupted"
+        },
+        {
+          "case_id": "long/real_ishares_iboxx_bond_etfs"
+        },
+        {
+          "case_id": "long/real_ofac_ssi_full"
+        },
+        {
+          "case_id": "long/real_oklahoma_unclaimed_2024"
+        },
+        {
+          "case_id": "long/real_sm0801_ae_full"
+        },
+        {
+          "case_id": "long/real_sm0801_eco_full"
+        },
+        {
+          "case_id": "long/real_sm0801_eco_full_corrupted"
+        },
+        {
+          "case_id": "long/sec_13f_0010_renaissance_technologies"
+        },
+        {
+          "case_id": "long/sec_13f_0026_brown_brothers_harriman"
+        },
+        {
+          "case_id": "long/sf1449_supplies_services_0042"
+        },
+        {
+          "case_id": "long/sf1449_supplies_services_0059"
+        },
+        {
+          "case_id": "medium/13f__leonteq_securities_2025q4"
+        },
+        {
+          "case_id": "medium/13f__nalls_sherbakoff_2025q4"
+        },
+        {
+          "case_id": "medium/1G1PC5SB6E7111015_professional_valuation"
+        },
+        {
+          "case_id": "medium/1G1PC5SB6E7111015_professional_valuation_corrupted"
+        },
+        {
+          "case_id": "medium/arif-2023"
+        },
+        {
+          "case_id": "medium/baker_hughes_earnings_deck_q4fy25"
+        },
+        {
+          "case_id": "medium/bar-lev-2021"
+        },
+        {
+          "case_id": "medium/bar-lev-2022"
+        },
+        {
+          "case_id": "medium/bar-lev-2023"
+        },
+        {
+          "case_id": "medium/bar-lev-2024"
+        },
+        {
+          "case_id": "medium/becerra-2021"
+        },
+        {
+          "case_id": "medium/becerra-2022"
+        },
+        {
+          "case_id": "medium/becerra-2023"
+        },
+        {
+          "case_id": "medium/becerra-2024"
+        },
+        {
+          "case_id": "medium/bianco-2021"
+        },
+        {
+          "case_id": "medium/bianco-2022"
+        },
+        {
+          "case_id": "medium/byline_bancorp_investor_deck_q2_2023"
+        },
+        {
+          "case_id": "medium/cabrera-2021"
+        },
+        {
+          "case_id": "medium/cabrera-2022"
+        },
+        {
+          "case_id": "medium/cabrera-2023"
+        },
+        {
+          "case_id": "medium/ccc_online_0003_geico_ford_crown_victoria"
+        },
+        {
+          "case_id": "medium/ccc_online_0003_geico_ford_crown_victoria_corrupted"
+        },
+        {
+          "case_id": "medium/ccc_online_0004_liberty_dodge_journey"
+        },
+        {
+          "case_id": "medium/ccc_online_0004_liberty_dodge_journey_corrupted"
+        },
+        {
+          "case_id": "medium/ccc_online_0008_state_farm_genesis_gv80"
+        },
+        {
+          "case_id": "medium/ccc_online_0008_state_farm_genesis_gv80_corrupted"
+        },
+        {
+          "case_id": "medium/ccc_online_0009_travelers_ford_f150"
+        },
+        {
+          "case_id": "medium/ccc_online_0009_travelers_ford_f150_corrupted"
+        },
+        {
+          "case_id": "medium/ccc_online_0010_travelers_ford_explorer"
+        },
+        {
+          "case_id": "medium/ccc_online_0010_travelers_ford_explorer_corrupted"
+        },
+        {
+          "case_id": "medium/ccc_online_0011_infinity_toyota_tacoma"
+        },
+        {
+          "case_id": "medium/ccc_online_0011_infinity_toyota_tacoma_corrupted"
+        },
+        {
+          "case_id": "medium/ccc_online_0012_chubb_dodge_durango"
+        },
+        {
+          "case_id": "medium/ccc_online_0012_chubb_dodge_durango_corrupted"
+        },
+        {
+          "case_id": "medium/coreweave_earnings_deck_q4fy25"
+        },
+        {
+          "case_id": "medium/crh_results_deck_q4fy25"
+        },
+        {
+          "case_id": "medium/dd1155_schedule_continuation_0007"
+        },
+        {
+          "case_id": "medium/erie_county_2017_single_audit"
+        },
+        {
+          "case_id": "medium/gov_clin_schedule_0033"
+        },
+        {
+          "case_id": "medium/gov_clin_schedule_0035"
+        },
+        {
+          "case_id": "medium/gov_clin_schedule_0038"
+        },
+        {
+          "case_id": "medium/gsa_mas_it_labor_0003"
+        },
+        {
+          "case_id": "medium/gsa_mas_it_labor_0005"
+        },
+        {
+          "case_id": "medium/gsa_mas_it_labor_0006"
+        },
+        {
+          "case_id": "medium/gsa_mas_it_labor_0007"
+        },
+        {
+          "case_id": "medium/gsa_mas_it_labor_0008"
+        },
+        {
+          "case_id": "medium/gsa_mas_it_labor_0010"
+        },
+        {
+          "case_id": "medium/gsa_mas_it_labor_0011"
+        },
+        {
+          "case_id": "medium/gsa_mas_it_labor_0014"
+        },
+        {
+          "case_id": "medium/gsa_mas_it_labor_0016"
+        },
+        {
+          "case_id": "medium/gsa_mas_it_labor_0018"
+        },
+        {
+          "case_id": "medium/gsa_mas_it_labor_0019"
+        },
+        {
+          "case_id": "medium/hpe_earnings_deck_q4fy25"
+        },
+        {
+          "case_id": "medium/jackson_college_2024_federal_awards_audit"
+        },
+        {
+          "case_id": "medium/nport__advisors_inner_circle_fund"
+        },
+        {
+          "case_id": "medium/nport__dunham_funds"
+        },
+        {
+          "case_id": "medium/nport__sei_etf_2025q4"
+        },
+        {
+          "case_id": "medium/q4-2025-earnings-press-release"
+        },
+        {
+          "case_id": "medium/real_bbb_service_list"
+        },
+        {
+          "case_id": "medium/real_bbb_service_list_corrupted"
+        },
+        {
+          "case_id": "medium/real_blackrock_muni_bmn"
+        },
+        {
+          "case_id": "medium/real_blackrock_schedule_full"
+        },
+        {
+          "case_id": "medium/real_cooke_co_tx_2024"
+        },
+        {
+          "case_id": "medium/real_dcd_sumf_full"
+        },
+        {
+          "case_id": "medium/real_dcd_sumf_full_corrupted"
+        },
+        {
+          "case_id": "medium/real_enotes_deviations"
+        },
+        {
+          "case_id": "medium/real_enotes_deviations_corrupted"
+        },
+        {
+          "case_id": "medium/real_fidelity_northstar"
+        },
+        {
+          "case_id": "medium/real_franklin_sep_2025"
+        },
+        {
+          "case_id": "medium/real_penn_hills_pa_2023"
+        },
+        {
+          "case_id": "medium/real_pueblo_oct_2025"
+        },
+        {
+          "case_id": "medium/real_sm0801_dispositions_full"
+        },
+        {
+          "case_id": "medium/real_sm0801_dispositions_full_corrupted"
+        },
+        {
+          "case_id": "medium/real_vg_divappr_full"
+        },
+        {
+          "case_id": "medium/real_vg_divgrowth_full"
+        },
+        {
+          "case_id": "medium/real_vg_equity_income_full"
+        },
+        {
+          "case_id": "medium/real_vg_esg_full"
+        },
+        {
+          "case_id": "medium/real_vg_gcc_full"
+        },
+        {
+          "case_id": "medium/real_vg_healthcare_full"
+        },
+        {
+          "case_id": "medium/real_vg_megacap_full"
+        },
+        {
+          "case_id": "medium/real_vg_primecap_full"
+        },
+        {
+          "case_id": "medium/real_vg_reit2_full"
+        },
+        {
+          "case_id": "medium/real_vg_reit_full"
+        },
+        {
+          "case_id": "medium/real_wright_co_mn"
+        },
+        {
+          "case_id": "medium/sched_i__akron_community_foundation_ty2024"
+        },
+        {
+          "case_id": "medium/sched_i__united_way_worldwide_ty2024"
+        },
+        {
+          "case_id": "medium/schwab_dana_jones_2012"
+        },
+        {
+          "case_id": "medium/sec_13f_0031_loomis_sayles"
+        },
+        {
+          "case_id": "medium/sf1449_supplies_services_0003"
+        },
+        {
+          "case_id": "medium/sf1449_supplies_services_0046"
+        },
+        {
+          "case_id": "medium/sf1449_supplies_services_0047"
+        },
+        {
+          "case_id": "medium/smfg-kessan-tanshin-2024-ja"
+        },
+        {
+          "case_id": "medium/sunoco_investor_deck_march_2026"
+        },
+        {
+          "case_id": "medium/synchrony_investor_deck_q1_2026"
+        },
+        {
+          "case_id": "medium/sysco_earnings_deck_q2fy26"
+        },
+        {
+          "case_id": "medium/transunion_earnings_deck_q4fy25"
+        },
+        {
+          "case_id": "medium/united_way_san_antonio_fy23_single_audit"
+        },
+        {
+          "case_id": "medium/veralto_earnings_deck_q4fy25"
+        },
+        {
+          "case_id": "short/00581-2011-p0050"
+        },
+        {
+          "case_id": "short/00581-2011-p0052"
+        },
+        {
+          "case_id": "short/00581-2011-p0098"
+        },
+        {
+          "case_id": "short/00581-2011-p0102"
+        },
+        {
+          "case_id": "short/02-10121 H-12 7-2-2024 F-22628"
+        },
+        {
+          "case_id": "short/07021-2016-p0014"
+        },
+        {
+          "case_id": "short/07021-2016-p0016"
+        },
+        {
+          "case_id": "short/07021-2016-p0018"
+        },
+        {
+          "case_id": "short/07021-2016-p0026"
+        },
+        {
+          "case_id": "short/07021-2016-p0029"
+        },
+        {
+          "case_id": "short/07021-2016-p0032"
+        },
+        {
+          "case_id": "short/07021-2016-p0038"
+        },
+        {
+          "case_id": "short/07021-2016-p0039"
+        },
+        {
+          "case_id": "short/07021-2016-p0040"
+        },
+        {
+          "case_id": "short/07021-2016-p0051"
+        },
+        {
+          "case_id": "short/07021-2016-p0052"
+        },
+        {
+          "case_id": "short/07021-2016-p0053"
+        },
+        {
+          "case_id": "short/07021-2016-p0074"
+        },
+        {
+          "case_id": "short/07021-2016-p0078"
+        },
+        {
+          "case_id": "short/07021-2016-p0082"
+        },
+        {
+          "case_id": "short/08-15427 H-12 1-21-2003 F-01341"
+        },
+        {
+          "case_id": "short/08-20813 H-12 10-17-2008 F-01094A"
+        },
+        {
+          "case_id": "short/08-37943 H-12 09-25-2014 F-01249"
+        },
+        {
+          "case_id": "short/08-43259 H-12 3-18-2024 F-22737"
+        },
+        {
+          "case_id": "short/08-51344 H-12 10-2-2023 F-22666"
+        },
+        {
+          "case_id": "short/13f__audent_global_2025q4"
+        },
+        {
+          "case_id": "short/13f__dedeker_financial_llc"
+        },
+        {
+          "case_id": "short/13f__radnor_capital_management_llc"
+        },
+        {
+          "case_id": "short/13f__sl_advisors_llc"
+        },
+        {
+          "case_id": "short/2A-27-103150_116454"
+        },
+        {
+          "case_id": "short/2A-9-136008_97695"
+        },
+        {
+          "case_id": "short/2A-9-156032_107792"
+        },
+        {
+          "case_id": "short/2A-9-160248_109904"
+        },
+        {
+          "case_id": "short/2A-9-160258_109909"
+        },
+        {
+          "case_id": "short/2A-9-160266_109913"
+        },
+        {
+          "case_id": "short/2A-9-160268_109914"
+        },
+        {
+          "case_id": "short/2A-9-160282_109921"
+        },
+        {
+          "case_id": "short/2A-9-160294_109927"
+        },
+        {
+          "case_id": "short/2A-9-160298_109929"
+        },
+        {
+          "case_id": "short/2A-9-160318_109939"
+        },
+        {
+          "case_id": "short/3N1AB7AP8FY283932_professional_valuation"
+        },
+        {
+          "case_id": "short/3N1AB7AP8FY283932_professional_valuation_corrupted"
+        },
+        {
+          "case_id": "short/593338187_200912_990PF-p0023"
+        },
+        {
+          "case_id": "short/593338187_200912_990PF-p0024"
+        },
+        {
+          "case_id": "short/593338187_200912_990PF-p0025"
+        },
+        {
+          "case_id": "short/593338187_200912_990PF-p0026"
+        },
+        {
+          "case_id": "short/593338187_200912_990PF-p0027"
+        },
+        {
+          "case_id": "short/593338187_200912_990PF-p0030"
+        },
+        {
+          "case_id": "short/593338187_200912_990PF-p0031"
+        },
+        {
+          "case_id": "short/593338187_200912_990PF-p0032"
+        },
+        {
+          "case_id": "short/593338187_200912_990PF-p0033"
+        },
+        {
+          "case_id": "short/593338187_200912_990PF-p0034"
+        },
+        {
+          "case_id": "short/593338187_200912_990PF-p0035"
+        },
+        {
+          "case_id": "short/593338187_200912_990PF-p0036"
+        },
+        {
+          "case_id": "short/593338187_200912_990PF-p0037"
+        },
+        {
+          "case_id": "short/593338187_200912_990PF-p0038"
+        },
+        {
+          "case_id": "short/7C-02014 H-12 5-20-2013 F-01083"
+        },
+        {
+          "case_id": "short/7C-04947 H-12 12-7-2009 F-01079"
+        },
+        {
+          "case_id": "short/H9-53-1621_1656"
+        },
+        {
+          "case_id": "short/H9-53-2119_2144"
+        },
+        {
+          "case_id": "short/H9-53-23_23"
+        },
+        {
+          "case_id": "short/H9-53-24_24"
+        },
+        {
+          "case_id": "short/H9-53-30_30"
+        },
+        {
+          "case_id": "short/H9-53-319_311"
+        },
+        {
+          "case_id": "short/H9-53-31_31"
+        },
+        {
+          "case_id": "short/H9-53-32_32"
+        },
+        {
+          "case_id": "short/H9-53-514_1043"
+        },
+        {
+          "case_id": "short/H9-53-59_60"
+        },
+        {
+          "case_id": "short/H9-53-7226_7240"
+        },
+        {
+          "case_id": "short/H9-53-7234_7248"
+        },
+        {
+          "case_id": "short/H9-53-7239_7253"
+        },
+        {
+          "case_id": "short/H9-53-9349_9509"
+        },
+        {
+          "case_id": "short/H9-53-9386_9545"
+        },
+        {
+          "case_id": "short/P18-28-1547"
+        },
+        {
+          "case_id": "short/P18-28-21_77"
+        },
+        {
+          "case_id": "short/P18-28-35_39"
+        },
+        {
+          "case_id": "short/P18-28-43_44"
+        },
+        {
+          "case_id": "short/P18-28-44_45"
+        },
+        {
+          "case_id": "short/P18-28-50_51"
+        },
+        {
+          "case_id": "short/P18-28-52_53"
+        },
+        {
+          "case_id": "short/P18-28-54_55"
+        },
+        {
+          "case_id": "short/P18-28-55_56"
+        },
+        {
+          "case_id": "short/P18-28-56_57"
+        },
+        {
+          "case_id": "short/P18-28-62_62"
+        },
+        {
+          "case_id": "short/P4-27-51022_74198"
+        },
+        {
+          "case_id": "short/P4-27-51094_74234"
+        },
+        {
+          "case_id": "short/P4-27-51220_74625"
+        },
+        {
+          "case_id": "short/P4-27-51300_74665"
+        },
+        {
+          "case_id": "short/P4-27-51318_74674"
+        },
+        {
+          "case_id": "short/P4-83-199_29"
+        },
+        {
+          "case_id": "short/P4-83-201_30"
+        },
+        {
+          "case_id": "short/P4-83-211_35"
+        },
+        {
+          "case_id": "short/P4-83-433_147"
+        },
+        {
+          "case_id": "short/P4-83-443_152"
+        },
+        {
+          "case_id": "short/P4-83-449_155"
+        },
+        {
+          "case_id": "short/P4-83-457_159"
+        },
+        {
+          "case_id": "short/P4-83-631_246"
+        },
+        {
+          "case_id": "short/P4-83-693_277"
+        },
+        {
+          "case_id": "short/P4-Historical Single Signature83-10963_5480"
+        },
+        {
+          "case_id": "short/P4-Historical Single Signature83-223_41"
+        },
+        {
+          "case_id": "short/P4-Historical Single Signature83-257_58"
+        },
+        {
+          "case_id": "short/REDACTED_2007_NISSAN_MURANO_professional_valuation"
+        },
+        {
+          "case_id": "short/ROGER-WINFIELD-SCOTT-FOUNDATION-INC-2009-580655183-p0023"
+        },
+        {
+          "case_id": "short/ROGER-WINFIELD-SCOTT-FOUNDATION-INC-2009-580655183-p0024"
+        },
+        {
+          "case_id": "short/ROGER-WINFIELD-SCOTT-FOUNDATION-INC-2009-580655183-p0025"
+        },
+        {
+          "case_id": "short/W-1-9-258_260"
+        },
+        {
+          "case_id": "short/W-1-9-260_262"
+        },
+        {
+          "case_id": "short/W-1-9-261_263"
+        },
+        {
+          "case_id": "short/W14-2nd Sub 53269 Revised W14"
+        },
+        {
+          "case_id": "short/W14-2nd Sub 55975 Revised W14 ADMIN REVIEWED"
+        },
+        {
+          "case_id": "short/W14-52342_W14"
+        },
+        {
+          "case_id": "short/W14-53632_W14 ADMIN REVIEWED"
+        },
+        {
+          "case_id": "short/W14-54500_W14 admin reviewed"
+        },
+        {
+          "case_id": "short/W14-55311_W14 reviewed"
+        },
+        {
+          "case_id": "short/W14-55711_W14 ADMIN REVIEWED"
+        },
+        {
+          "case_id": "short/W14-57077_W14"
+        },
+        {
+          "case_id": "short/W14-57728_W14_REVISED"
+        },
+        {
+          "case_id": "short/W14-58025_W14 Admin Reviewed"
+        },
+        {
+          "case_id": "short/W14-58509_W14 2nd sub revised"
+        },
+        {
+          "case_id": "short/W14-58549_W14"
+        },
+        {
+          "case_id": "short/W14-Atascosa SWD Well No. 4 - W-14 (Updated 01.22.2025)"
+        },
+        {
+          "case_id": "short/W2-27-216874_212740"
+        },
+        {
+          "case_id": "short/W2-27-217184_213122"
+        },
+        {
+          "case_id": "short/W2-27-217314_213200"
+        },
+        {
+          "case_id": "short/W2-27-217884_213729"
+        },
+        {
+          "case_id": "short/WVWJK73C19P047779_professional_valuation"
+        },
+        {
+          "case_id": "short/WVWJK73C19P047779_professional_valuation_corrupted"
+        },
+        {
+          "case_id": "short/YV4952BL2C1140915_professional_valuation"
+        },
+        {
+          "case_id": "short/YV4952BL2C1140915_professional_valuation_corrupted"
+        },
+        {
+          "case_id": "short/aclu_cdwg_invoice"
+        },
+        {
+          "case_id": "short/arif-2021"
+        },
+        {
+          "case_id": "short/arif-2022"
+        },
+        {
+          "case_id": "short/arif-2024"
+        },
+        {
+          "case_id": "short/bianco-2024"
+        },
+        {
+          "case_id": "short/brand_price_list_lifescience_2024"
+        },
+        {
+          "case_id": "short/brand_price_list_lifescience_2024_corrupted"
+        },
+        {
+          "case_id": "short/budget_appendix_doe"
+        },
+        {
+          "case_id": "short/budget_appendix_legis"
+        },
+        {
+          "case_id": "short/ca_rad_crossover_inpatient_p5"
+        },
+        {
+          "case_id": "short/ca_rad_crossover_inpatient_p5_corrupted"
+        },
+        {
+          "case_id": "short/ca_rad_crossover_outpatient_p5"
+        },
+        {
+          "case_id": "short/ca_rad_crossover_outpatient_p5_corrupted"
+        },
+        {
+          "case_id": "short/caterpillar_spec_sheet_312c_excavator"
+        },
+        {
+          "case_id": "short/caterpillar_spec_sheet_312c_excavator_corrupted"
+        },
+        {
+          "case_id": "short/caterpillar_spec_sheet_330_excavator"
+        },
+        {
+          "case_id": "short/caterpillar_spec_sheet_330_excavator_corrupted"
+        },
+        {
+          "case_id": "short/cbp_7501_continuation_0001"
+        },
+        {
+          "case_id": "short/cbp_7501_continuation_0002"
+        },
+        {
+          "case_id": "short/cbp_7501_continuation_0007"
+        },
+        {
+          "case_id": "short/cbp_7501_continuation_0016"
+        },
+        {
+          "case_id": "short/cbp_7501_continuation_0018"
+        },
+        {
+          "case_id": "short/ccc_online_0005_american_family_chevrolet_sonic"
+        },
+        {
+          "case_id": "short/ccc_online_0005_american_family_chevrolet_sonic_corrupted"
+        },
+        {
+          "case_id": "short/ccc_online_0006_esurance_toyota_rav4"
+        },
+        {
+          "case_id": "short/ccc_online_0006_esurance_toyota_rav4_corrupted"
+        },
+        {
+          "case_id": "short/census_statab"
+        },
+        {
+          "case_id": "short/census_statab_12s0035"
+        },
+        {
+          "case_id": "short/census_statab_12s0711"
+        },
+        {
+          "case_id": "short/census_statab_employment"
+        },
+        {
+          "case_id": "short/census_statab_income_by_state"
+        },
+        {
+          "case_id": "short/cfpb_closing-disclosure_H25E"
+        },
+        {
+          "case_id": "short/cfpb_closing-disclosure_H25E_corrupted"
+        },
+        {
+          "case_id": "short/cfpb_closing-disclosure_H25F"
+        },
+        {
+          "case_id": "short/cfpb_closing-disclosure_H25F_corrupted"
+        },
+        {
+          "case_id": "short/cfpb_closing-disclosure_filled-sample"
+        },
+        {
+          "case_id": "short/cfpb_closing-disclosure_filled-sample_corrupted"
+        },
+        {
+          "case_id": "short/dc-pepco-residential-bill"
+        },
+        {
+          "case_id": "short/dd1155_schedule_continuation_0002"
+        },
+        {
+          "case_id": "short/dd1155_schedule_continuation_0008"
+        },
+        {
+          "case_id": "short/fidelity_0002_sample"
+        },
+        {
+          "case_id": "short/fort_bend_operativeiq_invoice"
+        },
+        {
+          "case_id": "short/golden_corral_receipt_refugio_county_auditor"
+        },
+        {
+          "case_id": "short/grafton_isotrope_invoice_19503"
+        },
+        {
+          "case_id": "short/gsa_mas_it_labor_0004"
+        },
+        {
+          "case_id": "short/gsa_mas_it_labor_0020"
+        },
+        {
+          "case_id": "short/h5Filing-45659-1"
+        },
+        {
+          "case_id": "short/h5Filing-45884-1"
+        },
+        {
+          "case_id": "short/h5Filing-45887-1"
+        },
+        {
+          "case_id": "short/h5Filing-45919-1"
+        },
+        {
+          "case_id": "short/h5Filing-46302-1"
+        },
+        {
+          "case_id": "short/h5Filing-46383-1"
+        },
+        {
+          "case_id": "short/h5Filing-46384-1"
+        },
+        {
+          "case_id": "short/h5Filing-46780-1"
+        },
+        {
+          "case_id": "short/h5Filing-47175-1"
+        },
+        {
+          "case_id": "short/h5Filing-48982-1"
+        },
+        {
+          "case_id": "short/h5Filing-49070-1"
+        },
+        {
+          "case_id": "short/h5Filing-50745-2"
+        },
+        {
+          "case_id": "short/h5Filing-66006-1"
+        },
+        {
+          "case_id": "short/hingham-grainger-invoice"
+        },
+        {
+          "case_id": "short/hingham-wbmason-invoice"
+        },
+        {
+          "case_id": "short/hingham_lowes_receipt"
+        },
+        {
+          "case_id": "short/lancaster_county_ne_requisition_po_husker_steel"
+        },
+        {
+          "case_id": "short/lancaster_county_ne_requisition_po_husker_steel_corrupted"
+        },
+        {
+          "case_id": "short/mcdonalds_receipt_chicago_documentcloud"
+        },
+        {
+          "case_id": "short/mission-tx-tyler-invoice"
+        },
+        {
+          "case_id": "short/ms_medicaid_ra_adjustments"
+        },
+        {
+          "case_id": "short/ms_medicaid_ra_adjustments_corrupted"
+        },
+        {
+          "case_id": "short/ms_medicaid_ra_paid_denied_claims"
+        },
+        {
+          "case_id": "short/ms_medicaid_ra_paid_denied_claims_corrupted"
+        },
+        {
+          "case_id": "short/nport__bullfinch_fund_inc"
+        },
+        {
+          "case_id": "short/nport__gabelli_growth_fund_2025q4"
+        },
+        {
+          "case_id": "short/nport__oak_associates_funds"
+        },
+        {
+          "case_id": "short/oklahoma_county_purchase_order_avl_systems"
+        },
+        {
+          "case_id": "short/oklahoma_county_purchase_order_avl_systems_corrupted"
+        },
+        {
+          "case_id": "short/passcoag-2020-w2-p0002-r1"
+        },
+        {
+          "case_id": "short/passcoag-2020-w2-p0002-r2"
+        },
+        {
+          "case_id": "short/passcoag-2020-w2-p0002-r3"
+        },
+        {
+          "case_id": "short/passcoag-2020-w2-p0002-r4"
+        },
+        {
+          "case_id": "short/passcoag-2020-w2-p0003-r1"
+        },
+        {
+          "case_id": "short/passcoag-2020-w2-p0003-r2"
+        },
+        {
+          "case_id": "short/passcoag-2020-w2-p0003-r3"
+        },
+        {
+          "case_id": "short/passcoag-2020-w2-p0003-r4"
+        },
+        {
+          "case_id": "short/passcoag-2020-w2-p0004-r1"
+        },
+        {
+          "case_id": "short/passcoag-2020-w2-p0004-r2"
+        },
+        {
+          "case_id": "short/passcoag-2020-w2-p0004-r3"
+        },
+        {
+          "case_id": "short/passcoag-2020-w2-p0004-r4"
+        },
+        {
+          "case_id": "short/passcoag-2020-w2-p0005-r1"
+        },
+        {
+          "case_id": "short/passcoag-2020-w2-p0005-r2"
+        },
+        {
+          "case_id": "short/passcoag-2020-w2-p0005-r3"
+        },
+        {
+          "case_id": "short/passcoag-2020-w2-p0005-r4"
+        },
+        {
+          "case_id": "short/passcoag-2020-w2-p0006-r1"
+        },
+        {
+          "case_id": "short/passcoag-2020-w2-p0006-r2"
+        },
+        {
+          "case_id": "short/passcoag-2020-w2-p0006-r3"
+        },
+        {
+          "case_id": "short/passcoag-2020-w2-p0006-r4"
+        },
+        {
+          "case_id": "short/pershing_0001"
+        },
+        {
+          "case_id": "short/ppl-two-bill-example"
+        },
+        {
+          "case_id": "short/real_clinton_property_25_11073"
+        },
+        {
+          "case_id": "short/real_clinton_property_25_11073_corrupted"
+        },
+        {
+          "case_id": "short/real_franklin_aug_2025"
+        },
+        {
+          "case_id": "short/real_franklin_nov_2025"
+        },
+        {
+          "case_id": "short/real_wyo_Goshen_2024"
+        },
+        {
+          "case_id": "short/real_wyo_Niobrara_2024"
+        },
+        {
+          "case_id": "short/real_wyo_Weston_2024"
+        },
+        {
+          "case_id": "short/sched_i__after_violence_project_ty2024"
+        },
+        {
+          "case_id": "short/sched_i__idaho_humanities_council_inc_ty2023"
+        },
+        {
+          "case_id": "short/sched_i__rotary_club_ty2024"
+        },
+        {
+          "case_id": "short/sched_i__the_women_s_foundation_of_colorado_inc_ty2024"
+        },
+        {
+          "case_id": "short/sec_13f_0009_coatue_management"
+        },
+        {
+          "case_id": "short/sec_13f_0019_soros_fund_management"
+        },
+        {
+          "case_id": "short/southampton-ny-york-env-invoice"
+        },
+        {
+          "case_id": "short/stephenville-axon-invoice"
+        },
+        {
+          "case_id": "short/texas_facilities_commission_purchase_order_shelton-keller"
+        },
+        {
+          "case_id": "short/texas_facilities_commission_purchase_order_shelton-keller_corrupted"
+        },
+        {
+          "case_id": "short/ti_spec_sheet_ne555_timer"
+        },
+        {
+          "case_id": "short/ti_spec_sheet_ne555_timer_corrupted"
+        },
+        {
+          "case_id": "short/uillinois_rate_card_carpool_2024"
+        },
+        {
+          "case_id": "short/uillinois_rate_card_carpool_2024_corrupted"
+        },
+        {
+          "case_id": "short/utah_fleet_rate_schedule_fy2024"
+        },
+        {
+          "case_id": "short/utah_fleet_rate_schedule_fy2024_corrupted"
+        },
+        {
+          "case_id": "short/viega_price_list_propress_2026"
+        },
+        {
+          "case_id": "short/viega_price_list_propress_2026_corrupted"
+        },
+        {
+          "case_id": "short/we-energies-sample-bill"
+        }
+      ],
+      "length_counts": {
+        "short": 252,
+        "medium": 98,
+        "long": 20
+      },
+      "source_composition": {
+        "real_public_record_documents": 325,
+        "synthetic_long_list_documents_from_real_layouts": 45
+      },
+      "development_separation": "The separate upstream smoke branch contains six byte-identical main-set examples. Smoke/pilot are operational gates; they are not extra benchmark-quality samples.",
+      "upstream_harness_revision": "3a79026f39eb5e066f091b137bd3fcfb61b342bf",
+      "oversize_input_policy": "The 59,470,077-byte long/real_imedia_full_corrupted PDF remains in the 370-task denominator as a terminal failure on this input path."
+    },
+    {
+      "workload": "classification-routing",
+      "source_url": null,
+      "source_revision": null,
+      "source_type": "Project-authored deterministic synthetic generator",
+      "dataset_version": "2.0.0-candidate",
+      "split": "holdout",
+      "evaluated_n": 192,
+      "selection_procedure": "All 192 holdout records; 48 separate development records. No stochastic sampling or model-generated inputs.",
+      "selection_seed": null,
+      "case_id_mapping": "cr-v2-holdout-{index:03d}, for every integer index 1 through 192.",
+      "development_separation": "Routing scenario families and invoice layout families are disjoint across development/holdout.",
+      "label_status": "Author-seeded expected answers; independent adjudication remains pending.",
+      "representativeness": "Engineered test distribution; no claim of representing production traffic or real customer prevalence."
+    },
+    {
+      "workload": "structured-document-extraction",
+      "source_url": null,
+      "source_revision": null,
+      "source_type": "Project-authored deterministic synthetic generator",
+      "dataset_version": "2.0.0-candidate",
+      "split": "holdout",
+      "evaluated_n": 192,
+      "selection_procedure": "All 192 holdout records; 48 separate development records. No stochastic sampling or model-generated inputs.",
+      "selection_seed": null,
+      "case_id_mapping": "se-v2-holdout-{index:03d}, for every integer index 1 through 192.",
+      "development_separation": "Routing scenario families and invoice layout families are disjoint across development/holdout.",
+      "label_status": "Author-seeded expected answers; independent adjudication remains pending.",
+      "representativeness": "Engineered test distribution; no claim of representing production traffic or real customer prevalence."
+    }
+  ]
+}

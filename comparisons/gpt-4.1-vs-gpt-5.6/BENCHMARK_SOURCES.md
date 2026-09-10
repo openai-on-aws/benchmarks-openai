@@ -2,6 +2,8 @@
 
 The links below identify the benchmark sources used by this comparison. Sample sizes are the evaluated counts per model/reasoning configuration, not necessarily the size of the upstream dataset.
 
+For the exact pinned versions, splits, selection procedures, seeds, and available source identifiers, see [dataset selection](evidence/dataset-selection.json) and the [methodology](METHODOLOGY.md#public-dataset-selection). A seed used to select cases is distinct from seeds used for stage membership and execution order.
+
 | Workload | N | Upstream reference |
 |---|---:|---|
 | Synthetic classification/routing | 192 | Project-authored synthetic evaluation |
@@ -25,4 +27,4 @@ The existing repository [code license](../../LICENSE) and [documentation license
 
 The AIME link is a dataset mirror; its metadata alone does not establish rights in the underlying contest problems. GPQA source access conditions also remain applicable. No source-data redistribution permission is asserted by this file.
 
-The public source links are references, not a substitute for exact evaluation inputs. Exact source/input mapping and the original evidence are retained in the internal review record; the public package reproduces aggregate reporting only.
+The public source links are references, not a substitute for exact evaluation inputs. The selection metadata adds public-source pins and case-selection details without redistributing examples or responses. Full source/input mapping and the original evidence remain in the internal review record; the public package reproduces aggregate reporting only.
