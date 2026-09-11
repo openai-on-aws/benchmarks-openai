@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       MPLBACKEND: Agg
-      MPLCONFIGDIR: ${{ runner.temp }}/matplotlib
+      MPLCONFIGDIR: /tmp/benchmark-matplotlib
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
