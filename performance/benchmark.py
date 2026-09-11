@@ -28,8 +28,11 @@ from datetime import datetime, timezone
 
 from openai import OpenAI
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "quality"))
+from eval_utils import resolve_effort, response_options
+
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
-RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
+RESULTS_DIR = os.environ.get("BENCHMARK_RESULTS_DIR", os.path.join(os.path.dirname(__file__), "results"))
 
 DEFAULT_MODELS = {
     "bedrock": "openai.gpt-5.6-luna",
@@ -147,9 +150,7 @@ def run_single(client, model, prompt, max_output_tokens, effort):
     cached_tokens = 0
     status = None
 
-    kwargs = {}
-    if effort:
-        kwargs["reasoning"] = {"effort": effort}
+    kwargs = response_options(model, effort)
 
     start = time.perf_counter()
     stream = client.responses.create(
@@ -237,6 +238,7 @@ def run_with_retries(backend, base_url, model, prompt, max_out, effort, client_b
 
 
 def run_benchmark(backend, base_url, model, input_label, output_configs, n_runs, effort, concurrency, tag):
+    effort = resolve_effort(model, effort)
     prompt = load_prompt(input_label)
     nominal_input_tokens = PROMPTS[input_label]["tokens"]
     total_calls = len(output_configs) * n_runs
@@ -388,6 +390,10 @@ def main():
         return
 
     model = args.model or DEFAULT_MODELS[args.backend]
+    try:
+        args.effort = resolve_effort(model, args.effort)
+    except ValueError as e:
+        p.error(str(e))
     sizes = args.sizes or list(PROMPTS.keys())
     bad = [s for s in sizes if s not in PROMPTS]
     if bad:

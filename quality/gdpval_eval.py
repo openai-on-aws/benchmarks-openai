@@ -32,8 +32,9 @@ from datetime import datetime, timezone
 from datasets import load_dataset
 
 from quick_evals import make_client, call_cost_usd, capture_error
+from eval_utils import resolve_effort, response_options, sum_costs, rounded_cost
 
-RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
+RESULTS_DIR = os.environ.get("BENCHMARK_RESULTS_DIR", os.path.join(os.path.dirname(__file__), "results"))
 SEED = 42
 N_TASKS = 24
 MAX_OUTPUT_TOKENS = 8192
@@ -99,7 +100,7 @@ def load_tasks(n=N_TASKS):
 
 def generate(backend, model, effort, tasks):
     client, base_url = make_client(backend)
-    kwargs = {"reasoning": {"effort": effort}} if effort else {}
+    kwargs = response_options(model, effort)
     results = []
     for i, t in enumerate(tasks):
         t0 = time.perf_counter()
@@ -191,7 +192,7 @@ def judge_file(path, tasks_by_id, backend="saas"):
     graded = [r for r in d["results"] if is_graded(r)]
     scores = [r["judgment"]["rubric_fraction"] for r in graded]
     passed = sum(1 for r in graded if r["judgment"]["rubric_fraction"] >= PASS_FRACTION)
-    total_cost = sum(r["cost_usd"] or 0 for r in d["results"])
+    total_cost = sum_costs(r["cost_usd"] for r in d["results"])
     judge_backends = sorted({r["judgment"].get("judge_backend", "saas") for r in graded})
     d["judge_summary"] = {
         "judge_model": "gpt-5.5",
@@ -204,7 +205,7 @@ def judge_file(path, tasks_by_id, backend="saas"):
         "n_graded": len(graded),
         "mean_rubric_fraction": round(sum(scores) / len(scores), 4) if scores else None,
         "pass_rate": round(passed / len(graded), 4) if graded else None,
-        "cost_per_pass_usd": round(total_cost / passed, 6) if passed else None,
+        "cost_per_pass_usd": round(total_cost / passed, 6) if total_cost is not None and passed else None,
     }
     with open(out, "w") as f:
         json.dump(d, f, indent=2)
@@ -226,6 +227,14 @@ def main():
     p.add_argument("--file", help="judge only this result file (with --judge-only)")
     args = p.parse_args()
 
+    if not args.judge_only:
+        if not args.backend or not args.model:
+            p.error("--backend and --model are required unless --judge-only")
+        try:
+            args.effort = resolve_effort(args.model, args.effort)
+        except ValueError as e:
+            p.error(str(e))
+    os.makedirs(RESULTS_DIR, exist_ok=True)
     tasks = load_tasks(args.n)
     tasks_by_id = {t["task_id"]: t for t in tasks}
 
@@ -245,13 +254,13 @@ def main():
     results, base_url = generate(args.backend, args.model, args.effort, tasks)
 
     ok = [r for r in results if not r["error"]]
-    total_cost = sum(r["cost_usd"] or 0 for r in ok)
+    total_cost = sum_costs(r["cost_usd"] for r in results)
     summary = {
         "n": len(results), "n_errors": len(results) - len(ok),
         "mean_output_tokens": round(sum(r["output_tokens"] for r in ok) / len(ok), 1) if ok else None,
         "mean_latency_s": round(sum(r["latency_s"] for r in ok) / len(ok), 2) if ok else None,
-        "total_cost_usd": round(total_cost, 6),
-        "mean_cost_per_task_usd": round(total_cost / len(ok), 6) if ok else None,
+        "total_cost_usd": rounded_cost(total_cost),
+        "mean_cost_per_task_usd": round(total_cost / len(results), 6) if total_cost is not None and results else None,
     }
     ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     safe_model = args.model.replace("/", "-")
@@ -263,6 +272,7 @@ def main():
                    "backend": args.backend, "model": args.model, "base_url": base_url,
                    "reasoning_effort": args.effort, "timestamp": ts,
                    "task_ids": [t["task_id"] for t in tasks],
+                   "cost_basis": "uncached Standard list-price estimate; cache writes/discounts, tool and judge fees excluded",
                    "summary": summary, "results": results}, f, indent=2)
     print(f"Saved {os.path.basename(path)}  (judge with --judge-only)")
 

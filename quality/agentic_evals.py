@@ -25,8 +25,9 @@ import time
 from datetime import datetime, timezone
 
 from quick_evals import make_client, call_cost_usd, capture_error
+from eval_utils import is_astra, resolve_effort, response_options, sum_costs, rounded_cost
 
-RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
+RESULTS_DIR = os.environ.get("BENCHMARK_RESULTS_DIR", os.path.join(os.path.dirname(__file__), "results"))
 MAX_TURNS = 12
 MAX_OUTPUT_TOKENS = 2048
 
@@ -345,7 +346,7 @@ SUITES = {"core": TASKS, "hard": HARD_TASKS, "all": TASKS + HARD_TASKS}
 def run_trajectory(client, backend_label, model, effort, task):
     backend = task["backend_factory"]() if "backend_factory" in task else task["backend"]
     history = [{"role": "user", "content": task["goal"]}]
-    kwargs = {"reasoning": {"effort": effort}} if effort else {}
+    kwargs = response_options(model, effort, tools=True)
     max_turns = task.get("max_turns", MAX_TURNS)
 
     turns = 0
@@ -356,6 +357,7 @@ def run_trajectory(client, backend_label, model, effort, task):
     t0 = time.perf_counter()
     final_text = None
     outcome = "no_answer"
+    response_status = None
 
     while turns < max_turns:
         turns += 1
@@ -367,17 +369,18 @@ def run_trajectory(client, backend_label, model, effort, task):
             return {"outcome": "api_error", "error": capture_error(e), "turns": turns,
                     "success": False, "tool_calls": len(tool_calls_made),
                     "input_tokens": tot_in, "output_tokens": tot_out,
-                    "reasoning_tokens": tot_reasoning, "cost_usd": round(cost, 6),
+                    "reasoning_tokens": tot_reasoning, "cost_usd": rounded_cost(cost),
                     "input_tokens_per_turn": input_tokens_per_turn,
                     "wall_s": round(time.perf_counter() - t0, 2), "final_text": None}
 
         u = r.usage
+        response_status = r.status
         input_tokens_per_turn.append(u.input_tokens)
         tot_in += u.input_tokens
         tot_out += u.output_tokens
         tot_reasoning += getattr(u.output_tokens_details, "reasoning_tokens", 0) or 0
         c = call_cost_usd(backend_label, model, u.input_tokens, u.output_tokens)
-        cost += c or 0.0
+        cost = sum_costs([cost, c])
 
         calls = [o for o in r.output if o.type == "function_call"]
         if not calls:
@@ -385,11 +388,14 @@ def run_trajectory(client, backend_label, model, effort, task):
             outcome = "answered"
             break
 
-        # extend history with the model's calls + our tool results
+        # Astra needs its reasoning items replayed alongside the function calls.
+        if is_astra(model):
+            history.extend(o.model_dump(exclude_none=True) for o in r.output)
         for call in calls:
             tool_calls_made.append({"name": call.name, "arguments": call.arguments})
-            history.append({"type": "function_call", "name": call.name,
-                            "call_id": call.call_id, "arguments": call.arguments})
+            if not is_astra(model):
+                history.append({"type": "function_call", "name": call.name,
+                                "call_id": call.call_id, "arguments": call.arguments})
             fn = backend.get(call.name)
             if fn is None:
                 result = _err(f"unknown tool {call.name}")
@@ -412,10 +418,10 @@ def run_trajectory(client, backend_label, model, effort, task):
     if success and "check_state" in task:
         success = bool(task["check_state"](tool_calls_made))
 
-    return {"outcome": outcome, "error": None, "turns": turns, "success": success,
+    return {"outcome": outcome, "status": response_status, "error": None, "turns": turns, "success": success,
             "tool_calls": len(tool_calls_made),
             "input_tokens": tot_in, "output_tokens": tot_out,
-            "reasoning_tokens": tot_reasoning, "cost_usd": round(cost, 6),
+            "reasoning_tokens": tot_reasoning, "cost_usd": rounded_cost(cost),
             "input_tokens_per_turn": input_tokens_per_turn,
             "wall_s": round(time.perf_counter() - t0, 2),
             "final_text": (final_text or "")[:500]}
@@ -431,6 +437,11 @@ def main():
                    help="core = original 6 tasks; hard = long-horizon/big-payload; all = both")
     p.add_argument("--tasks", help="comma-separated task ids (default: whole suite)")
     args = p.parse_args()
+    try:
+        args.effort = resolve_effort(args.model, args.effort)
+    except ValueError as e:
+        p.error(str(e))
+    os.makedirs(RESULTS_DIR, exist_ok=True)
 
     client, base_url = make_client(args.backend)
     pool = SUITES[args.suite]
@@ -449,12 +460,12 @@ def main():
             all_results.append(r)
             print(f"  {task['id']:>13} #{rep+1}: {'OK ' if r['success'] else 'FAIL'} "
                   f"turns={r['turns']:>2} tools={r['tool_calls']:>2} "
-                  f"in_tok={r['input_tokens']:>6} cost=${r['cost_usd']:.4f} "
+                  f"in_tok={r['input_tokens']:>6} cost=${r['cost_usd']} "
                   f"({r['outcome']})")
 
     ok = [r for r in all_results if r["error"] is None]
     succ = [r for r in ok if r["success"]]
-    total_cost = sum(r["cost_usd"] for r in ok)
+    total_cost = sum_costs(r["cost_usd"] for r in all_results)
     summary = {
         "n_runs": len(all_results),
         "n_errors": len(all_results) - len(ok),
@@ -466,9 +477,9 @@ def main():
         "mean_input_tokens": round(sum(r["input_tokens"] for r in ok) / len(ok), 1) if ok else None,
         "mean_output_tokens": round(sum(r["output_tokens"] for r in ok) / len(ok), 1) if ok else None,
         "mean_wall_s": round(sum(r["wall_s"] for r in ok) / len(ok), 2) if ok else None,
-        "total_cost_usd": round(total_cost, 6),
-        "mean_cost_per_run_usd": round(total_cost / len(ok), 6) if ok else None,
-        "cost_per_success_usd": round(total_cost / len(succ), 6) if succ else None,
+        "total_cost_usd": rounded_cost(total_cost),
+        "mean_cost_per_run_usd": round(total_cost / len(all_results), 6) if total_cost is not None and all_results else None,
+        "cost_per_success_usd": round(total_cost / len(succ), 6) if total_cost is not None and succ else None,
         "per_task": {},
     }
     for task in tasks:
@@ -482,7 +493,7 @@ def main():
         summary["per_task"][task["id"]] = {
             "success": f"{len(ts)}/{len(tr)}",
             "mean_turns": round(sum(r["turns"] for r in tr) / len(tr), 2) if tr else None,
-            "mean_cost_usd": round(sum(r["cost_usd"] for r in tr) / len(tr), 6) if tr else None,
+            "mean_cost_usd": round(sum(r["cost_usd"] for r in tr) / len(tr), 6) if tr and all(r["cost_usd"] is not None for r in tr) else None,
             "mean_input_tokens": round(sum(r["input_tokens"] for r in tr) / len(tr), 1) if tr else None,
             "context_growth_x": round(sum(growth) / len(growth), 2) if growth else None,
         }
@@ -501,6 +512,7 @@ def main():
                    "reasoning_effort": args.effort, "max_turns": MAX_TURNS,
                    "suite": args.suite,
                    "repeats": args.repeats, "timestamp": ts,
+                   "cost_basis": "uncached Standard list-price estimate; cache writes/discounts, tool and judge fees excluded",
                    "summary": summary, "results": all_results}, f, indent=2)
     print(f"Saved {os.path.basename(path)}")
 

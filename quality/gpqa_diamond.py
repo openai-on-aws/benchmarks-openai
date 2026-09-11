@@ -18,31 +18,20 @@ import time
 import argparse
 from datetime import datetime, timezone
 
-from openai import OpenAI
-from eval_utils import capture_error, supports_temperature
+from quick_evals import make_client as shared_client
+from eval_utils import (capture_error, supports_temperature, legacy_model,
+                        resolve_effort, response_options)
 from datasets import load_dataset
 
 N_REPEATS   = 5
 TEMPERATURE = 0.6
-RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
+RESULTS_DIR = os.environ.get("BENCHMARK_RESULTS_DIR", os.path.join(os.path.dirname(__file__), "results"))
 
 
-def make_client(backend):
-    if backend == "mantle":
-        if os.environ.get("AWS_BEARER_TOKEN_BEDROCK"):
-            token = os.environ["AWS_BEARER_TOKEN_BEDROCK"]
-        else:
-            from aws_bedrock_token_generator import provide_token
-            region = os.environ.get("AWS_REGION", "us-west-2")
-            token = provide_token(region=region)
-        base_url = os.environ.get("MANTLE_BASE_URL", "https://bedrock-mantle.us-west-2.api.aws/openai/v1")
-        model = os.environ.get("MANTLE_MODEL", "openai.gpt-5.4")
-        return OpenAI(api_key=token, base_url=base_url), model
-    else:
-        return OpenAI(
-            api_key=os.environ.get("OPENAI_API_KEY_SAAS", os.environ.get("OPENAI_API_KEY", "")),
-            base_url="https://api.openai.com/v1"
-        ), os.environ.get("SAAS_MODEL", "gpt-5.4")
+def make_client(backend, model=None):
+    client, _ = shared_client(backend)
+    return client, legacy_model(backend, model)
+
 
 SYSTEM_PROMPT = (
     "You are an expert scientist. Answer the following multiple choice question. "
@@ -104,7 +93,7 @@ def extract_answer(response_text):
     return None
 
 
-def run_question(client, model, question_data, repeat_idx):
+def run_question(client, model, question_data, repeat_idx, effort=None):
     choices, correct_letter = shuffle_choices(question_data)
     prompt = format_question(question_data["Question"], choices)
 
@@ -116,8 +105,7 @@ def run_question(client, model, question_data, repeat_idx):
                 input=[{"role": "user", "content": prompt}],
                 max_output_tokens=2048,
             )
-            if supports_temperature(model):
-                kwargs["temperature"] = TEMPERATURE
+            kwargs.update(response_options(model, effort, TEMPERATURE))
             r = client.responses.create(**kwargs)
             response_text = r.output_text
             break
@@ -147,6 +135,7 @@ def run_question(client, model, question_data, repeat_idx):
             "correct_letter": correct_letter,
             "choices": choices,
             "response_preview": response_text[-200:],
+            "status": r.status,
             "error": None,
         }
     except Exception as e:
@@ -162,33 +151,47 @@ def run_question(client, model, question_data, repeat_idx):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--backend", choices=["mantle", "saas"], default="mantle")
+    parser.add_argument("--backend", choices=["mantle", "saas", "runtime"], default="mantle")
+    parser.add_argument("--model", help="model ID (overrides MANTLE_MODEL / SAAS_MODEL / RUNTIME_MODEL)")
+    parser.add_argument("--effort", help="reasoning effort; Astra defaults to low")
+    parser.add_argument("--max-questions", type=int)
+    parser.add_argument("--repeats", type=int, default=N_REPEATS)
     args = parser.parse_args()
+    args.model = legacy_model(args.backend, args.model)
+    try:
+        args.effort = resolve_effort(args.model, args.effort)
+    except ValueError as e:
+        parser.error(str(e))
+    if args.max_questions is not None and args.max_questions < 1:
+        parser.error("--max-questions must be positive")
+    if args.repeats < 1:
+        parser.error("--repeats must be positive")
+    os.makedirs(RESULTS_DIR, exist_ok=True)
 
     random.seed(42)
     dataset = load_dataset("Idavidrein/gpqa", "gpqa_diamond", split="train")
-    questions = list(dataset)
+    questions = list(dataset)[:args.max_questions]
     n_questions = len(questions)
 
-    client, model = make_client(args.backend)
+    client, model = make_client(args.backend, args.model)
 
     started_at = datetime.now(timezone.utc)
     print(f"\nGPQA Diamond Eval — {model} ({args.backend})")
-    print(f"Questions: {n_questions}  |  Repeats: {N_REPEATS}  |  Total calls: {n_questions * N_REPEATS}")
-    print(f"Temperature: {TEMPERATURE}  |  Started: {started_at.strftime('%Y-%m-%d %H:%M:%S UTC')}")
+    print(f"Questions: {n_questions}  |  Repeats: {args.repeats}  |  Total calls: {n_questions * args.repeats}")
+    print(f"Temperature: {TEMPERATURE if supports_temperature(model) else 'omitted'}  |  Started: {started_at.strftime('%Y-%m-%d %H:%M:%S UTC')}")
     print(f"Published GPT-5.4 score: 92.8%")
     print("=" * 65)
 
     all_results = []
-    total_calls = n_questions * N_REPEATS
+    total_calls = n_questions * args.repeats
     call_num = 0
-    correct_per_repeat = [0] * N_REPEATS
+    correct_per_repeat = [0] * args.repeats
 
     for qi, q in enumerate(questions):
         q_results = []
-        for ri in range(N_REPEATS):
+        for ri in range(args.repeats):
             call_num += 1
-            result = run_question(client, model, q, ri)
+            result = run_question(client, model, q, ri, args.effort)
             result["question_idx"] = qi
             result["repeat"] = ri
             result["subdomain"] = q.get("Subdomain", "")
@@ -203,8 +206,8 @@ def main():
                   f"[{result['domain'][:20]}]", flush=True)
 
             # Refresh mantle token every 50 calls
-            if args.backend == "mantle" and call_num % 50 == 0:
-                client, model = make_client(args.backend)
+            if args.backend in ("mantle", "runtime") and call_num % 50 == 0:
+                client, model = make_client(args.backend, args.model)
 
         all_results.extend(q_results)
 
@@ -215,14 +218,14 @@ def main():
     for qi in range(n_questions):
         q_reps = [r for r in all_results if r["question_idx"] == qi]
         # pass@1 = fraction of repeats correct
-        frac = sum(r["correct"] for r in q_reps) / N_REPEATS
+        frac = sum(r["correct"] for r in q_reps) / args.repeats
         per_question_pass.append(frac)
 
     # Overall accuracy = mean of per-question pass@1
     accuracy = sum(per_question_pass) / n_questions * 100
 
     # Per-repeat accuracy
-    rep_accs = [correct_per_repeat[ri] / n_questions * 100 for ri in range(N_REPEATS)]
+    rep_accs = [correct_per_repeat[ri] / n_questions * 100 for ri in range(args.repeats)]
 
     # Per-domain breakdown
     domains = {}
@@ -255,8 +258,10 @@ def main():
         "model": model,
         "backend": args.backend,
         "n_questions": n_questions,
-        "n_repeats": N_REPEATS,
-        "temperature": TEMPERATURE,
+        "n_repeats": args.repeats,
+        "temperature": TEMPERATURE if supports_temperature(model) else None,
+        "reasoning_effort": args.effort,
+        "max_output_tokens": 2048,
         "started_at": started_at.isoformat(),
         "ended_at": ended_at.isoformat(),
         "duration_seconds": round(duration, 1),

@@ -30,6 +30,11 @@ flowchart LR
 
 ## 🚀 Quick start
 
+**Adding GPT-6 Astra:** [coverage, model settings and run guide](docs/astra-benchmarks.md).
+Preview all runnable suites on Mantle, Runtime and OpenAI with
+`python run_astra.py --region us-west-2`. Add `--execute` for live calls; the default
+only prints the plan. Astra uses explicit `low` reasoning and requires fresh measurements.
+
 **You need:** Python 3.10+, AWS credentials (for the Bedrock side), and your own OpenAI API key (for the 1P side).
 
 ```bash
@@ -117,7 +122,7 @@ Legacy single-backend scripts (`benchmark_bedrock.py`, `benchmark_openai_saas.py
 
 ## 🎯 Quality suite
 
-The quick-eval, agentic, DeepSearchQA, and GDPval harnesses switch backends with `--backend mantle|saas|runtime` (the legacy full-eval scripts — `gpqa_diamond.py`, `hle.py`, `aime_2025.py` — support `mantle|saas` only) and emit timestamped result JSONs with per-attempt token usage, so cost-per-success falls out of every run. `mantle` is the `bedrock-mantle` OpenAI-compatible endpoint; `runtime` is the `bedrock-runtime` endpoint — same Responses API and auth, but model ids must be **inference profiles** (e.g. `--backend runtime --model us.openai.gpt-5.6-luna`; bare `openai.*` ids are rejected).
+The quick-eval, agentic, DeepSearchQA, and GDPval harnesses switch backends with `--backend mantle|saas|runtime` (the full-eval scripts also support these backends, with explicit `--model` and `--effort`) and emit timestamped result JSONs with per-attempt token usage, so cost-per-success falls out of every run. `mantle` is the `bedrock-mantle` OpenAI-compatible endpoint; `runtime` is the `bedrock-runtime` endpoint — same Responses API and auth, but model ids must be **inference profiles** (e.g. `--backend runtime --model us.openai.gpt-5.6-luna`; bare `openai.*` ids are rejected).
 
 **Quick evals** — fixed-seed samples of six community benchmarks (AIME 2022–24, GPQA Diamond via ungated mirror, MMLU-Pro, MATH-500, GSM8K, HumanEval with official tests executed), exact-match scoring, every model sees the same questions:
 
@@ -184,7 +189,9 @@ python performance/benchmark.py --backend bedrock --list-models   # source of tr
 | `MANTLE_BASE_URL` | override the Bedrock endpoint | `https://bedrock-mantle.<AWS_REGION>.api.aws/openai/v1` |
 | `BEDROCK_RUNTIME_BASE_URL` | override the bedrock-runtime endpoint | `https://bedrock-runtime.<AWS_REGION>.amazonaws.com/openai/v1` |
 
-OpenAI model ids on Bedrock (newest first): `openai.gpt-5.6-luna`, `-terra`, `-sol`, `openai.gpt-5.5`, `openai.gpt-5.4`, `openai.gpt-oss-120b`/`-20b`. ⚠️ **Availability varies by region** — e.g. as of July 2026, the bedrock-mantle endpoint in us-west-2 serves luna/terra but *not* sol (use us-east-1 for sol); `--list-models` is always the source of truth. The gpt-5.6 family rejects `temperature`/`top_p` but accepts `reasoning: {effort: ...}` including `none` — on both Bedrock endpoints.
+OpenAI model ids on Bedrock (newest first): `openai.gpt-6-astra`, `openai.gpt-5.6-luna`, `-terra`, `-sol`, `openai.gpt-5.5`, `openai.gpt-5.4`, `openai.gpt-oss-120b`/`-20b`. ⚠️ **Availability varies by region** — e.g. as of July 2026, the bedrock-mantle endpoint in us-west-2 serves luna/terra but *not* sol (use us-east-1 for sol); `--list-models` is always the source of truth. The gpt-5.6 family rejects `temperature`/`top_p` but accepts `reasoning: {effort: ...}` including `none` — on both Bedrock endpoints.
+
+Astra uses `low`/`medium`/`high`/`xhigh`/`max` reasoning; `none` is unsupported. Its Mantle endpoint is available in `us-west-2`. See the [Astra guide](docs/astra-benchmarks.md) for current IDs and caveats.
 
 **bedrock-runtime backend** (`--backend bedrock-runtime` for performance, `--backend runtime` for quality): the same models addressed by **inference-profile id** — `us.openai.gpt-5.6-luna`/`-terra`/`-sol` (US cross-region) or `global.openai.gpt-5.6-*`. Bare `openai.*` ids return a 400 here. Cross-region profiles also mean all three gpt-5.6 models are reachable from us-west-2 on this backend, unlike mantle. `--backend bedrock-runtime --list-models` prints the ACTIVE profiles for your region (the runtime endpoint itself has no models API). gpt-5.5 has no inference profile, so the GDPval judge stays on `mantle`/`saas`.
 

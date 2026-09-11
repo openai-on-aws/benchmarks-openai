@@ -5,6 +5,7 @@ equivalent but expressed differently (LaTeX, decimals, fractions, etc.).
 Judge: anthropic.claude-haiku-4-5 on Bedrock (fast, cheap)
 """
 
+import argparse
 import os, sys, json, time, boto3
 from datetime import datetime, timezone
 
@@ -62,15 +63,18 @@ def judge_answer(bedrock, question, correct, predicted):
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Grade a saved HLE run with the fixed Claude judge")
+    parser.add_argument("--file", help="HLE result JSON from any candidate/backend")
+    args = parser.parse_args()
     # Find latest HLE mantle results file
     import glob
     files = sorted(f for f in glob.glob(os.path.join(RESULTS_DIR, "hle_mantle_*.json"))
                    if not f.endswith("_rescored.json"))
-    if not files:
+    if not args.file and not files:
         print("No HLE mantle results found")
         return
 
-    fname = files[-1]
+    fname = args.file or files[-1]
     print(f"Loading: {fname}")
     data = json.load(open(fname))
     results = data["results"]
@@ -130,7 +134,7 @@ def main():
     llm_answerable = correct_count / answerable * 100 if answerable > 0 else 0
 
     print("\n" + "=" * 65)
-    print(f"RESCORED HLE — {data['model']} (mantle)")
+    print(f"RESCORED HLE — {data['model']} ({data['backend']})")
     print(f"Exact match accuracy:          {exact_accuracy:.1f}%  ({exact_count}/{len(results)})")
     print(f"LLM judge accuracy (all):      {llm_accuracy:.1f}%  ({correct_count}/{len(results)})")
     print(f"LLM judge accuracy (answerable): {llm_answerable:.1f}%  ({correct_count}/{answerable})")

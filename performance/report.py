@@ -8,6 +8,7 @@ nothing is hardcoded. Usage:
   python performance/report.py
 """
 
+import argparse
 import base64
 import glob
 import html as html_mod
@@ -30,6 +31,7 @@ MODELS = [
     ("gpt-5.6-luna", "openai.gpt-5.6-luna", "gpt-5.6-luna"),
     ("gpt-5.6-terra", "openai.gpt-5.6-terra", "gpt-5.6-terra"),
     ("gpt-5.6-sol", "openai.gpt-5.6-sol", "gpt-5.6-sol"),
+    ("gpt-6-astra", "openai.gpt-6-astra", "gpt-6-astra"),
 ]
 # the latency sections compare exactly these two backends; other backends'
 # result files (e.g. bedrock-runtime) are skipped in load_results
@@ -47,13 +49,13 @@ GRID = "#e1e0d9"
 SURFACE = "#fcfcfb"
 
 
-def load_results():
+def load_results(effort=None):
     """out[(backend, family)][size] = latest payload for that cell."""
     out, skipped_backends = {}, {}
     for path in sorted(glob.glob(os.path.join(RESULTS_DIR, "results_*.json"))):
         with open(path) as f:
             d = json.load(f)
-        if d.get("schema_version") != 2 or d.get("concurrency", 1) != 1 or d.get("reasoning_effort"):
+        if d.get("schema_version") != 2 or d.get("concurrency", 1) != 1 or d.get("reasoning_effort") != effort:
             continue
         if d["backend"] not in BACKEND_LABEL:
             skipped_backends[d["backend"]] = skipped_backends.get(d["backend"], 0) + 1
@@ -99,7 +101,8 @@ def prompt_stats():
     tokens = {"1k": 1002, "5k": 4750, "10k": 9984, "20k": 20136}
     for size in SIZES:
         p = os.path.join(DATA_DIR, f"prompt_{size}.txt")
-        stats[size] = (tokens[size], len(open(p).read()))
+        with open(p) as source:
+            stats[size] = (tokens[size], len(source.read()))
     return stats
 
 
@@ -109,21 +112,21 @@ def build_setup_table(results):
     total_calls = sum(s["n_runs"] for cell in results.values() for d in cell.values() for s in d["summary"])
     total_errors = sum(s["n_errors"] for cell in results.values() for d in cell.values() for s in d["summary"])
     rows = [
-        ("Models", "`openai.gpt-5.6-luna`, `-terra`, `-sol` (Bedrock) vs `gpt-5.6-luna`, `-terra`, `-sol` (1P)"),
-        ("Bedrock endpoint", "`https://bedrock-mantle.us-west-2.api.aws/openai/v1` (luna/terra) · `us-east-1` (sol — not served in us-west-2)"),
+        ("Models", ", ".join(sorted({d["model"] for cell in results.values() for d in cell.values()}))),
+        ("Bedrock endpoint", ", ".join(sorted({d["base_url"] for (backend, _), cell in results.items() if backend == "bedrock" for d in cell.values()}))),
         ("OpenAI 1P endpoint", "`https://api.openai.com/v1`"),
         ("API surface", "Responses API, streaming — identical code path on both backends (`performance/benchmark.py`)"),
         ("Auth", "Bedrock: IAM via `aws-bedrock-token-generator` · 1P: user-supplied `OPENAI_API_KEY`"),
-        ("Runs per config", "25"),
+        ("Runs per config", ", ".join(str(n) for n in sorted({s["n_runs"] for cell in results.values() for d in cell.values() for s in d["summary"]}))),
         ("Concurrency", "Single thread, sequential calls"),
-        ("Reasoning effort", "Default (not set)"),
-        ("Output configs", "1k input: 100/500/1000 · 5k: 500/1000/5000 · 10k: 500/1000/5000 · 20k: 1000/5000/10000"),
+        ("Reasoning effort", ", ".join(sorted({d.get("reasoning_effort") or "default (not set)" for cell in results.values() for d in cell.values()}))),
+        ("Output configs", "See per-model detail tables; compare equal input sizes and output budgets."),
         ("Prompt source", "Manhattan Project (Wikipedia) — real varied text, no repetition"),
         ("1k input prompt", f"{ps['1k'][0]:,} verified tokens ({ps['1k'][1]:,} chars)"),
         ("5k input prompt", f"{ps['5k'][0]:,} verified tokens ({ps['5k'][1]:,} chars)"),
         ("10k input prompt", f"{ps['10k'][0]:,} verified tokens ({ps['10k'][1]:,} chars)"),
         ("20k input prompt", f"{ps['20k'][0]:,} verified tokens ({ps['20k'][1]:,} chars)"),
-        ("Run dates", ", ".join(dates) + " (Bedrock luna 07-18; sol overnight 07-20→21; rest 07-20)"),
+        ("Run dates", ", ".join(dates)),
         ("Total calls", f"{total_calls:,} ({total_errors} errored)"),
     ]
     lines = ["| Parameter | Value |", "|---|---|"]
@@ -304,7 +307,7 @@ def build_findings(results):
         for backend in ["bedrock", "openai"]:
             ttfts = {sz: get(s, "ttft_ms", "p50") for sz, s, _ in rows_for(results, backend, family)
                      if s["max_output_tokens"] == 1000}
-            if len(ttfts) == 4:
+            if len(ttfts) == 4 and all(v is not None and v > 0 for v in ttfts.values()):
                 lo, hi = min(ttfts.values()), max(ttfts.values())
                 if hi / lo < 1.35:
                     f.append(f"**TTFT is roughly flat across input sizes on {BACKEND_LABEL[backend]} ({family}):** "
@@ -320,7 +323,7 @@ def build_findings(results):
         if br and op:
             pct = (op - br) / op * 100
             direction = "lower" if pct > 0 else "higher"
-            f.append(f"**{family} TTFT:** averaged across all 12 configs, Bedrock p50 TTFT is "
+            f.append(f"**{family} TTFT:** averaged across the available configs, Bedrock p50 TTFT is "
                      f"{abs(pct):.0f}% {direction} than 1P ({fnum(br)} vs {fnum(op)} ms).")
 
     # 3. Throughput comparison and luna-vs-terra gap
@@ -328,7 +331,7 @@ def build_findings(results):
     for family in [m[0] for m in MODELS]:
         for backend in ["bedrock", "openai"]:
             tp[(backend, family)] = mean_of(results, backend, family, "otps", "p50")
-    if all(tp.values()):
+    if all(tp.get((b, f)) for b in ("bedrock", "openai") for f in ("gpt-5.6-luna", "gpt-5.6-terra")):
         f.append(f"**Throughput (≥500-token outputs):** luna averages "
                  f"{fnum(tp[('bedrock','gpt-5.6-luna')],1)} tok/s on Bedrock vs {fnum(tp[('openai','gpt-5.6-luna')],1)} on 1P "
                  f"(+{(tp[('bedrock','gpt-5.6-luna')]/tp[('openai','gpt-5.6-luna')]-1)*100:.0f}%); terra averages "
@@ -367,7 +370,7 @@ def build_findings(results):
                 if n:
                     burn.append(f"{n}/{len(raw)} on {BACKEND_LABEL[backend]} {family}")
     if burn:
-        f.append("**At 100-token output budgets, gpt-5.6 often spends the whole budget on reasoning "
+        f.append("**At 100-token output budgets, reasoning models can spend the whole budget on reasoning "
                  "and emits no visible text** (" + "; ".join(burn) + "). Null-TTFT calls are excluded "
                  "from latency stats; budget well above 100 output tokens for latency-sensitive use.")
 
@@ -417,10 +420,11 @@ def load_quickevals():
 def _short_model_label(label):
     """'gpt-5.6-luna (Bedrock, effort=none)' -> 'luna (BR)'; mini/nano -> 'mini (1P)'."""
     name = label.split(" ")[0]
-    short = name.replace("gpt-5.6-", "").replace("gpt-5.4-", "")
+    short = name.replace("gpt-5.6-", "").replace("gpt-5.4-", "").replace("gpt-6-", "")
     backend = ("BR-rt" if "Bedrock runtime" in label
                else "BR" if "Bedrock" in label else "1P")
-    return f"{short} ({backend})"
+    effort = re.search(r"effort=([^)]*)", label)
+    return f"{short} ({backend}" + (f", {effort[1]}" if effort else "") + ")"
 
 
 def build_evals_section(section_no):
@@ -431,19 +435,14 @@ def build_evals_section(section_no):
     models = sorted({k[0] for k in evals}, key=lambda m: ("Bedrock" not in m, m))
     heads = " | ".join(_short_model_label(m) for m in models)
     lines = [
-        f"## {section_no}. Task-quality evals — gpt-5.6 (reasoning off) vs gpt-5.4-mini/nano",
+        f"## {section_no}. Task-quality evals",
         "",
-        "The matchup (an OpenAI-suggested comparison for migration planning): gpt-5.6 "
-        "**luna**/**terra** on Bedrock with `reasoning: {effort: none}` — thinking disabled — "
-        "vs **gpt-5.4-mini**/**nano** on the OpenAI API at their defaults. Fixed-seed or "
-        "deterministic samples of community benchmarks (AIME 60 most-recent problems, MMLU-Pro "
-        "140 stratified Qs, MATH-500 100 Qs, GSM8K 100 Qs, HumanEval all 164 tasks); every "
-        "model answered the **same questions** via the same Responses-API path. Scoring: "
-        "exact match for MCQ/number/boxed answers; HumanEval executes the official unit tests. "
-        "**Bold** marks the best score per benchmark. At these sample sizes the 95% CI is "
-        "roughly ±8–12 points: treat differences inside that band as ties. GSM8K is saturated "
-        "for all four models and acts as a sanity control. "
-        "Result files: `quality/results/quickeval_*.json`.",
+        "Seeded community benchmark samples through the Responses API. "
+        "Model labels retain the backend and requested reasoning effort. "
+        "Compare runs with the same sample size, question IDs, and token budget; "
+        "small smoke samples are connectivity checks. MCQ, numeric, and boxed answers "
+        "use exact-match scoring; HumanEval executes the official tests. "
+        "Each result file records its configuration under `quality/results/quickeval_*.json`.",
         "",
         f"### {section_no}.1 Accuracy",
         "",
@@ -597,21 +596,21 @@ def build_deepsearchqa_section(section_no):
         n_pass = round(js["pass_rate"] * ok)
         return (js["mean_f1"], n_pass, ok, s["mean_turns"],
                 s["mean_input_tokens"], s["mean_cost_per_q_usd"],
-                s["total_cost_usd"] / n_pass if n_pass else None)
+                s["total_cost_usd"] / n_pass if n_pass and s["total_cost_usd"] is not None else None)
     stats = {m: cells_for(m) for m in models}
     best_f1 = max(s[0] for s in stats.values())
     best_pass = max(s[1] / s[2] for s in stats.values())
     best_turns = min(s[3] for s in stats.values())
     best_tok = min(s[4] for s in stats.values())
-    best_cq = min(s[5] for s in stats.values())
-    best_cpp = min(s[6] for s in stats.values() if s[6] is not None)
+    best_cq = min((s[5] for s in stats.values() if s[5] is not None), default=None)
+    best_cpp = min((s[6] for s in stats.values() if s[6] is not None), default=None)
     for m in models:
         f1, n_pass, n, turns, tok, cq, cpp = stats[m]
         cells = [(f"{f1:.3f}", f1 == best_f1),
                  (f"{n_pass}/{n} ({n_pass / n:.0%})", n_pass / n == best_pass),
                  (f"{turns:.2f}", turns == best_turns),
                  (f"{tok / 1000:,.0f}k", tok == best_tok),
-                 (f"${cq:.3f}", cq == best_cq),
+                 (f"${cq:.3f}" if cq is not None else "—", cq is not None and cq == best_cq),
                  (f"${cpp:.3f}" if cpp is not None else "—", cpp == best_cpp)]
         row = [f"**{c}**" if is_best else c for c, is_best in cells]
         lines.append(f"| {_short_model_label(m)} | " + " | ".join(row) + " |")
@@ -621,8 +620,8 @@ def build_deepsearchqa_section(section_no):
         "context stuffed with search results on every extra turn, which is how a "
         "higher-priced-per-token model can end up cheaper per passing answer. "
         f"Caveat: n={n_qs} per model; treat F1 gaps under ~0.1 as directional. "
-        "Costs use the 2026-07-30 list prices (luna/terra runs executed earlier are "
-        "rescaled exactly; each file records the factor).",
+        "Costs are estimates recorded by each run. Astra uses September 11 Standard "
+        "uncached rates; historical runs retain their recorded pricing basis.",
         "",
         "Column key: " + " · ".join(f"**{_short_model_label(m)}** = {m}" for m in models),
         "",
@@ -680,13 +679,13 @@ def build_gdpval_section(section_no):
     stats = {m: cells_for(m) for m in models}
     best_frac = max(s[0] for s in stats.values())
     best_pass = max(s[1] / s[2] for s in stats.values())
-    best_cpt = min(s[3] for s in stats.values())
-    best_cpp = min(s[4] for s in stats.values() if s[4] is not None)
+    best_cpt = min((s[3] for s in stats.values() if s[3] is not None), default=None)
+    best_cpp = min((s[4] for s in stats.values() if s[4] is not None), default=None)
     for m in models:
         frac, passed, n, cpt, cpp = stats[m]
         c1 = f"{frac:.3f}"
         c2 = f"{passed}/{n} ({passed / n:.0%})"
-        c3 = f"${cpt:.4f}"
+        c3 = f"${cpt:.4f}" if cpt is not None else "—"
         c4 = f"${cpp:.4f}" if cpp is not None else "—"
         row = [f"**{c1}**" if frac == best_frac else c1,
                f"**{c2}**" if passed / n == best_pass else c2,
@@ -705,12 +704,13 @@ def build_gdpval_section(section_no):
 
 def build_markdown(results):
     charts = {}
-    for family, *_ in MODELS:
+    present_models = [m for m in MODELS if any((b, m[0]) in results for b in BACKEND_LABEL)]
+    for family, *_ in present_models:
         png = os.path.join(RESULTS_DIR, f"chart_{family}.png")
         build_chart(results, family, png)
         charts[family] = os.path.basename(png)
 
-    parts = [f"""# GPT-5.6 on Amazon Bedrock vs OpenAI 1P — Latency & Quality Benchmark Report
+    parts = [f"""# OpenAI models on Amazon Bedrock vs OpenAI 1P — Latency & Quality Benchmark Report
 
 **Generated:** {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')} · **Repo:** [openai-on-aws/benchmarks-openai](https://github.com/openai-on-aws/benchmarks-openai)
 
@@ -729,26 +729,24 @@ timestamped result JSONs in `performance/results/` at report build time.
 
 ### Caveats
 
-- Bedrock **luna** ran 2026-07-18; all other matrices ran 2026-07-20 (sol overnight into 07-21), so the
-  luna comparison includes day-to-day variance. The **terra** and **sol** comparisons are same-session
-  on both backends.
-- **Sol's Bedrock runs used us-east-1** (sol is not served in us-west-2), so its Bedrock-vs-1P deltas
-  include a region difference; luna/terra used us-west-2.
-- Sol is a deep-reasoning model: it spends heavily on reasoning tokens before the first visible token,
-  so its TTFT is inherently higher and more variable than luna/terra on both backends.
-- Sequential, default reasoning effort. Concurrency and effort sweeps are supported by the harness but
-  not yet run.
+- Compare matching model, reasoning effort, input size and output budget. Astra's supported
+  baseline is `low`; it cannot be treated as an effort=`none` run.
+- Run dates, endpoints and sample counts appear in the setup table. Region and date differences
+  can affect latency. Small smoke samples do not support stable tail-percentile conclusions.
+- Reasoning consumes output budget before visible text. Calls with no visible text have null TTFT.
+- These latency sections include sequential Mantle and OpenAI runs at the selected effort.
+  Runtime results remain in their JSONs and campaign manifest.
 - Delta convention: **positive = Bedrock better** (lower latency or higher throughput).
 """]
 
     section_no = 3
-    for family, *_ in MODELS:
+    for family, *_ in present_models:
         parts.append(f"""## {section_no}. {family}
 
 ### {section_no}.1 Benchmark chart
 
 **How to read this chart:** the solid line is the median (p50) call. The shaded band spans
-p5→p95 — 90% of the 25 calls per config landed inside it, so a wide band means inconsistent
+p5→p95 — the central 90% of calls per config, so a wide band means inconsistent
 latency, not measurement error. The dashed line (TTFT row only) is p99, the worst-case tail.
 One panel per input size; y-scale shared within each row.
 
@@ -868,7 +866,7 @@ def md_to_html(md, charts):
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GPT-5.6 on Bedrock vs OpenAI 1P — Latency Benchmark Report</title>
+<title>OpenAI models on Bedrock vs OpenAI 1P — Latency Benchmark Report</title>
 <style>
   :root {{
     --fg: #0b0b0b; --muted: #52514e; --line: #e1e0d9; --accent: #146eb4;
@@ -989,7 +987,15 @@ def md_to_docx(md, outfile):
 
 
 def main():
-    results = load_results()
+    global RESULTS_DIR, QUALITY_RESULTS_DIR
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--effort", help="include only this explicit latency effort, e.g. low for Astra")
+    parser.add_argument("--results-dir", default=RESULTS_DIR)
+    parser.add_argument("--quality-results-dir", default=QUALITY_RESULTS_DIR)
+    args = parser.parse_args()
+    RESULTS_DIR, QUALITY_RESULTS_DIR = args.results_dir, args.quality_results_dir
+    os.makedirs(RESULTS_DIR, exist_ok=True)
+    results = load_results(args.effort)
     md, charts = build_markdown(results)
     md_path = os.path.join(RESULTS_DIR, "REPORT.md")
     with open(md_path, "w") as f:

@@ -16,13 +16,14 @@ import time
 import argparse
 from datetime import datetime, timezone
 
-from openai import OpenAI
-from eval_utils import capture_error, supports_temperature
+from quick_evals import make_client as shared_client
+from eval_utils import (capture_error, supports_temperature, legacy_model,
+                        resolve_effort, response_options)
 from datasets import load_dataset
 
 N_REPEATS   = 5
 TEMPERATURE = 0.6
-RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
+RESULTS_DIR = os.environ.get("BENCHMARK_RESULTS_DIR", os.path.join(os.path.dirname(__file__), "results"))
 
 SYSTEM_PROMPT = (
     "You are an expert mathematician. Solve the following competition math problem. "
@@ -31,22 +32,10 @@ SYSTEM_PROMPT = (
 )
 
 
-def make_client(backend):
-    if backend == "mantle":
-        if os.environ.get("AWS_BEARER_TOKEN_BEDROCK"):
-            token = os.environ["AWS_BEARER_TOKEN_BEDROCK"]
-        else:
-            from aws_bedrock_token_generator import provide_token
-            region = os.environ.get("AWS_REGION", "us-west-2")
-            token = provide_token(region=region)
-        base_url = os.environ.get("MANTLE_BASE_URL", "https://bedrock-mantle.us-west-2.api.aws/openai/v1")
-        model = os.environ.get("MANTLE_MODEL", "openai.gpt-5.4")
-        return OpenAI(api_key=token, base_url=base_url), model
-    else:
-        return OpenAI(
-            api_key=os.environ.get("OPENAI_API_KEY_SAAS", os.environ.get("OPENAI_API_KEY", "")),
-            base_url="https://api.openai.com/v1"
-        ), os.environ.get("SAAS_MODEL", "gpt-5.4")
+def make_client(backend, model=None):
+    client, _ = shared_client(backend)
+    return client, legacy_model(backend, model)
+
 
 
 def extract_answer(text):
@@ -73,18 +62,33 @@ def extract_answer(text):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--backend", choices=["mantle", "saas"], default="mantle")
+    parser.add_argument("--backend", choices=["mantle", "saas", "runtime"], default="mantle")
+    parser.add_argument("--model", help="model ID (overrides MANTLE_MODEL / SAAS_MODEL / RUNTIME_MODEL)")
+    parser.add_argument("--effort", help="reasoning effort; Astra defaults to low")
+    parser.add_argument("--max-questions", type=int)
+    parser.add_argument("--repeats", type=int, default=N_REPEATS)
     args = parser.parse_args()
+    args.model = legacy_model(args.backend, args.model)
+    try:
+        args.effort = resolve_effort(args.model, args.effort)
+    except ValueError as e:
+        parser.error(str(e))
+    if args.max_questions is not None and args.max_questions < 1:
+        parser.error("--max-questions must be positive")
+    if args.repeats < 1:
+        parser.error("--repeats must be positive")
+    os.makedirs(RESULTS_DIR, exist_ok=True)
 
     # AIME 2024 — closest available public dataset (2025 not yet on HuggingFace)
     dataset = load_dataset("qq8933/AIME_1983_2024", split="train")
     questions = [q for q in dataset if int(q.get("Year", 0)) == 2024]
+    questions = questions[:args.max_questions]
     print(f"Note: Using AIME 2024 ({len(questions)} problems) — 2025 dataset not yet public on HuggingFace")
 
-    client, model = make_client(args.backend)
+    client, model = make_client(args.backend, args.model)
     print(f"\nAIME 2024 Eval — {model} ({args.backend})")
-    print(f"Questions: {len(questions)}  |  Repeats: {N_REPEATS}")
-    print(f"Temperature: {TEMPERATURE}")
+    print(f"Questions: {len(questions)}  |  Repeats: {args.repeats}")
+    print(f"Temperature: {TEMPERATURE if supports_temperature(model) else 'omitted'}")
 
     started_at = datetime.now(timezone.utc)
     print(f"Started: {started_at.strftime('%Y-%m-%d %H:%M:%S UTC')}")
@@ -102,7 +106,7 @@ def main():
         except:
             correct_answer = None
 
-        for ri in range(N_REPEATS):
+        for ri in range(args.repeats):
             total += 1
             try:
                 r = client.responses.create(
@@ -110,7 +114,7 @@ def main():
                     instructions=SYSTEM_PROMPT,
                     input=[{"role": "user", "content": problem}],
                     max_output_tokens=4096,
-                    **({"temperature": TEMPERATURE} if supports_temperature(model) else {}),
+                    **response_options(model, args.effort, TEMPERATURE),
                 )
                 response_text = r.output_text
                 predicted = extract_answer(response_text)
@@ -127,6 +131,7 @@ def main():
                     "correct_answer": correct_answer,
                     "predicted": predicted,
                     "is_correct": is_correct,
+                    "status": r.status,
                     "error": None,
                 })
             except Exception as e:
@@ -140,8 +145,8 @@ def main():
                     "error": err,
                 })
 
-            if total % 10 == 0 and args.backend == "mantle":
-                client, model = make_client(args.backend)
+            if total % 10 == 0 and args.backend in ("mantle", "runtime"):
+                client, model = make_client(args.backend, args.model)
 
     ended_at = datetime.now(timezone.utc)
     accuracy = correct / total * 100 if total > 0 else 0
@@ -160,8 +165,10 @@ def main():
         "model": model,
         "backend": args.backend,
         "n_questions": len(questions),
-        "n_repeats": N_REPEATS,
-        "temperature": TEMPERATURE,
+        "n_repeats": args.repeats,
+        "temperature": TEMPERATURE if supports_temperature(model) else None,
+        "reasoning_effort": args.effort,
+        "max_output_tokens": 4096,
         "started_at": started_at.isoformat(),
         "ended_at": ended_at.isoformat(),
         "duration_seconds": round(duration, 1),

@@ -26,9 +26,9 @@ from datetime import datetime, timezone
 from datasets import load_dataset
 from openai import OpenAI
 
-from eval_utils import capture_error
+from eval_utils import capture_error, is_astra, resolve_effort, response_options
 
-RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
+RESULTS_DIR = os.environ.get("BENCHMARK_RESULTS_DIR", os.path.join(os.path.dirname(__file__), "results"))
 SEED = 42
 
 DEFAULTS = {"mmlu_pro": 140, "math500": 100, "gsm8k": 100, "aime": 60, "humaneval": 164,
@@ -45,6 +45,12 @@ LETTERS = "ABCDEFGHIJ"
 # Luna/terra repriced 2026-07-30 (Bedrock: luna -80%, terra -20%; OpenAI
 # matched on 1P). Result files generated earlier carry a "repriced" note.
 PRICES = {
+    # Astra Standard, verified 2026-09-11:
+    # https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-openai-gpt-6-astra.html
+    # https://developers.openai.com/api/docs/pricing
+    ("mantle", "openai.gpt-6-astra"): (11.00, 55.00),
+    ("runtime", "global.openai.gpt-6-astra"): (10.00, 50.00),
+    ("saas", "gpt-6-astra"): (10.00, 50.00),
     ("mantle", "openai.gpt-5.6-luna"):  (0.22, 1.32),
     ("mantle", "openai.gpt-5.6-terra"): (2.20, 13.20),
     ("mantle", "openai.gpt-5.6-sol"):   (5.50, 33.00),
@@ -58,7 +64,9 @@ PRICES = {
 
 
 def call_cost_usd(backend, model, input_tokens, output_tokens):
-    if backend == "runtime":
+    """Uncached Standard list-price estimate, excluding cache writes and tool fees."""
+    astra = is_astra(model)
+    if backend == "runtime" and (backend, model) not in PRICES:
         # bedrock-runtime addresses models by inference-profile id — a region
         # scope (us. / global. / eu. / apac. / ...) prepended to the model id;
         # profiles price as the underlying Bedrock model.
@@ -67,6 +75,8 @@ def call_cost_usd(backend, model, input_tokens, output_tokens):
     price = PRICES.get((backend, model))
     if not price:
         return None
+    if astra and input_tokens > 272_000:
+        price = (price[0] * 2, price[1] * 1.5)
     return (input_tokens * price[0] + output_tokens * price[1]) / 1e6
 
 
@@ -378,9 +388,7 @@ def score(task, gold, text, item=None):
 # -------------------------------------------------------------------- runner
 
 def call_one(client, model, effort, item, max_tokens, max_retries=4):
-    kwargs = {}
-    if effort:
-        kwargs["reasoning"] = {"effort": effort}
+    kwargs = response_options(model, effort)
     for attempt in range(max_retries):
         try:
             t0 = time.perf_counter()
@@ -416,6 +424,7 @@ def call_one(client, model, effort, item, max_tokens, max_retries=4):
 
 
 def run_task(backend, model, effort, task, n, concurrency):
+    effort = resolve_effort(model, effort)
     client, base_url = make_client(backend)
     items = list(LOADERS[task](n))
     max_tokens = MAX_TOKENS[task]
@@ -472,7 +481,8 @@ def run_task(backend, model, effort, task, n, concurrency):
         json.dump({
             "task": task, "backend": backend, "model": model, "base_url": base_url,
             "reasoning_effort": effort, "seed": SEED, "max_output_tokens": max_tokens,
-            "timestamp": ts, "summary": summary, "results": results,
+            "timestamp": ts, "cost_basis": "uncached Standard list-price estimate; cache writes/discounts, tool and judge fees excluded",
+                   "summary": summary, "results": results,
         }, f, indent=2)
     print(f"  Saved {os.path.basename(path)}")
     return summary
@@ -527,6 +537,10 @@ def main():
     p.add_argument("--n", type=int, help="override sample size for every task")
     p.add_argument("--concurrency", type=int, default=6)
     args = p.parse_args()
+    try:
+        args.effort = resolve_effort(args.model, args.effort)
+    except ValueError as e:
+        p.error(str(e))
 
     os.makedirs(RESULTS_DIR, exist_ok=True)
     for task in args.tasks.split(","):

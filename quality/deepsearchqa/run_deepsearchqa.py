@@ -29,10 +29,11 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from quick_evals import make_client, call_cost_usd, capture_error  # noqa: E402
+from eval_utils import is_astra, resolve_effort, response_options, sum_costs, rounded_cost
 
 import search_tool  # noqa: E402  (lives next to this script)
 
-RESULTS_DIR = os.path.join(os.path.dirname(__file__), "..", "results")
+RESULTS_DIR = os.environ.get("BENCHMARK_RESULTS_DIR", os.path.join(os.path.dirname(__file__), "..", "results"))
 
 MAX_SEARCHES = 8
 MAX_FETCHES = 6
@@ -73,7 +74,7 @@ TOOLS = [
 def run_case(client, backend, model, effort, row, idx):
     history = [{"role": "developer", "content": SYSTEM_PROMPT},
                {"role": "user", "content": row["problem"]}]
-    kwargs = {"reasoning": {"effort": effort}} if effort else {}
+    kwargs = response_options(model, effort, tools=True)
 
     searches = fetches = live_calls = turns = 0
     tot_in = tot_cached = tot_out = tot_reason = 0
@@ -96,7 +97,7 @@ def run_case(client, backend, model, effort, row, idx):
                     "fetch_count": fetches, "live_search_calls": live_calls,
                     "tool_log": tool_log, "input_tokens": tot_in,
                     "cached_tokens": tot_cached, "output_tokens": tot_out,
-                    "reasoning_tokens": tot_reason, "cost_usd": round(cost, 6),
+                    "reasoning_tokens": tot_reason, "cost_usd": rounded_cost(cost),
                     "latency_s": round(time.perf_counter() - t0, 2),
                     "stop_reason": "api_error", "api_success": False,
                     "error": capture_error(e)}
@@ -106,7 +107,7 @@ def run_case(client, backend, model, effort, row, idx):
         tot_cached += getattr(u.input_tokens_details, "cached_tokens", 0) or 0
         tot_out += u.output_tokens
         tot_reason += getattr(u.output_tokens_details, "reasoning_tokens", 0) or 0
-        cost += call_cost_usd(backend, model, u.input_tokens, u.output_tokens) or 0.0
+        cost = sum_costs([cost, call_cost_usd(backend, model, u.input_tokens, u.output_tokens)])
 
         calls = [o for o in r.output if o.type == "function_call"]
         if not calls:
@@ -114,9 +115,12 @@ def run_case(client, backend, model, effort, row, idx):
             stop = getattr(r, "status", None) or "completed"
             break
 
+        if is_astra(model):
+            history.extend(o.model_dump(exclude_none=True) for o in r.output)
         for call in calls:
-            history.append({"type": "function_call", "name": call.name,
-                            "call_id": call.call_id, "arguments": call.arguments})
+            if not is_astra(model):
+                history.append({"type": "function_call", "name": call.name,
+                                "call_id": call.call_id, "arguments": call.arguments})
             args = json.loads(call.arguments or "{}")
             if call.name == search_tool.TOOL_NAME:
                 if searches >= MAX_SEARCHES:
@@ -149,7 +153,7 @@ def run_case(client, backend, model, effort, row, idx):
             "fetch_count": fetches, "live_search_calls": live_calls,
             "tool_log": tool_log, "input_tokens": tot_in,
             "cached_tokens": tot_cached, "output_tokens": tot_out,
-            "reasoning_tokens": tot_reason, "cost_usd": round(cost, 6),
+            "reasoning_tokens": tot_reason, "cost_usd": rounded_cost(cost),
             "latency_s": round(time.perf_counter() - t0, 2),
             "stop_reason": stop, "api_success": True, "error": None}
 
@@ -164,6 +168,11 @@ def main():
     p.add_argument("--sample", choices=["20", "50"], default="20",
                    help="frozen sample to run: stratified 20 or its 50-question superset")
     args = p.parse_args()
+    try:
+        args.effort = resolve_effort(args.model, args.effort)
+    except ValueError as e:
+        p.error(str(e))
+    os.makedirs(RESULTS_DIR, exist_ok=True)
 
     from datasets import load_dataset
     ds = load_dataset("google/deepsearchqa", split="eval")
@@ -181,10 +190,10 @@ def main():
         results.append(r)
         print(f"  [{n+1:>2}/{len(indices)}] idx={idx:>3} {row['answer_type']:<13} "
               f"turns={r['turns']:>2} searches={r['search_count']} fetches={r['fetch_count']} "
-              f"cost=${r['cost_usd']:.4f} ({r['stop_reason']})")
+              f"cost=${r['cost_usd']} ({r['stop_reason']})")
 
     ok = [r for r in results if r["api_success"]]
-    total_cost = sum(r["cost_usd"] for r in ok)
+    total_cost = sum_costs(r["cost_usd"] for r in results)
     live = sum(r["live_search_calls"] for r in ok)
     summary = {
         "n": len(results), "n_api_errors": len(results) - len(ok),
@@ -194,8 +203,8 @@ def main():
         "live_search_calls": live,
         "mean_latency_s": round(sum(r["latency_s"] for r in ok) / len(ok), 2) if ok else None,
         "mean_input_tokens": round(sum(r["input_tokens"] for r in ok) / len(ok), 1) if ok else None,
-        "total_cost_usd": round(total_cost, 4),
-        "mean_cost_per_q_usd": round(total_cost / len(ok), 6) if ok else None,
+        "total_cost_usd": rounded_cost(total_cost, 4),
+        "mean_cost_per_q_usd": round(total_cost / len(results), 6) if total_cost is not None and results else None,
     }
     print(f"\nSUMMARY: turns={summary['mean_turns']} searches={summary['mean_searches']} "
           f"cost/q=${summary['mean_cost_per_q_usd']} total=${summary['total_cost_usd']} "
@@ -214,6 +223,7 @@ def main():
                    "budgets": {"searches": MAX_SEARCHES, "fetches": MAX_FETCHES,
                                "turns": MAX_TURNS},
                    "system_prompt": SYSTEM_PROMPT, "timestamp": ts,
+                   "cost_basis": "uncached Standard list-price estimate; cache writes/discounts, tool and judge fees excluded",
                    "summary": summary, "results": results}, f, indent=2)
     print(f"Saved {os.path.basename(path)}")
 

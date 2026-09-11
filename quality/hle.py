@@ -11,11 +11,12 @@ openai.gpt-5.4 on Bedrock Mantle vs OAI SaaS.
 import os, sys, re, json, random, argparse
 from datetime import datetime, timezone
 
-from openai import OpenAI
-from eval_utils import capture_error, supports_temperature
+from quick_evals import make_client as shared_client
+from eval_utils import (capture_error, supports_temperature, legacy_model,
+                        resolve_effort, response_options)
 from datasets import load_dataset
 
-RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
+RESULTS_DIR = os.environ.get("BENCHMARK_RESULTS_DIR", os.path.join(os.path.dirname(__file__), "results"))
 TEMPERATURE = 0.6
 
 SYSTEM_PROMPT = (
@@ -24,22 +25,10 @@ SYSTEM_PROMPT = (
 )
 
 
-def make_client(backend):
-    if backend == "mantle":
-        if os.environ.get("AWS_BEARER_TOKEN_BEDROCK"):
-            token = os.environ["AWS_BEARER_TOKEN_BEDROCK"]
-        else:
-            from aws_bedrock_token_generator import provide_token
-            region = os.environ.get("AWS_REGION", "us-west-2")
-            token = provide_token(region=region)
-        base_url = os.environ.get("MANTLE_BASE_URL", "https://bedrock-mantle.us-west-2.api.aws/openai/v1")
-        model = os.environ.get("MANTLE_MODEL", "openai.gpt-5.4")
-        return OpenAI(api_key=token, base_url=base_url), model
-    else:
-        return OpenAI(
-            api_key=os.environ.get("OPENAI_API_KEY_SAAS", os.environ.get("OPENAI_API_KEY", "")),
-            base_url="https://api.openai.com/v1"
-        ), os.environ.get("SAAS_MODEL", "gpt-5.4")
+def make_client(backend, model=None):
+    client, _ = shared_client(backend)
+    return client, legacy_model(backend, model)
+
 
 
 def extract_answer(text):
@@ -56,7 +45,7 @@ def score(predicted, correct):
     return predicted.strip().lower() == correct.strip().lower()
 
 
-def run_single(client, model, question_text, max_retries=5):
+def run_single(client, model, question_text, max_retries=5, effort=None):
     for attempt in range(max_retries):
         try:
             r = client.responses.create(
@@ -64,9 +53,9 @@ def run_single(client, model, question_text, max_retries=5):
                 instructions=SYSTEM_PROMPT,
                 input=[{"role": "user", "content": question_text}],
                 max_output_tokens=1024,
-                **({"temperature": TEMPERATURE} if supports_temperature(model) else {}),
+                **response_options(model, effort, TEMPERATURE),
             )
-            return r.output_text, None
+            return r.output_text, None, r.status
         except Exception as e:
             err = capture_error(e)
             if err["status_code"] == 429:
@@ -75,16 +64,26 @@ def run_single(client, model, question_text, max_retries=5):
                 print(f" [rate limit, wait {wait}s]", end="", flush=True)
                 time.sleep(wait)
             else:
-                return None, err
-    return None, {"error_message": "max retries exceeded"}
+                return None, err, "error"
+    return None, {"error_message": "max retries exceeded"}, "error"
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--backend", choices=["mantle", "saas"], required=True)
+    parser.add_argument("--backend", choices=["mantle", "saas", "runtime"], required=True)
     parser.add_argument("--max-questions", type=int, default=None)
     parser.add_argument("--start-from", type=int, default=0)
+    parser.add_argument("--model", help="model ID (overrides MANTLE_MODEL / SAAS_MODEL / RUNTIME_MODEL)")
+    parser.add_argument("--effort", help="reasoning effort; Astra defaults to low")
     args = parser.parse_args()
+    args.model = legacy_model(args.backend, args.model)
+    try:
+        args.effort = resolve_effort(args.model, args.effort)
+    except ValueError as e:
+        parser.error(str(e))
+    if args.max_questions is not None and args.max_questions < 1:
+        parser.error("--max-questions must be positive")
+    os.makedirs(RESULTS_DIR, exist_ok=True)
 
     ds = load_dataset("cais/hle", split="test")
     questions = [q for q in ds if not q.get("image")]
@@ -95,12 +94,12 @@ def main():
         questions = questions[args.start_from:]
         print(f"Resuming from question {args.start_from+1}, {len(questions)} remaining.")
 
-    client, model = make_client(args.backend)
+    client, model = make_client(args.backend, args.model)
     started_at = datetime.now(timezone.utc)
 
     print(f"\nHLE Eval — {model} ({args.backend})")
     print(f"Questions: {len(questions)} (text-only)  |  Repeats: 1")
-    print(f"Temperature: {TEMPERATURE}  |  Published GPT-5.4 (no tools): 39.8%")
+    print(f"Temperature: {TEMPERATURE if supports_temperature(model) else 'omitted'}  |  Published GPT-5.4 (no tools): 39.8%")
     print(f"Started: {started_at.strftime('%Y-%m-%d %H:%M:%S UTC')}")
     print("=" * 65)
 
@@ -108,7 +107,7 @@ def main():
     correct_count = 0
 
     for qi, q in enumerate(questions):
-        response_text, error = run_single(client, model, q["question"])
+        response_text, error, response_status = run_single(client, model, q["question"], effort=args.effort)
         predicted = extract_answer(response_text) if response_text else None
         is_correct = score(predicted, q["answer"]) if predicted else False
         if is_correct:
@@ -126,12 +125,13 @@ def main():
             "correct_answer": q["answer"],
             "predicted": predicted,
             "is_correct": is_correct,
+            "status": response_status,
             "error": error,
         })
 
         # Refresh mantle token every 100 calls
-        if args.backend == "mantle" and (qi + 1) % 100 == 0:
-            client, model = make_client(args.backend)
+        if args.backend in ("mantle", "runtime") and (qi + 1) % 100 == 0:
+            client, model = make_client(args.backend, args.model)
 
     ended_at = datetime.now(timezone.utc)
     accuracy = correct_count / len(questions) * 100
@@ -146,15 +146,18 @@ def main():
 
     ts = started_at.strftime("%Y%m%d_%H%M%S")
     fname = os.path.join(RESULTS_DIR, f"hle_{args.backend}_{model}_{ts}.json")
-    json.dump({
-        "eval": "hle_text_only", "model": model, "backend": args.backend,
-        "n_questions": len(questions), "temperature": TEMPERATURE,
-        "started_at": started_at.isoformat(), "ended_at": ended_at.isoformat(),
-        "duration_seconds": round(duration, 1),
-        "correct": correct_count, "accuracy_pct": round(accuracy, 2),
-        "published_gpt54_score_pct": 39.8,
-        "results": results,
-    }, open(fname, "w"), indent=2)
+    with open(fname, "w") as output:
+        json.dump({
+            "eval": "hle_text_only", "model": model, "backend": args.backend,
+            "n_questions": len(questions), "temperature": TEMPERATURE if supports_temperature(model) else None,
+            "reasoning_effort": args.effort,
+            "max_output_tokens": 1024,
+            "started_at": started_at.isoformat(), "ended_at": ended_at.isoformat(),
+            "duration_seconds": round(duration, 1),
+            "correct": correct_count, "accuracy_pct": round(accuracy, 2),
+            "published_gpt54_score_pct": 39.8,
+            "results": results,
+        }, output, indent=2)
     print(f"Saved: {os.path.basename(fname)}")
 
 
