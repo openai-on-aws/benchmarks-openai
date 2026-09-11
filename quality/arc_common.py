@@ -1,4 +1,4 @@
-"""Shared, bounded Bedrock Responses calls for the ARC pilots."""
+"""Shared, bounded Bedrock model calls for the ARC pilots."""
 
 import argparse
 from dataclasses import dataclass
@@ -69,7 +69,9 @@ def new_run(args, suite):
         "schema_version": 1, "suite": suite, "status": "planned",
         "started_at": datetime.now(timezone.utc).isoformat(),
         "backend": args.backend, "model": args.model, "region": args.region,
-        "reasoning_effort": args.effort, "max_output_tokens": args.max_output_tokens,
+        "requested_reasoning_effort": args.effort,
+        "reasoning_effort": "model_default" if "gpt-oss-safeguard-" in args.model else args.effort,
+        "max_output_tokens": args.max_output_tokens,
         "max_input_bytes": args.max_input_bytes, "budget_usd": args.budget_usd,
         "rate_override": {"input": args.input_rate, "output": args.output_rate}
         if args.input_rate is not None else None,
@@ -152,6 +154,8 @@ class BedrockSession:
         os.environ["AWS_REGION"] = args.region
         self.args = args
         self.plain_messages = "gpt-oss-" in args.model
+        self.api = "chat_completions" if "gpt-oss-safeguard-" in args.model else "responses"
+        self.effective_effort = "model_default" if self.api == "chat_completions" else args.effort
         client, self.endpoint = make_client(args.backend)
         if args.backend == "mantle" and "gpt-oss-" in args.model:
             self.endpoint = self.endpoint.replace("/openai/v1", "/v1")
@@ -169,6 +173,8 @@ class BedrockSession:
         self.previous_context_tokens = 0
 
     def call(self, history, *, compaction_threshold=None):
+        if self.api == "chat_completions" and compaction_threshold is not None:
+            raise RunLimit("Safeguard's Chat Completions interface does not support Responses compaction")
         body_bytes = len(json.dumps(history, ensure_ascii=False).encode())
         if body_bytes > self.args.max_input_bytes:
             raise RunLimit("input byte limit reached; no history was silently truncated")
@@ -176,6 +182,8 @@ class BedrockSession:
         # reported context size to cover opaque retained reasoning, plus framing.
         input_bound = body_bytes + self.previous_context_tokens + 4096
         self.budget.reserve(input_bound, self.args.max_output_tokens)
+        if self.api == "chat_completions":
+            return self.call_chat(history)
         options = response_options(self.args.model, self.args.effort)
         options.update(store=False, service_tier="default")
         if "gpt-oss-" not in self.args.model:
@@ -205,10 +213,38 @@ class BedrockSession:
             "output": [item.model_dump(mode="json", exclude_none=True) for item in response.output],
         }
 
+    def call_chat(self, history):
+        """Safeguard uses its documented Bedrock Chat Completions interface."""
+        start = time.perf_counter()
+        response = self.client.chat.completions.create(
+            model=self.args.model, messages=history, max_tokens=self.args.max_output_tokens)
+        elapsed = time.perf_counter() - start
+        usage = response.usage
+        if usage is None:
+            self.unaccounted_response = response.model_dump(mode="json", exclude_none=True)
+            raise RuntimeError("Chat Completions response has no usage; reservation retained")
+        cost = self.budget.settle(usage.prompt_tokens, usage.completion_tokens)
+        self.previous_context_tokens = usage.prompt_tokens + usage.completion_tokens
+        choice = response.choices[0]
+        text = choice.message.content or ""
+        return {
+            "response_id": response.id, "text": text,
+            "status": "completed" if choice.finish_reason == "stop" else "incomplete",
+            "elapsed_seconds": elapsed,
+            "usage": {"input_tokens": usage.prompt_tokens, "output_tokens": usage.completion_tokens},
+            "raw_usage": usage.model_dump(mode="json"),
+            "estimated_cost_usd": cost,
+            "output": [{"type": "message", "role": "assistant",
+                        "content": [{"type": "output_text", "text": text}]}],
+            "raw_message": choice.message.model_dump(mode="json", exclude_none=True),
+        }
+
 
 def finish(run, args, session=None):
     if session is not None:
         run["endpoint"] = session.endpoint
+        run["api"] = session.api
+        run["effective_reasoning_effort"] = session.effective_effort
         run["client_versions"] = {p: version(p) for p in ("openai", "boto3")}
         run["estimated_cost_usd"] = session.budget.spent
         run["unsettled_call_reservation_usd"] = session.budget.reserved

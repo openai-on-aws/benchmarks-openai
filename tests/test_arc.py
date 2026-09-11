@@ -117,6 +117,31 @@ class ArcTests(unittest.TestCase):
             session.call([{"role": "user", "content": "test"}])
         client.responses.create.assert_not_called()
 
+    def test_safeguard_uses_bedrock_chat_and_labels_default_effort(self):
+        args = SimpleNamespace(region="us-west-2", backend="mantle",
+            model="openai.gpt-oss-safeguard-20b", effort="low", budget_usd=1,
+            input_rate=None, output_rate=None, max_output_tokens=4096, max_input_bytes=100_000)
+        usage = SimpleNamespace(prompt_tokens=100, completion_tokens=20,
+                                model_dump=lambda **_: {"prompt_tokens": 100, "completion_tokens": 20})
+        message = SimpleNamespace(content="[[1]]", model_dump=lambda **_: {"content": "[[1]]"})
+        response = SimpleNamespace(id="chat_test", usage=usage,
+            choices=[SimpleNamespace(message=message, finish_reason="stop")])
+        client = Mock()
+        client.with_options.return_value = client
+        client.chat.completions.create.return_value = response
+        with patch("quick_evals.make_client", return_value=(client, "https://bedrock/openai/v1")):
+            session = BedrockSession(args)
+        answer = session.call([{"role": "user", "content": "test"}])
+        self.assertEqual(session.api, "chat_completions")
+        self.assertEqual(session.effective_effort, "model_default")
+        self.assertEqual(answer["usage"], {"input_tokens": 100, "output_tokens": 20})
+        self.assertEqual(answer["status"], "completed")
+        request = client.chat.completions.create.call_args.kwargs
+        self.assertNotIn("reasoning_effort", request)
+        client.responses.create.assert_not_called()
+        with self.assertRaises(RunLimit):
+            session.call([], compaction_threshold=10000)
+
     def test_context_only_pruned_at_server_compaction(self):
         history = [{"role": "user", "content": "old"}]
         reasoning = {"type": "reasoning", "encrypted_content": "opaque"}

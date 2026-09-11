@@ -1,8 +1,9 @@
 # ARC pilots on Amazon Bedrock
 
 These runners compare OpenAI models **on Amazon Bedrock only**. They use the
-OpenAI-compatible Responses API on Mantle or Runtime; no OpenAI SaaS key or
-external model judge is needed. The existing nine suites remain available through
+OpenAI-compatible Responses API on Mantle or Runtime, with Bedrock Chat Completions
+for Safeguard models that do not support Responses. No OpenAI SaaS key or external
+model judge is needed. The existing nine suites remain available through
 their individual runners and `run_astra.py`.
 
 This is a first implementation for public-set pilots, not a reproduction of
@@ -19,14 +20,17 @@ OpenAI's headline scores or a submission to the ARC Prize leaderboard.
 | Results | Per-call output, usage, latency, estimated cost, provenance, completion status, and a Markdown comparison |
 
 Discovery is not proof of invocation access. The default regions are Oregon,
-Virginia, and Ohio; this is an inventory of the Responses routes returned there,
+Virginia, and Ohio; this is an inventory of the model routes returned there,
 not a claim to inventory every native API or AWS region. Dated model snapshots
 remain separate conditions. `--all-routes` also retains duplicate model conditions
 across regions, Mantle, and Runtime inference profiles.
 
 The inventory includes specialised Safeguard and Daybreak models where advertised.
-They remain visible in the matrix, but ARC results for them are diagnostics, not
-a recommendation to use safety classifiers or cyber models for general reasoning.
+Safeguard uses Chat Completions with the provider's default reasoning settings and
+visible-message history, and these differences are labelled in results. It cannot
+use the Responses compaction option. These models remain visible in the matrix,
+but ARC results for them are diagnostics, not a recommendation to use safety
+classifiers or cyber models for general reasoning.
 The separate CyberSOC/Daybreak **benchmark suite** remains follow-up work.
 
 ## Setup and model discovery
@@ -132,6 +136,8 @@ with a compaction-enabled OpenAI blog result.
 Keep model ID, reasoning effort, output ceiling, task/game versions, attempt count,
 action ceiling, and context policy fixed or explicitly labelled. The default
 common effort is `low`; equal effort names do not imply equal compute.
+Safeguard conditions record `effective_reasoning_effort=model_default` because no
+reasoning-effort override is sent through their Chat Completions adapter.
 
 ## Validation
 
@@ -153,6 +159,7 @@ to verify credentials, endpoint paths, and model-specific parameter support.
 - [OpenAI's ARC-AGI-3 harness analysis](https://openai.com/index/how-two-settings-tripled-our-arc-agi-3-scores/)
 - [Responses compaction](https://developers.openai.com/api/docs/guides/compaction)
 - [Bedrock pricing, including GPT-OSS and Safeguard](https://aws.amazon.com/bedrock/pricing/)
+- [Safeguard interfaces](https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-openai-gpt-oss-safeguard-20b.html)
 - [GPT-5.5 pricing](https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-openai-gpt-55.html)
 - [Daybreak Red pricing](https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-openai-gpt-56-cyber.html)
 - [Daybreak Blue pricing](https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-openai-gpt-daybreak-blue-56-sol.html)

@@ -162,7 +162,9 @@ def main():
         parser.error(str(e))
     run.update(games=games, seed=args.seed, max_actions_per_game=args.max_actions,
                planned_max_calls=len(games) * args.max_actions,
-               reasoning_strategy="replay all returned output items; request encrypted reasoning for frontier models",
+               reasoning_strategy="visible assistant text only (Safeguard Chat Completions)"
+               if "gpt-oss-safeguard-" in args.model else
+               "replay all returned output items; request encrypted reasoning for frontier models",
                compaction_threshold=args.compact_threshold,
                prompt_sha256=digest(PROMPT.encode()))
     session, arcade, card_id = None, None, None

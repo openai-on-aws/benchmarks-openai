@@ -99,7 +99,11 @@ def build_commands(models, args):
                             "--max-actions", str(args.max_actions)]
                 if args.compact_threshold:
                     command += ["--compact-threshold", str(args.compact_threshold)]
-            steps.append({**model, "suite": suite, "command": command,
+            safeguard = "gpt-oss-safeguard-" in model["model"]
+            steps.append({**model, "suite": suite,
+                          "api": "chat_completions" if safeguard else "responses",
+                          "effective_reasoning_effort": "model_default" if safeguard else args.effort,
+                          "command": command,
                           "result": str(output / "manifest.json"), "status": "planned"})
     return steps
 
@@ -109,8 +113,8 @@ def write_report(campaign, directory):
         "# Bedrock ARC pilot", "",
         "Small public-set runs validate the harness. They are not official leaderboard results.",
         "ARC-AGI-2 and ARC-AGI-3 measure different capabilities; compare within each suite.", "",
-        "| Model | Region | Suite | Run status | Score | Coverage | Estimated token cost |",
-        "| --- | --- | --- | --- | --- | --- | --- |",
+        "| Model | Region | Suite | API / effort | Run status | Score | Coverage | Estimated token cost |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     total = 0.0
     for step in campaign["steps"]:
@@ -128,7 +132,10 @@ def write_report(campaign, directory):
         cost = data.get("estimated_cost_usd")
         cost_text = f"${cost:.4f}" if cost is not None else "—"
         total += cost or 0
-        lines.append(f"| `{step['model']}` | {step['region']} | {step['suite']} | "
+        api = data.get("api", step.get("api", "pending"))
+        effort = data.get("effective_reasoning_effort",
+                          data.get("reasoning_effort", step.get("effective_reasoning_effort", "pending")))
+        lines.append(f"| `{step['model']}` | {step['region']} | {step['suite']} | {api} / {effort} | "
                      f"{data.get('status', step['status'])} | {score} | {coverage} | {cost_text} |")
     lines.extend(["", f"Settled estimated token cost: ${total:.4f}.",
                   "Failed calls may have unreported usage; inspect unsettled reservations in each manifest.",
@@ -208,7 +215,8 @@ def main():
         for step in steps:
             step["status"] = "running"
             write_json(path, campaign)
-            with open(Path(step["result"]).parent.with_suffix(".log"), "w") as log:
+            output = Path(step["result"]).parent
+            with open(output.parent / f"{output.name}.log", "w") as log:
                 result = subprocess.run([*step["command"], "--execute"], cwd=ROOT,
                                         stdout=log, stderr=subprocess.STDOUT)
             step["exit_code"] = result.returncode
