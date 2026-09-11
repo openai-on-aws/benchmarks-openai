@@ -45,3 +45,6 @@ docs/sa-guide-*.md
 docs/img/
 performance/results/REPORT.md
 performance/results/REPORT.html
+
+# Isolated benchmark campaigns; publish reviewed results explicitly.
+runs/

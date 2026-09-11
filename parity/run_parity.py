@@ -18,6 +18,8 @@ Known Mantle constraints vs OAI SaaS:
 """
 
 import os
+import sys
+import argparse
 import json
 import base64
 from datetime import datetime, timezone
@@ -25,10 +27,16 @@ from datetime import datetime, timezone
 from aws_bedrock_token_generator import provide_token
 from openai import OpenAI
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "quality"))
+from eval_utils import is_astra, legacy_model, resolve_effort, response_options
+
 REGION = os.environ.get("AWS_REGION", "us-west-2")
 BASE_URL = os.environ.get("MANTLE_BASE_URL", f"https://bedrock-mantle.{REGION}.api.aws/openai/v1")
 MODEL = os.environ.get("MANTLE_MODEL", "openai.gpt-5.4")
 RESULTS_FILE = os.path.join(os.path.dirname(__file__), f"results_{MODEL}_{REGION}.txt")
+
+BACKEND = "mantle"
+EFFORT = None
 
 results = []
 
@@ -37,8 +45,21 @@ PLOT_PNG = os.path.join(os.path.dirname(os.path.dirname(__file__)), "performance
 
 
 def make_client():
-    token = provide_token(region=REGION)
+    if BACKEND == "saas":
+        key = os.environ.get("OPENAI_API_KEY_SAAS") or os.environ["OPENAI_API_KEY"]
+        return OpenAI(api_key=key, base_url=BASE_URL)
+    token = os.environ.get("AWS_BEARER_TOKEN_BEDROCK") or provide_token(region=REGION)
     return OpenAI(api_key=token, base_url=BASE_URL)
+
+
+def create_response(client, *, preserve_budget=False, **kwargs):
+    options = response_options(MODEL, EFFORT, tools=bool(kwargs.get("tools")))
+    if is_astra(MODEL) and not preserve_budget:
+        # These are feature checks: leave room for reasoning before visible text.
+        kwargs["max_output_tokens"] = max(kwargs.get("max_output_tokens", 0), 2048)
+    else:
+        kwargs.setdefault("max_output_tokens", 1024)
+    return client.responses.create(**{**options, **kwargs})
 
 
 def record(name, passed, detail=""):
@@ -67,7 +88,7 @@ def safe_run(name, fn):
 # ── 1. Basic text generation ──────────────────────────────────────────────────
 def test_basic_text():
     client = make_client()
-    r = client.responses.create(
+    r = create_response(client,
         model=MODEL,
         input=[{"role": "user", "content": "Reply with exactly: hello world"}],
         max_output_tokens=32,
@@ -80,7 +101,7 @@ def test_basic_text():
 def test_streaming():
     client = make_client()
     chunks = []
-    stream = client.responses.create(
+    stream = create_response(client,
         model=MODEL,
         input=[{"role": "user", "content": "Count to 3, one number per line."}],
         max_output_tokens=40,
@@ -97,7 +118,7 @@ def test_streaming():
 # ── 3. Instructions (system prompt) ───────────────────────────────────────────
 def test_instructions():
     client = make_client()
-    r = client.responses.create(
+    r = create_response(client,
         model=MODEL,
         instructions="Always respond in French, no matter what language the user uses.",
         input=[{"role": "user", "content": "What is the capital of Germany?"}],
@@ -111,7 +132,7 @@ def test_instructions():
 # ── 4. Multi-role input (developer/user/assistant) ────────────────────────────
 def test_multi_role():
     client = make_client()
-    r = client.responses.create(
+    r = create_response(client,
         model=MODEL,
         input=[
             {"role": "developer", "content": "You are a helpful assistant. Be concise."},
@@ -128,12 +149,12 @@ def test_multi_role():
 # ── 5a. Multi-turn via full history (workaround for missing previous_response_id) ─
 def test_multiturn_history():
     client = make_client()
-    r1 = client.responses.create(
+    r1 = create_response(client,
         model=MODEL,
         input=[{"role": "user", "content": "My name is Alex. Remember it."}],
         max_output_tokens=40,
     )
-    r2 = client.responses.create(
+    r2 = create_response(client,
         model=MODEL,
         input=[
             {"role": "user", "content": "My name is Alex. Remember it."},
@@ -149,14 +170,14 @@ def test_multiturn_history():
 # ── 5b. Stateful conversation (previous_response_id) ──────────────────────────
 def test_stateful_conversation():
     client = make_client()
-    r1 = client.responses.create(
+    r1 = create_response(client,
         model=MODEL,
         input=[{"role": "user", "content": "My name is Alex. Remember it."}],
         max_output_tokens=40,
         store=True,
     )
     try:
-        r2 = client.responses.create(
+        r2 = create_response(client,
             model=MODEL,
             input=[{"role": "user", "content": "What is my name?"}],
             previous_response_id=r1.id,
@@ -171,7 +192,7 @@ def test_stateful_conversation():
 # ── 6. Max output tokens ──────────────────────────────────────────────────────
 def test_max_output_tokens():
     client = make_client()
-    r = client.responses.create(
+    r = create_response(client, preserve_budget=True,
         model=MODEL,
         input=[{"role": "user", "content": "Write a very long essay about the ocean."}],
         max_output_tokens=16,
@@ -182,8 +203,11 @@ def test_max_output_tokens():
 
 # ── 7. Temperature ────────────────────────────────────────────────────────────
 def test_temperature():
+    if is_astra(MODEL):
+        record("Temperature parameter", None, "Astra does not support custom sampling parameters")
+        return
     client = make_client()
-    r = client.responses.create(
+    r = create_response(client,
         model=MODEL,
         input=[{"role": "user", "content": "Reply with a single integer between 1 and 10."}],
         max_output_tokens=16,
@@ -194,8 +218,11 @@ def test_temperature():
 
 # ── 8. Top-p ──────────────────────────────────────────────────────────────────
 def test_top_p():
+    if is_astra(MODEL):
+        record("top_p parameter", None, "Astra does not support custom sampling parameters")
+        return
     client = make_client()
-    r = client.responses.create(
+    r = create_response(client,
         model=MODEL,
         input=[{"role": "user", "content": "Say yes."}],
         max_output_tokens=16,
@@ -207,7 +234,7 @@ def test_top_p():
 # ── 9. Structured output (JSON schema) ───────────────────────────────────────
 def test_structured_output():
     client = make_client()
-    r = client.responses.create(
+    r = create_response(client,
         model=MODEL,
         input=[{"role": "user", "content": "Extract: 'John is 30 years old and lives in NYC'."}],
         max_output_tokens=80,
@@ -240,7 +267,7 @@ def test_structured_output():
 # ── 10. Function calling ──────────────────────────────────────────────────────
 def test_function_calling():
     client = make_client()
-    r = client.responses.create(
+    r = create_response(client,
         model=MODEL,
         input=[{"role": "user", "content": "What is the weather in Seattle?"}],
         max_output_tokens=100,
@@ -266,7 +293,7 @@ def test_function_calling():
 # ── 11. Parallel function calls ───────────────────────────────────────────────
 def test_parallel_function_calls():
     client = make_client()
-    r = client.responses.create(
+    r = create_response(client,
         model=MODEL,
         input=[{"role": "user", "content": "What's the weather in Seattle AND New York?"}],
         max_output_tokens=150,
@@ -304,7 +331,7 @@ def test_tool_result_roundtrip():
         },
         "strict": True,
     }
-    r1 = client.responses.create(
+    r1 = create_response(client,
         model=MODEL,
         input=[{"role": "user", "content": "What is the weather in Boston?"}],
         max_output_tokens=100,
@@ -316,12 +343,13 @@ def test_tool_result_roundtrip():
         return
 
     # Pass full conversation history + tool result in input array
-    r2 = client.responses.create(
+    r2 = create_response(client,
         model=MODEL,
         input=[
             {"role": "user", "content": "What is the weather in Boston?"},
-            {"type": "function_call", "name": fn_calls[0].name,
-             "call_id": fn_calls[0].call_id, "arguments": fn_calls[0].arguments},
+            *([o.model_dump(exclude_none=True) for o in r1.output] if is_astra(MODEL) else [
+                {"type": "function_call", "name": fn_calls[0].name,
+                 "call_id": fn_calls[0].call_id, "arguments": fn_calls[0].arguments}]),
             {"type": "function_call_output", "call_id": fn_calls[0].call_id,
              "output": '{"temperature": 55, "condition": "cloudy"}'},
         ],
@@ -335,7 +363,7 @@ def test_tool_result_roundtrip():
 # ── 13. tool_choice forced ────────────────────────────────────────────────────
 def test_tool_choice_forced():
     client = make_client()
-    r = client.responses.create(
+    r = create_response(client,
         model=MODEL,
         input=[{"role": "user", "content": "Hello there."}],
         max_output_tokens=80,
@@ -361,7 +389,7 @@ def test_tool_choice_forced():
 def test_image_url():
     client = make_client()
     try:
-        r = client.responses.create(
+        r = create_response(client,
             model=MODEL,
             input=[{"role": "user", "content": [
                 {"type": "input_text", "text": "What color is the sky in this image? One word."},
@@ -383,7 +411,7 @@ def test_image_base64():
     # Use the real benchmark plot PNG — confirmed valid PNG file
     with open(PLOT_PNG, "rb") as f:
         b64 = base64.standard_b64encode(f.read()).decode()
-    r = client.responses.create(
+    r = create_response(client,
         model=MODEL,
         input=[{"role": "user", "content": [
             {"type": "input_text", "text": "This is a benchmark chart. What are the two metrics shown on the Y axes? Answer in a few words."},
@@ -400,7 +428,7 @@ def test_image_base64():
 def test_image_s3():
     client = make_client()
     try:
-        r = client.responses.create(
+        r = create_response(client,
             model=MODEL,
             input=[{"role": "user", "content": [
                 {"type": "input_text", "text": "This is a benchmark chart. What are the two metrics shown on the Y axes? Answer in a few words."},
@@ -419,7 +447,7 @@ def test_image_s3():
 def test_web_search():
     client = make_client()
     try:
-        r = client.responses.create(
+        r = create_response(client,
             model=MODEL,
             input=[{"role": "user", "content": "What is today's date?"}],
             max_output_tokens=60,
@@ -436,7 +464,7 @@ def test_web_search():
 def test_file_search():
     client = make_client()
     try:
-        r = client.responses.create(
+        r = create_response(client,
             model=MODEL,
             input=[{"role": "user", "content": "Search for AWS docs."}],
             max_output_tokens=40,
@@ -451,7 +479,7 @@ def test_file_search():
 # ── 18. Tool search (gpt-5.4+ only) ──────────────────────────────────────────
 def test_tool_search():
     client = make_client()
-    r = client.responses.create(
+    r = create_response(client,
         model=MODEL,
         input=[{"role": "user", "content": "What is the weather in Denver?"}],
         max_output_tokens=100,
@@ -479,7 +507,7 @@ def test_tool_search():
 def test_remote_mcp_url():
     client = make_client()
     try:
-        r = client.responses.create(
+        r = create_response(client,
             model=MODEL,
             input=[{"role": "user", "content": "Roll 2d6."}],
             max_output_tokens=80,
@@ -500,7 +528,7 @@ def test_remote_mcp_url():
 # ── 19c. Custom tool type ─────────────────────────────────────────────────────
 def test_custom_tool():
     client = make_client()
-    r = client.responses.create(
+    r = create_response(client,
         model=MODEL,
         input=[{"role": "user", "content": "Calculate 42 * 7 using the calculator tool."}],
         max_output_tokens=60,
@@ -519,7 +547,7 @@ def test_custom_tool():
 # ── 19d. Namespace tool type ──────────────────────────────────────────────────
 def test_namespace_tool():
     client = make_client()
-    r = client.responses.create(
+    r = create_response(client,
         model=MODEL,
         input=[{"role": "user", "content": "What is the weather in Denver?"}],
         max_output_tokens=100,
@@ -558,7 +586,7 @@ def test_remote_mcp_arn():
 def test_image_generation():
     client = make_client()
     try:
-        r = client.responses.create(
+        r = create_response(client,
             model=MODEL,
             input=[{"role": "user", "content": "Generate a small image of a red circle."}],
             max_output_tokens=50,
@@ -574,7 +602,7 @@ def test_image_generation():
 def test_computer_use():
     client = make_client()
     try:
-        r = client.responses.create(
+        r = create_response(client,
             model=MODEL,
             input=[{"role": "user", "content": "Click the Submit button."}],
             max_output_tokens=60,
@@ -590,7 +618,7 @@ def test_computer_use():
 def test_shell():
     client = make_client()
     try:
-        r = client.responses.create(
+        r = create_response(client,
             model=MODEL,
             input=[{"role": "user", "content": "Run: echo hello"}],
             max_output_tokens=60,
@@ -605,7 +633,7 @@ def test_shell():
 # ── 23. store=False ───────────────────────────────────────────────────────────
 def test_store_false():
     client = make_client()
-    r = client.responses.create(
+    r = create_response(client,
         model=MODEL,
         input=[{"role": "user", "content": "Say: stateless"}],
         max_output_tokens=16,
@@ -617,7 +645,7 @@ def test_store_false():
 # ── 24. Usage object ──────────────────────────────────────────────────────────
 def test_usage():
     client = make_client()
-    r = client.responses.create(
+    r = create_response(client,
         model=MODEL,
         input=[{"role": "user", "content": "Hi."}],
         max_output_tokens=16,
@@ -631,7 +659,7 @@ def test_usage():
 # ── 25. Response retrieval by ID ──────────────────────────────────────────────
 def test_response_retrieval():
     client = make_client()
-    r = client.responses.create(
+    r = create_response(client,
         model=MODEL,
         input=[{"role": "user", "content": "Say: retrievable"}],
         max_output_tokens=16,
@@ -645,7 +673,7 @@ def test_response_retrieval():
 def test_background_accepted():
     client = make_client()
     try:
-        r = client.responses.create(
+        r = create_response(client,
             model=MODEL,
             input=[{"role": "user", "content": "Write a haiku about clouds."}],
             background=True,
@@ -663,7 +691,7 @@ def test_background_retrieve():
     import time
     client = make_client()
     try:
-        r = client.responses.create(
+        r = create_response(client,
             model=MODEL,
             input=[{"role": "user", "content": "Say: background complete"}],
             background=True,
@@ -689,7 +717,7 @@ def test_background_retrieve():
 def test_background_cancel():
     client = make_client()
     try:
-        r = client.responses.create(
+        r = create_response(client,
             model=MODEL,
             input=[{"role": "user", "content": "Write a very long 5000 word essay about the history of computing."}],
             background=True,
@@ -707,7 +735,7 @@ def test_background_stream():
     import time
     client = make_client()
     try:
-        r = client.responses.create(
+        r = create_response(client,
             model=MODEL,
             input=[{"role": "user", "content": "Count to 5, one number per line."}],
             background=True,
@@ -767,8 +795,30 @@ TESTS = [
 
 
 def main():
+    global MODEL, BACKEND, EFFORT, BASE_URL, RESULTS_FILE
+    parser = argparse.ArgumentParser(description="Responses API feature parity")
+    parser.add_argument("--backend", choices=["mantle", "runtime", "saas"], default="mantle")
+    parser.add_argument("--model")
+    parser.add_argument("--effort")
+    args = parser.parse_args()
+    BACKEND = args.backend
+    MODEL = legacy_model(BACKEND, args.model)
+    try:
+        EFFORT = resolve_effort(MODEL, args.effort)
+    except ValueError as e:
+        parser.error(str(e))
+    if BACKEND == "runtime":
+        BASE_URL = os.environ.get("BEDROCK_RUNTIME_BASE_URL",
+                                  f"https://bedrock-runtime.{REGION}.amazonaws.com/openai/v1")
+    elif BACKEND == "saas":
+        BASE_URL = "https://api.openai.com/v1"
+    results.clear()
     started = datetime.now(timezone.utc)
-    print(f"\nParity Test Suite: {MODEL} on Bedrock Mantle")
+    outdir = os.environ.get("BENCHMARK_RESULTS_DIR", os.path.dirname(__file__))
+    os.makedirs(outdir, exist_ok=True)
+    safe_model = MODEL.replace("/", "-").replace(":", "-")
+    RESULTS_FILE = os.path.join(outdir, f"results_{BACKEND}_{safe_model}_{REGION}_{started:%Y%m%d_%H%M%S}.txt")
+    print(f"\nParity Test Suite: {MODEL} on {BACKEND} (effort={EFFORT})")
     print(f"Endpoint: {BASE_URL}")
     print(f"Started:  {started.strftime('%Y-%m-%d %H:%M:%S UTC')}")
     print("=" * 60)
@@ -790,6 +840,8 @@ def main():
         f.write(f"Parity Test Results\n")
         f.write(f"Model:    {MODEL}\n")
         f.write(f"Endpoint: {BASE_URL}\n")
+        f.write(f"Reasoning effort: {EFFORT}\n")
+        f.write("Astra feature-check budget floor: 2048 (except token-limit check)\n" if is_astra(MODEL) else "")
         f.write(f"Started:  {started.isoformat()}\n")
         f.write(f"Ended:    {ended.isoformat()}\n")
         f.write(f"{'='*60}\n\n")
