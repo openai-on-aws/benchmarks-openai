@@ -1,6 +1,6 @@
 # Visual guide to the benchmark results
 
-Compare responsiveness, completion, and recorded spend **within a workload**, alongside its answer-quality metric. These charts present the saved v1.1.0 measurements from August 26–30, 2026: GPT-4.1 through the direct OpenAI API and GPT-5.6 Luna, Terra, and Sol through Amazon Bedrock Mantle. This chart addition is part of the local 1.0.0-rc5 candidate, pending review.
+Compare responsiveness, completion, and recorded spend **within a workload**, alongside its answer-quality metric. These charts present the saved v1.1.0 measurements from August 26–30, 2026: GPT-4.1 through the direct OpenAI API and GPT-5.6 Luna, Terra, and Sol through Amazon Bedrock Mantle. These charts are included in reporting package 1.0.0-rc5.
 
 ## Explore a workload
 

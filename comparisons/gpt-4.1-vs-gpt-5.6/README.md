@@ -1,6 +1,6 @@
 # GPT-4.1 versus GPT-5.6: benchmark results
 
-This local 1.0.0-rc5 publication candidate, pending review, presents the saved comparison across **12 workloads, 10 model/reasoning conditions, and 47,960 planned observations**. Full-stage runs are dated August 26–30, 2026. The measurement scorecard remains v1.1.0, including the earlier grading corrections and the address-normalization metric revision. This is a project-specific evaluation of the recorded configurations and scoring rules.
+This reporting package (1.0.0-rc5) presents the saved comparison across **12 workloads, 10 model/reasoning conditions, and 47,960 planned observations**. Full-stage runs are dated August 26–30, 2026. The measurement scorecard remains v1.1.0, including the earlier grading corrections and the address-normalization metric revision. This is a project-specific evaluation of the recorded configurations and scoring rules.
 
 Start with **[RESULTS.md](RESULTS.md)** for all quality, completion, recorded cost, and p50/p95 latency results. The **[120-row CSV](results/2026-08-30/scorecard.csv)** includes token usage and cost per correct result for count-based metrics; F1-only workloads leave cost per correct blank.
 
