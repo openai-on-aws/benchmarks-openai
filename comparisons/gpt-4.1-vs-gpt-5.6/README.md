@@ -1,8 +1,14 @@
 # GPT-4.1 versus GPT-5.6: benchmark results
 
-This 1.0.0-rc4 publication candidate presents the saved comparison across **12 workloads, 10 model/reasoning conditions, and 47,960 planned observations**. Full-stage runs are dated August 26–30, 2026. The measurement scorecard remains v1.1.0, including the earlier grading corrections and the address-normalization metric revision. This is a project-specific evaluation of the recorded configurations and scoring rules.
+This local 1.0.0-rc5 publication candidate, pending review, presents the saved comparison across **12 workloads, 10 model/reasoning conditions, and 47,960 planned observations**. Full-stage runs are dated August 26–30, 2026. The measurement scorecard remains v1.1.0, including the earlier grading corrections and the address-normalization metric revision. This is a project-specific evaluation of the recorded configurations and scoring rules.
 
 Start with **[RESULTS.md](RESULTS.md)** for all quality, completion, recorded cost, and p50/p95 latency results. The **[120-row CSV](results/2026-08-30/scorecard.csv)** includes token usage and cost per correct result for count-based metrics; F1-only workloads leave cost per correct blank.
+
+For a visual view, open **[CHARTS.md](CHARTS.md)** for the summary and workload previews, or download **[CHARTS.html](CHARTS.html)** and open it locally in a browser. The offline explorer includes all 12 workloads and 120 result cells, with 36 workload/reasoning views of TTFT, response latency (final attempt), completion, recorded spend, a quality-versus-cost scatter plot, and an accompanying quality table. Invoice scatter plots show strict and post hoc normalized scoring in separate panels. GitHub displays the HTML source rather than running the explorer.
+
+![Completion and recorded spend across the ten tested configurations](charts/operating-summary.png)
+
+The summary is weighted by case count; Banking77 supplies 64.22% of cases. Use the workload views to inspect completion gaps. No overall latency or quality score is pooled across workloads.
 
 The report places workload completion gaps beside overall completion, shows strict and post hoc normalized invoice scores together, displays cost bounds and missing-usage counts at workload level, and presents the saved confidence intervals and paired tests. **[METHODOLOGY.md](METHODOLOGY.md)** documents execution settings, timing populations, subset selection, synthetic-case design, and details that were not recorded.
 
@@ -43,7 +49,7 @@ Python 3.10+ and the standard library are sufficient. From the repository root:
 python3 comparisons/gpt-4.1-vs-gpt-5.6/render_report.py --verify
 ```
 
-This checks the public manifest against every shipped package file, verifies the complete 120-cell matrix, and regenerates Markdown and CSV in memory for byte-for-byte comparison. To write the same reports again:
+This checks the public manifest against every shipped package file, verifies the complete 120-cell matrix, and regenerates RESULTS.md and CSV in memory for byte-for-byte comparison. It verifies stored chart-file hashes without rerendering charts. To write the same reports again:
 
 ```sh
 python3 comparisons/gpt-4.1-vs-gpt-5.6/render_report.py --write
@@ -55,6 +61,8 @@ Run the reporting regression checks with the same standard-library environment:
 python3 -B comparisons/gpt-4.1-vs-gpt-5.6/test_render_report.py
 ```
 
+Chart-data regression checks also use the standard library. [Chart reproduction instructions](CHARTS.md#reproduce-the-charts) describe those checks and the optional Matplotlib environment needed to regenerate figures.
+
 **Reproduction boundary:** this is a reporting package built from saved aggregate results. It does not rerun inference or regrade individual responses. Raw per-attempt logs, dataset examples, and the original execution/rescoring harness are outside this export. The public manifest lists package-relative files and hashes; the full source-to-release mapping remains in the internal review record. File integrity and report reproduction do not establish independent replication of inference or grading, or publication approval.
 
 ## Files
@@ -62,6 +70,14 @@ python3 -B comparisons/gpt-4.1-vs-gpt-5.6/test_render_report.py
 | File | Purpose |
 |---|---|
 | [RESULTS.md](RESULTS.md) | Complete human-readable scorecard, operating summary, and normalization explanation |
+| [CHARTS.md](CHARTS.md) | Visual guide with an operating summary, operational and quality-versus-cost previews, and chart definitions |
+| [CHARTS.html](CHARTS.html) | Self-contained offline explorer with 36 workload/reasoning views, operational and quality-versus-cost figures, and SVG downloads; download and open locally |
+| [charts/operating-summary.png](charts/operating-summary.png), [SVG](charts/operating-summary.svg) | Completion and recorded spend across all ten configurations |
+| [charts/workload-example.png](charts/workload-example.png) | Classification-routing preview for the original comparison |
+| [charts/quality-cost-example.png](charts/quality-cost-example.png), [SVG](charts/quality-cost-example.svg) | Classification-routing quality versus recorded spend, with completion counts and rates |
+| [charts/chart-data.json](charts/chart-data.json) | All 120 chart data records, including timing populations and cost bounds |
+| [render_charts.py](render_charts.py), [chart-template.html](chart-template.html) | Chart renderer and offline explorer template; regeneration uses Matplotlib |
+| [test_render_charts.py](test_render_charts.py) | Standard-library checks for chart-data mapping and coverage |
 | [results/2026-08-30/scorecard.json](results/2026-08-30/scorecard.json) | v1.1.0 measurements with public-facing metadata; all 120 result cells, operational records, paired statistics, and retained v1.0.0 results are preserved |
 | [results/2026-08-30/scorecard.csv](results/2026-08-30/scorecard.csv) | All 120 quality and operational rows |
 | [render_report.py](render_report.py) | Deterministic, offline report generation and verification |

@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GPT-4.1 and GPT-5.6 benchmark explorer</title>
+<style>
+:root { color-scheme: light; font-family: system-ui, sans-serif; color: #253242; background: #f5f7fa; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { max-width: 1240px; margin: auto; padding: 30px 24px 40px; }
+h1 { font-size: clamp(24px, 3vw, 34px); margin: 0 0 10px; letter-spacing: -.025em; }
+h2 { font-size: 18px; margin-top: 28px; }
+p { line-height: 1.55; max-width: 100ch; }
+.eyebrow { font-size: 12px; color: #526170; letter-spacing: .08em; text-transform: uppercase; }
+.intro { color: #526170; margin: 0 0 22px; }
+.controls { display: flex; flex-wrap: wrap; align-items: end; gap: 16px; }
+label { display: grid; gap: 6px; font-weight: 600; font-size: 14px; }
+select, button { font: inherit; min-height: 42px; border: 1px solid #bbc6d3; background: white; border-radius: 5px; padding: 8px 12px; color: #253242; }
+select { min-width: 180px; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid #2479bd; outline-offset: 3px; }
+.notice { border-left: 3px solid #2479bd; padding-left: 12px; font-size: 14px; }
+.plot-scroll { overflow-x: auto; background: white; margin-top: 20px; }
+#figure, #quality-cost-figure { min-width: 790px; }
+#figure svg, #quality-cost-figure svg { display: block; width: 100%; height: auto; }
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; background: white; font-size: 13px; }
+th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e2e7ee; white-space: nowrap; }
+th { color: #526170; font-weight: 600; }
+caption { text-align: left; padding: 12px 0; font-weight: 600; }
+details { margin-top: 20px; }
+summary { cursor: pointer; font-weight: 600; }
+footer { margin-top: 28px; color: #526170; font-size: 12px; overflow-wrap: anywhere; }
+a { color: #176aaa; }
+@media (max-width: 600px) { main { padding: 22px 14px; } label, select { width: 100%; } .controls { gap: 12px; } }
+@media print { .controls, details, footer, #download-quality-cost { display: none; } main { padding: 0; } .plot-scroll { overflow: visible; } #figure, #quality-cost-figure { min-width: 0; } }
+</style>
+</head>
+<body><main>
+<p class="eyebrow">Saved benchmark results · August 26–30, 2026 · measurement v1.1.0</p>
+<h1>GPT-4.1 and GPT-5.6 benchmark explorer</h1>
+<p class="intro">Compare responsiveness, completion and recorded spend within each workload. All 12 workloads, 10 model/reasoning configurations and 120 result cells are included. GPT-4.1 uses the direct OpenAI API; GPT-5.6 uses Amazon Bedrock Mantle.</p>
+<div class="controls">
+<label for="workload">Workload<select id="workload">@@WORKLOADS@@</select></label>
+<label for="effort">GPT-5.6 reasoning<select id="effort"><option value="none">none — original comparison</option><option value="low">low — sensitivity view</option><option value="high">high — sensitivity view</option></select></label>
+<button type="button" id="download-svg">Download selected chart (SVG)</button>
+</div>
+<p class="notice" id="scope">Original comparison: GPT-4.1/omitted versus GPT-5.6/none. Results are descriptive and depend on the tested serving paths and configurations.</p>
+<div class="plot-scroll"><div id="figure">@@INITIAL@@</div></div>
+<noscript><p>Enable JavaScript to switch workloads and reasoning settings. The classification-routing original comparison remains visible.</p></noscript>
+<p id="selection-status" aria-live="polite"></p>
+<h2>Quality versus cost</h2>
+<p>Each point shows one model under the selected reasoning setting, using this workload's quality score and recorded spend. Completion stays visible beside each point's values. Horizontal bars show missing-usage accounting bounds. Invoice scoring is shown separately for strict and exploratory normalized accuracy.</p>
+<button type="button" id="download-quality-cost">Download quality-cost chart (SVG)</button>
+<div class="plot-scroll"><div id="quality-cost-figure">@@QUALITY_COST_INITIAL@@</div></div>
+<h2>Quality alongside operations</h2>
+<p id="quality-note">API completion is distinct from answer quality. Scores use the full planned denominator; F1 is not document accuracy.</p>
+<div class="table-scroll"><table><caption id="quality-caption">Selected workload quality</caption><thead><tr><th>Model</th><th>Scoring rule</th><th>Score (0–100)</th></tr></thead><tbody id="quality"></tbody></table></div>
+<details><summary>Exact plotted values and timing populations</summary>
+<div class="table-scroll"><table><caption>TTFT and response latency (final attempt) have different sample populations.</caption><thead><tr><th>Model</th><th>Completed / planned</th><th>TTFT p50 / p95 (s)</th><th>TTFT n</th><th>Response latency p50 / p95 (s)</th><th>Latency n</th><th>Recorded USD lower / upper</th><th>Attempts missing usage</th></tr></thead><tbody id="values"></tbody></table></div>
+</details>
+<details><summary>How to read these charts</summary>
+<p>TTFT measures time to the first nonempty streamed text delta on final attempts where that event was observed. It includes incomplete responses that emitted text. Final-attempt duration includes terminal failures and local input rejections. Neither timing measure includes earlier retry durations or backoff.</p>
+<p>Filled and open circles show p50 and p95, not confidence intervals. Timing and cost axes stay fixed for a workload across reasoning settings, but differ between workloads. No overall latency is inferred by averaging workload percentiles.</p>
+<p>Spend sums recorded usage across all retained attempts, including retries. Hatching shows the conservative upper estimate for missing usage, not a statistical confidence interval or an exact billed total. Costs reflect the recorded pricing and configuration, not current price quotations.</p>
+<p>The same GPT-4.1 baseline is repeated in low/high views. Run timing, some output ceilings and overlapping suite execution differ between none and low/high; this is a descriptive sensitivity comparison.</p>
+<p>Use workload quality, uncertainty and customer-specific acceptance criteria alongside these operational results. Full definitions are in <a href="https://github.com/openai-on-aws/benchmarks-openai/blob/main/comparisons/gpt-4.1-vs-gpt-5.6/METHODOLOGY.md">the methodology</a>; scoring and saved statistics are in <a href="https://github.com/openai-on-aws/benchmarks-openai/blob/main/comparisons/gpt-4.1-vs-gpt-5.6/RESULTS.md">the full results</a>.</p>
+</details>
+<footer>This file contains every chart and all displayed values. No network connection or inference calls are needed to use it.<br><span id="source-hash"></span></footer>
+</main>
+<script type="application/json" id="chart-data">@@DATA@@</script>
+<script type="application/json" id="figures">@@FIGURES@@</script>
+<script type="application/json" id="quality-cost-figures">@@QUALITY_COST_FIGURES@@</script>
+<script>
+"use strict";
+const data = JSON.parse(document.getElementById("chart-data").textContent);
+const figures = JSON.parse(document.getElementById("figures").textContent);
+const qualityCostFigures = JSON.parse(document.getElementById("quality-cost-figures").textContent);
+const models = ["gpt-4.1-2025-04-14", "openai.gpt-5.6-luna", "openai.gpt-5.6-terra", "openai.gpt-5.6-sol"];
+const labels = ["GPT-4.1", "Luna", "Terra", "Sol"];
+const workload = document.getElementById("workload"), effort = document.getElementById("effort");
+function addRow(target, values) {
+  const row = document.createElement("tr");
+  for (const value of values) { const cell = document.createElement("td"); cell.textContent = value; row.appendChild(cell); }
+  target.appendChild(row);
+}
+function update() {
+  document.getElementById("figure").innerHTML = figures[workload.value + "|" + effort.value];
+  document.getElementById("quality-cost-figure").innerHTML = qualityCostFigures[workload.value + "|" + effort.value];
+  const rows = models.map(model => data.cells.find(c => c.benchmark === workload.value && c.model_id === model && c.effort === (model === models[0] ? "omitted" : effort.value)));
+  document.getElementById("scope").textContent = effort.value === "none"
+    ? "Original comparison: GPT-4.1/omitted versus GPT-5.6/none. Results are descriptive and depend on the tested serving paths and configurations."
+    : "Sensitivity view: the same GPT-4.1 baseline is repeated. Run timing, some output ceilings and overlapping execution differ from none; differences cannot be attributed solely to reasoning effort.";
+  const quality = document.getElementById("quality"), values = document.getElementById("values");
+  quality.replaceChildren(); values.replaceChildren();
+  rows.forEach((c, i) => {
+    if (c.benchmark === "structured-document-extraction") {
+      addRow(quality, [labels[i], "Strict document accuracy", (100 * c.secondary).toFixed(2)]);
+      addRow(quality, [labels[i], "Address-normalized accuracy (post hoc; exploratory)", (100 * c.primary).toFixed(2)]);
+    } else { addRow(quality, [labels[i], c.primary_metric, (100 * c.primary).toFixed(2)]); }
+    const f = v => v === null ? "N/A" : v.toFixed(3);
+    addRow(values, [labels[i], c.completed + "/" + c.planned, f(c.ttft_p50_s) + " / " + f(c.ttft_p95_s), c.ttft_samples,
+      f(c.e2e_p50_s) + " / " + f(c.e2e_p95_s), c.e2e_samples, "$" + c.cost_lower_usd.toFixed(6) + " / $" + c.cost_upper_usd.toFixed(6), c.missing_usage_attempts]);
+  });
+  document.getElementById("quality-caption").textContent = workload.selectedOptions[0].textContent + " — " + rows[0].planned + " planned cases per configuration";
+  document.getElementById("selection-status").textContent = "Showing " + workload.selectedOptions[0].textContent + "; GPT-5.6 reasoning " + effort.value + ".";
+  document.getElementById("quality-note").textContent = workload.value === "structured-document-extraction"
+    ? "Strict and address-normalized accuracy score the same saved responses. Address normalization was introduced post hoc and remains exploratory pending validation on fresh cases."
+    : "API completion is distinct from answer quality. Scores use the full planned denominator; F1 is not document accuracy. Point estimates do not have uniform statistical support; consult the full results.";
+}
+workload.addEventListener("change", update); effort.addEventListener("change", update);
+function downloadChart(collection, suffix) {
+  const blob = new Blob([collection[workload.value + "|" + effort.value]], {type: "image/svg+xml"});
+  const url = URL.createObjectURL(blob), a = document.createElement("a");
+  a.href = url; a.download = workload.value + "-" + effort.value + suffix + ".svg"; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+document.getElementById("download-svg").addEventListener("click", () => downloadChart(figures, ""));
+document.getElementById("download-quality-cost").addEventListener("click", () => downloadChart(qualityCostFigures, "-quality-cost"));
+document.getElementById("source-hash").textContent = "Scorecard SHA-256: " + data.source_sha256;
+update();
+</script>
+</body></html>

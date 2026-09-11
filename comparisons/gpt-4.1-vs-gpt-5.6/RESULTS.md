@@ -2,7 +2,7 @@
 
 **Comparison:** GPT-4.1 through the OpenAI API and GPT-5.6 Luna, Terra, and Sol through Amazon Bedrock across 12 workloads, with a separate GPT-5.6 reasoning-effort sensitivity view.
 
-**Measurement version:** v1.1.0. **Reporting package:** 1.0.0-rc4. **Coverage:** all 12 benchmarks, 10 model/reasoning conditions, 120 result cells, and 47,960 planned observations.
+**Measurement version:** v1.1.0. **Reporting package:** 1.0.0-rc5. **Coverage:** all 12 benchmarks, 10 model/reasoning conditions, 120 result cells, and 47,960 planned observations.
 
 This project-specific evaluation presents the saved v1.1.0 scorecard under the recorded configurations and scoring rules. Every headline quality table shows both strict and address-normalized invoice accuracy. Address normalization was introduced after inspecting saved responses and remains exploratory pending validation on fresh cases. MATH-500 includes the v1.0.0 grader corrections.
 
@@ -15,6 +15,12 @@ All quality values are shown on a 0–100 scale. F1 is explicitly labeled and sh
 - The scorecard does not establish migration readiness or a universal model winner. Quality, completion, latency, and cost must be evaluated together against customer-specific acceptance criteria.
 
 [Workload completion gaps](#workloads-below-full-completion), [statistical uncertainty](#statistical-uncertainty-and-comparison-coverage), and [methodology](METHODOLOGY.md) are part of the interpretation of every point estimate.
+
+## Visual summary
+
+[Open the chart guide](CHARTS.md) for the offline workload explorer and downloadable graphs. It shows TTFT and response latency (final attempt) p50/p95, API completion, recorded spend with accounting bounds, and quality-versus-cost plots for the selected workload. Strict and exploratory normalized invoice scoring have separate panels. All 120 result cells are included; timing percentiles are never pooled across workloads.
+
+![API completion and recorded spend for all ten model/reasoning configurations; completion is distinct from quality, and Sol/high includes a missing-usage cost range.](charts/operating-summary.png)
 
 ## Executive operating summary
 

@@ -1,21 +1,64 @@
 {
-  "candidate_date": "2026-09-09",
+  "candidate_date": "2026-09-10",
+  "chart_renderer": {
+    "chart_data": "charts/chart-data.json",
+    "chart_data_source": "results/2026-08-30/scorecard.json",
+    "figure_byte_reproduction": "Matplotlib/font/dependency/platform differences may change rendered bytes; the manifest records the shipped artifacts.",
+    "matplotlib_version": "3.10.6",
+    "timing_population_source": "evidence/run-settings.json"
+  },
   "files": {
     "BENCHMARK_SOURCES.md": {
       "bytes": 2895,
       "sha256": "a72fe85ffe77956d31dda46384c62cfc8c857283022e5e614ab9517af57901a6"
+    },
+    "CHARTS.html": {
+      "bytes": 2818337,
+      "sha256": "baacc258679c1b15bb2f7953ea6b1e938e9c15847297a552c1645801f7bdc2d9"
+    },
+    "CHARTS.md": {
+      "bytes": 7739,
+      "sha256": "de74b97c924d5240c43699f04be49dd4dc9a17ab0989eec188c212cd0e4f0468"
     },
     "METHODOLOGY.md": {
       "bytes": 13162,
       "sha256": "231e43c6bb57e72ea35a9efdb337948ee3493562a56af2db35a80c0107567c0d"
     },
     "README.md": {
-      "bytes": 8688,
-      "sha256": "b900d792e6ae9e79abe38b1a78f8e51edfb6f985ad6a78246177334090153242"
+      "bytes": 11070,
+      "sha256": "37f49b222b4859adb4f92ae259c1ebc2abb03e5ef690b79f1a8cbf3555e9ee86"
     },
     "RESULTS.md": {
-      "bytes": 41928,
-      "sha256": "15f07ac2a7cdc670a0ba5618b4f1e1ff192b27e0c27e1e408ca8aaa71b27283a"
+      "bytes": 42573,
+      "sha256": "a5c425039699b6d0aefaa9a20667302cde5dda32cf349acbf8e377137b80bd2a"
+    },
+    "chart-template.html": {
+      "bytes": 11123,
+      "sha256": "4d864a5292003971fed33cb9e7bfd3c8978d4fc496e2eded2be66a09f153616f"
+    },
+    "charts/chart-data.json": {
+      "bytes": 73410,
+      "sha256": "fbeda419c0b7635d5a06582867e01185faf2ce3aaebb29939fceb24a90e68d08"
+    },
+    "charts/operating-summary.png": {
+      "bytes": 213796,
+      "sha256": "386f1fdb4282e8ff406aa344238f6f695d2dbf3488fe84bb8cca07e4f085c475"
+    },
+    "charts/operating-summary.svg": {
+      "bytes": 29872,
+      "sha256": "8f4c758db2c9841000f78f0310bbe9c4f1ad7533fa51d33daad50e4ff98db92f"
+    },
+    "charts/quality-cost-example.png": {
+      "bytes": 189211,
+      "sha256": "a0f545a80821c90cbc056283b94e42c83232428ff49becaada7768bcd107e616"
+    },
+    "charts/quality-cost-example.svg": {
+      "bytes": 18701,
+      "sha256": "f972b25b86252fa146c7500403490d560a42904db31288df8497aba00ab47065"
+    },
+    "charts/workload-example.png": {
+      "bytes": 203611,
+      "sha256": "39ba207971629fbd770ec85766962d509cce6e8a2f1408174d7880e36143d88b"
     },
     "evidence/comparison-evidence-map.json": {
       "bytes": 6817,
@@ -37,9 +80,13 @@
       "bytes": 2668,
       "sha256": "79e9dd0eb0a0dcbf61444142025d650926e8cf3cf98be915b89e0a00a8337aca"
     },
+    "render_charts.py": {
+      "bytes": 19943,
+      "sha256": "891116d51f90112f2c1169953a49fdaf740703e153c778e4bdc4020f2b012008"
+    },
     "render_report.py": {
-      "bytes": 30390,
-      "sha256": "8b782078f2cd4bba2158d1958f56610e16d27567e0e233d06120339756fdbad4"
+      "bytes": 31077,
+      "sha256": "fc3a54fa0b8b3abd3ec959ee724de71e2680559489decc502b35362aebe016d9"
     },
     "results/2026-08-30/scorecard.csv": {
       "bytes": 23847,
@@ -48,6 +95,10 @@
     "results/2026-08-30/scorecard.json": {
       "bytes": 375386,
       "sha256": "1fc8900b08ef308b1f5ed1e1a36df28685d7395a1f61fe07a196a425c811aa37"
+    },
+    "test_render_charts.py": {
+      "bytes": 22975,
+      "sha256": "70325f1063dc524c20294efb4b34b8e0ba6437daaa1de7cda0509238ca02068c"
     },
     "test_render_report.py": {
       "bytes": 20975,
@@ -58,18 +109,18 @@
   "manifest_version": "benchmark-publication-manifest-1.0",
   "measurement_version": "1.1.0",
   "package": "gpt-4.1-vs-gpt-5.6",
-  "package_version": "1.0.0-rc4",
+  "package_version": "1.0.0-rc5",
   "path_scope": "Every path is relative to this comparison package. This manifest does not hash itself.",
-  "previous_package_version": "1.0.0-rc3",
+  "previous_package_version": "1.0.0-rc4",
   "provenance_scope": "Shipped-file hashes, public upstream revisions, and permitted selection identifiers are included. Full internal execution/source provenance remains in the internal review record.",
-  "reproduction_scope": "File-integrity verification and offline report regeneration; not independent inference or grading replication.",
+  "reproduction_scope": "File-integrity verification and offline Markdown/CSV regeneration; source-to-chart value checks use the standard library. Figure regeneration uses optional Matplotlib. Not independent inference or grading replication.",
   "revision_scope": [
-    "Clarify that the comparison reports project-specific outcomes under the recorded configurations and scoring rules.",
-    "Distinguish workload completion gaps, recovered retry events, tested input limits, and harness failure categories from inherent model capability.",
-    "Describe absent usage metadata without assigning an unverified cause, and clarify final-attempt latency includes local rejections.",
-    "Clarify statistical interpretation, post hoc metric field names, illustrative examples, and synthetic split limitations.",
+    "Add an offline workload explorer covering all 120 result cells in 36 workload/reasoning views, with downloadable SVG figures.",
+    "Show TTFT and response latency (final attempt) p50/p95 with their recorded populations, completion counts and rates, and recorded spend with missing-usage bounds.",
+    "Add workload-specific quality-versus-cost scatter plots with completion context and horizontal accounting bounds; keep strict and exploratory normalized invoice accuracy in separate panels.",
+    "Add static operating-summary, workload-preview and quality-cost graphics, chart documentation, and source-to-chart regression checks.",
     "Preserve all scorecard values, scoring policies, executed settings, dataset-selection records, and generated CSV bytes."
   ],
-  "scope": "Preserved aggregate measurements and scoring policies, deterministic report generation, reporting regression checks, executed settings, dataset-selection metadata, and benchmark references. No prompts, labels, source documents, model responses, or inference/grading harness are included.",
+  "scope": "Preserved aggregate measurements and scoring policies, report generation, offline charts, reporting and chart regression checks, executed settings, dataset-selection metadata, and benchmark references. No prompts, labels, source documents, model responses, or inference/grading harness are included.",
   "status": "release-candidate; approval pending"
 }
