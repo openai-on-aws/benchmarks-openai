@@ -1,0 +1,31 @@
+{
+  "name": "bedrock-bench",
+  "version": "0.1.0",
+  "description": "Reproducible agent task benchmarks with success scoring, latency, token usage, and cost per successful task.",
+  "author": {
+    "name": "OpenAI on AWS",
+    "url": "https://github.com/openai-on-aws"
+  },
+  "homepage": "https://github.com/openai-on-aws/benchmarks-openai",
+  "repository": "https://github.com/openai-on-aws/benchmarks-openai",
+  "license": "MIT-0 AND CC-BY-SA-4.0",
+  "keywords": ["bedrock", "benchmarks", "agents", "cost", "codex", "opencode", "openrouter"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Bedrock Bench",
+    "shortDescription": "Measure agent task economics",
+    "longDescription": "Plan and run agent task benchmarks across Amazon Bedrock, OpenAI, and OpenRouter using a controlled native loop or Codex and OpenCode. Compare verified task outcomes, latency, token usage, and cost per successful task, with explicit pricing provenance and an offline demonstration.",
+    "developerName": "OpenAI on AWS",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"],
+    "websiteURL": "https://github.com/openai-on-aws/benchmarks-openai",
+    "brandColor": "#D36D11",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/icon.png",
+    "defaultPrompt": [
+      "Plan an agent task cost comparison on Bedrock.",
+      "Show the offline Bedrock Bench demonstration.",
+      "Compare these runs by cost per successful task."
+    ]
+  }
+}

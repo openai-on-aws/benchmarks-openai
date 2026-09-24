@@ -23,12 +23,23 @@ flowchart LR
 | ⏱️ **performance/** | How fast? TTFT, inter-token latency, tokens/sec, E2E — p50/p95/p99 | `run_all.sh` · `benchmark.py` |
 | 🎯 **quality/** | How accurate, per benchmark *and* per dollar? AIME, GPQA, MMLU-Pro, MATH-500, GSM8K, HumanEval — with cost-per-success | `quick_evals.py` |
 | 🤖 **quality/ (agentic)** | How do multi-turn agents behave? Turn counts, trajectory cost, live web research | `agentic_evals.py` · `deepsearchqa/` |
+| **[Bedrock Bench plugin](plugins/bedrock-bench/)** | What does it cost to finish an agent task correctly? Compare native, Codex, and OpenCode runners | `bench.py` · [Plan](docs/bedrock-bench-plan.md) |
 | 📝 **quality/ (deliverables)** | Can it produce professional work products? Rubric-judged GDPval slice | `gdpval_eval.py` |
 | 🧩 **parity/** | Which Responses-API features work on Bedrock? 34 live checks | `run_parity.py` |
 | 📊 **[GPT-4.1 vs GPT-5.6 comparison](comparisons/gpt-4.1-vs-gpt-5.6/)** | How do quality, recorded cost, and latency compare across 12 workloads and reasoning settings? Cross-platform saved-run evidence | [Results](comparisons/gpt-4.1-vs-gpt-5.6/RESULTS.md) · [Offline verification](comparisons/gpt-4.1-vs-gpt-5.6/README.md#reproduce-the-report) |
 | 📄 **report** | One shareable document from all results | `performance/report.py` |
 
 ## 🚀 Quick start
+
+For agent task economics, start with the credential-free demonstration:
+
+```bash
+python3 bench.py demo --out bench-results
+```
+
+This creates a clearly labeled synthetic report and exercises task scoring and
+cost accounting. The [plugin guide](plugins/bedrock-bench/README.md) explains
+live configurations, runner/provider selection, pricing, and installation.
 
 **Adding GPT-6 Astra:** [coverage, model settings and run guide](docs/astra-benchmarks.md).
 Preview all runnable suites on Mantle, Runtime and OpenAI with
