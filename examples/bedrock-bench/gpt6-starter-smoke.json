@@ -1,0 +1,92 @@
+{
+  "name": "GPT-6 on Bedrock: starter smoke",
+  "targets": [
+    {
+      "id": "gpt6-astra-bedrock",
+      "runner": "native",
+      "provider": "bedrock-mantle",
+      "model": "openai.gpt-6-astra",
+      "region": "us-west-2",
+      "reasoning_effort": "low",
+      "service_tier": "default",
+      "aws_profile": null,
+      "routing": []
+    },
+    {
+      "id": "gpt6-sol-bedrock",
+      "runner": "native",
+      "provider": "bedrock-mantle",
+      "model": "openai.gpt-6-sol",
+      "region": "us-east-1",
+      "reasoning_effort": "low",
+      "service_tier": "default",
+      "aws_profile": null,
+      "routing": []
+    },
+    {
+      "id": "gpt6-luna-bedrock",
+      "runner": "native",
+      "provider": "bedrock-mantle",
+      "model": "openai.gpt-6-luna",
+      "region": "us-east-1",
+      "reasoning_effort": "low",
+      "service_tier": "default",
+      "aws_profile": null,
+      "routing": []
+    }
+  ],
+  "tasks": [
+    "invoice-reconciliation",
+    "deployment-order",
+    "inference-triage"
+  ],
+  "repetitions": 1,
+  "seed": 42,
+  "limits": {
+    "timeout_seconds": 300,
+    "max_turns": 10,
+    "max_output_tokens": 4096
+  },
+  "rate_cards": [
+    {
+      "provider": "bedrock-mantle",
+      "model": "openai.gpt-6-astra",
+      "region": "us-west-2",
+      "service_tier": "default",
+      "as_of": "2026-09-25",
+      "source": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-openai-gpt-6-astra.html",
+      "input_usd_per_million": 11.0,
+      "output_usd_per_million": 55.0,
+      "cached_input_usd_per_million": 1.1,
+      "cache_write_input_usd_per_million": 13.75,
+      "max_input_tokens": 272000
+    },
+    {
+      "provider": "bedrock-mantle",
+      "model": "openai.gpt-6-sol",
+      "region": "us-east-1",
+      "service_tier": "default",
+      "as_of": "2026-09-25",
+      "source": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-openai-gpt-6-sol.html",
+      "input_usd_per_million": 2.2,
+      "output_usd_per_million": 11.0,
+      "cached_input_usd_per_million": 0.22,
+      "cache_write_input_usd_per_million": 2.75,
+      "max_input_tokens": 272000
+    },
+    {
+      "provider": "bedrock-mantle",
+      "model": "openai.gpt-6-luna",
+      "region": "us-east-1",
+      "service_tier": "default",
+      "as_of": "2026-09-25",
+      "source": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-openai-gpt-6-luna.html",
+      "input_usd_per_million": 0.11,
+      "output_usd_per_million": 0.55,
+      "cached_input_usd_per_million": 0.011,
+      "cache_write_input_usd_per_million": 0.1375,
+      "max_input_tokens": 272000
+    }
+  ],
+  "schema_version": 1
+}

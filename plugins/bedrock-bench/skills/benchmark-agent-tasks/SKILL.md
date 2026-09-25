@@ -7,9 +7,10 @@ Use the packaged CLI at `../../scripts/bench.py`, resolved relative to this
 skill directory. It contains the runner, fixtures, graders, and reporting code;
 an installed plugin does not need a neighboring repository checkout.
 
-Read the [usage guide](../../README.md) for configuration, provider mappings,
-and cost accounting. Use Python 3.12+ for upstream suites; the starter loop also
-supports Python 3.10+.
+Read the [CLI reference](references/cli.md) when configuring experiments or
+provider authentication, and the [accounting reference](references/accounting.md)
+when configuring pricing or interpreting costs. Use Python 3.12+ for upstream
+suites; the starter loop also supports Python 3.10+.
 
 The user interacts through chat. Select the suite, prepare its runtime, execute
 authorized checks, and explain the results yourself; terminal commands are an
@@ -39,9 +40,10 @@ implementation detail unless the user asks for them.
   does not authorize a paid benchmark.
 - `run` displays a plan unless `--execute` is supplied. Use `demo` to validate
   the workflow without credentials; identify all demo metrics as synthetic.
-- Keep experiment files and results in the user's working directory, outside
-  the installed plugin. Never write credentials into experiment JSON or
-  reports. Use the runner's existing authentication or environment variables.
+- Use the repository or output directory selected by the user, even when the
+  chat started in another directory. Keep experiment files, prepared runtimes,
+  and results there, outside the installed plugin. Never write credentials into
+  experiment JSON or reports. Use existing authentication or environment variables.
 - Upstream container agents use their own authentication. Codex/OpenCode on
   Bedrock through Harbor require a Bedrock bearer token and explicit region.
   Installing or signing into the desktop client alone does not establish
@@ -59,9 +61,10 @@ implementation detail unless the user asks for them.
   Report success count, cost coverage, and the cost basis alongside any dollar
   figure. Include runner/provider/model/settings and links to `run.json` and
   `REPORT.md`.
-- Upstream agent costs are runner estimates unless an explicit rate card is used.
-  Verifier/judge and infrastructure costs are excluded. Keep missing trial
-  results and failed attempts visible; never turn an absent cost into zero.
+- A positive upstream cost remains a runner estimate; an exact rate card fills
+  missing estimates when usage is sufficient. Verifier/judge and infrastructure
+  costs are excluded. Keep missing trial results and failed attempts visible;
+  never turn an absent cost into zero.
 - Distinguish synthetic demos, reference/oracle validation, and live model
   measurements. A reference smoke does not validate provider authentication,
   model tool use, or real inference accounting.
