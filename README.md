@@ -1,6 +1,6 @@
 # ⚡ Benchmarks: OpenAI models on AWS
 
-**How do OpenAI models on [Amazon Bedrock](https://aws.amazon.com/bedrock/) compare to the same models on OpenAI's own API?** This repo answers that with reproducible, bring-your-own-key benchmarks: latency, task quality, and API feature parity — measured through one identical code path on both backends, so the numbers are directly comparable.
+**How do OpenAI models compare on [Amazon Bedrock](https://aws.amazon.com/bedrock/)?** This repo provides reproducible benchmarks for latency, task quality, reasoning, and API feature support. The new ARC pilots discover Bedrock's OpenAI models and run the same tasks across them. Historical comparisons with OpenAI's own API are also available.
 
 > 🧭 **House rule:** every number we circulate traces back to a script and a timestamped results file in this repo. No hand-copied stats.
 
@@ -26,6 +26,7 @@ flowchart LR
 | **[Bedrock Bench plugin](plugins/bedrock-bench/)** | Cost per successful agent task: starter tasks, CDK repair, Terminal-Bench, SWE-bench, and AWS-Bench | `bench.py` · [Suite guide](plugins/bedrock-bench/skills/benchmark-agent-tasks/references/suites.md) |
 | 📝 **quality/ (deliverables)** | Can it produce professional work products? Rubric-judged GDPval slice | `gdpval_eval.py` |
 | 🧩 **parity/** | Which Responses-API features work on Bedrock? 34 live checks | `run_parity.py` |
+| **ARC pilots** | How do Bedrock's OpenAI models handle grid reasoning and interactive learning? | [Run guide](docs/arc-benchmarks.md) · `run_bedrock_arc.py` |
 | 📊 **[GPT-4.1 vs GPT-5.6 comparison](comparisons/gpt-4.1-vs-gpt-5.6/)** | How do quality, recorded cost, and latency compare across 12 workloads and reasoning settings? Cross-platform saved-run evidence | [Results](comparisons/gpt-4.1-vs-gpt-5.6/RESULTS.md) · [Offline verification](comparisons/gpt-4.1-vs-gpt-5.6/README.md#reproduce-the-report) |
 | 📄 **report** | One shareable document from all results | `performance/report.py` |
 
@@ -45,12 +46,19 @@ an upstream benchmark. `python3.12 bench.py suites` lists the integrated suites;
 `smoke --suite aws-cdk-smoke --execute` validates real CDK compilation,
 synthesis, and grading in Docker without model calls or AWS deployment.
 
+**Bedrock model comparisons:** Start with the [ARC-AGI-2 and ARC-AGI-3 guide](docs/arc-benchmarks.md).
+`python run_bedrock_arc.py --discover --output-dir runs/bedrock-catalog` inventories
+OpenAI models on Bedrock without making inference calls. Plan a comparison from
+that catalogue, then use `--execute` for a bounded live run. These pilots need AWS
+credentials only; ARC-AGI-3 uses the optional `requirements-arc.txt` dependencies.
+
 **Adding GPT-6 Astra:** [coverage, model settings and run guide](docs/astra-benchmarks.md).
-Preview all runnable suites on Mantle, Runtime and OpenAI with
-`python run_astra.py --region us-west-2`. Add `--execute` for live calls; the default
+Preview the existing suites on Bedrock Mantle and Runtime with
+`python run_astra.py --region us-west-2 --backends mantle,runtime`. Add `--execute` for live calls; the default
 only prints the plan. Astra uses explicit `low` reasoning and requires fresh measurements.
 
-**You need:** Python 3.10+, AWS credentials (for the Bedrock side), and your own OpenAI API key (for the 1P side).
+**For the existing cross-platform comparison below:** Python 3.10+, AWS credentials,
+and your own OpenAI API key. The ARC-AGI-3 toolkit requires Python 3.12+.
 
 ```bash
 pip install -r requirements.txt
