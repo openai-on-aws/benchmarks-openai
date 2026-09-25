@@ -1,0 +1,4 @@
+# Needed only for native live runs. Planning, CLI adapters, demo, and reports use stdlib.
+openai>=1.66.0
+aws-bedrock-token-generator
+boto3

@@ -17,6 +17,11 @@ __pycache__/
 *.pyo
 .pytest_cache/
 
+# Local Bedrock Bench attempts and candidate workspaces
+bench-results/
+.bench-venv/
+.bench-tools/
+
 # Jupyter
 .ipynb_checkpoints/
 

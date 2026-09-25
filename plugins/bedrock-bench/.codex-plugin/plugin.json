@@ -1,0 +1,32 @@
+{
+  "name": "bedrock-bench",
+  "version": "0.2.0",
+  "description": "Run CDK repair, Terminal-Bench, SWE-bench, AWS-Bench, and starter agent tasks with explicit success and cost accounting.",
+  "author": {
+    "name": "OpenAI on AWS",
+    "url": "https://github.com/openai-on-aws"
+  },
+  "homepage": "https://github.com/openai-on-aws/benchmarks-openai",
+  "repository": "https://github.com/openai-on-aws/benchmarks-openai",
+  "license": "MIT-0 AND CC-BY-SA-4.0",
+  "keywords": ["bedrock", "benchmarks", "agents", "cost", "codex", "opencode", "openrouter", "cdk", "harbor"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Bedrock Bench",
+    "shortDescription": "Measure agent task economics",
+    "longDescription": "Run AWS CDK repair tasks, Terminal-Bench, SWE-bench, AWS-Bench, and starter agent benchmarks from chat. Use a fixed native loop or Codex and OpenCode through isolated harnesses. Compare verified outcomes, latency, token usage, and cost per successful task, retaining upstream evidence and pricing provenance.",
+    "developerName": "OpenAI on AWS",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"],
+    "websiteURL": "https://github.com/openai-on-aws/benchmarks-openai",
+    "brandColor": "#D36D11",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/icon.png",
+    "defaultPrompt": [
+      "Run the AWS CDK reference smoke test.",
+      "Plan a Terminal-Bench model comparison on Bedrock.",
+      "Show the offline Bedrock Bench demonstration.",
+      "Compare these runs by cost per successful task."
+    ]
+  }
+}

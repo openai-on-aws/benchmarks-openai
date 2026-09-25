@@ -1,0 +1,46 @@
+name: Bedrock Bench
+
+on:
+  pull_request:
+    paths:
+      - "plugins/bedrock-bench/**"
+      - "tests/test_bedrock_bench*.py"
+      - "bench.py"
+      - ".github/workflows/bedrock-bench.yml"
+  push:
+    branches: [main]
+    paths:
+      - "plugins/bedrock-bench/**"
+      - "tests/test_bedrock_bench*.py"
+      - "bench.py"
+      - ".github/workflows/bedrock-bench.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  reference-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install isolated harnesses
+        run: |
+          python -m pip install uv
+          python bench.py prepare --suite aws-cdk-smoke --execute
+          python bench.py prepare --suite aws-bench --execute
+      - name: Test adapters, accounting, and actual upstream schemas
+        run: python -m unittest discover -s tests -p 'test_bedrock_bench*.py' -v
+      - name: Validate CDK task without model calls or AWS deployment
+        run: python bench.py smoke --suite aws-cdk-smoke --execute
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bedrock-bench-reference-results
+          path: bench-results/
+          if-no-files-found: ignore

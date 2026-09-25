@@ -1,0 +1,12 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "bedrock-bench",
+  "version": "0.2.0",
+  "description": "Run CDK repair, Terminal-Bench, SWE-bench, AWS-Bench, and starter agent tasks with explicit success and cost accounting.",
+  "author": {
+    "name": "OpenAI on AWS",
+    "url": "https://github.com/openai-on-aws"
+  },
+  "repository": "https://github.com/openai-on-aws/benchmarks-openai",
+  "license": "MIT-0 AND CC-BY-SA-4.0"
+}

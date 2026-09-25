@@ -23,6 +23,7 @@ flowchart LR
 | ⏱️ **performance/** | How fast? TTFT, inter-token latency, tokens/sec, E2E — p50/p95/p99 | `run_all.sh` · `benchmark.py` |
 | 🎯 **quality/** | How accurate, per benchmark *and* per dollar? AIME, GPQA, MMLU-Pro, MATH-500, GSM8K, HumanEval — with cost-per-success | `quick_evals.py` |
 | 🤖 **quality/ (agentic)** | How do multi-turn agents behave? Turn counts, trajectory cost, live web research | `agentic_evals.py` · `deepsearchqa/` |
+| **[Bedrock Bench plugin](plugins/bedrock-bench/)** | Cost per successful agent task: starter tasks, CDK repair, Terminal-Bench, SWE-bench, and AWS-Bench | `bench.py` · [Suite guide](plugins/bedrock-bench/skills/benchmark-agent-tasks/references/suites.md) |
 | 📝 **quality/ (deliverables)** | Can it produce professional work products? Rubric-judged GDPval slice | `gdpval_eval.py` |
 | 🧩 **parity/** | Which Responses-API features work on Bedrock? 34 live checks | `run_parity.py` |
 | **ARC pilots** | How do Bedrock's OpenAI models handle grid reasoning and interactive learning? | [Run guide](docs/arc-benchmarks.md) · `run_bedrock_arc.py` |
@@ -30,6 +31,20 @@ flowchart LR
 | 📄 **report** | One shareable document from all results | `performance/report.py` |
 
 ## 🚀 Quick start
+
+For agent task economics, start with the credential-free demonstration:
+
+```bash
+python3 bench.py demo --out bench-results
+```
+
+This creates a clearly labeled synthetic report and exercises task scoring and
+cost accounting. The [plugin guide](plugins/bedrock-bench/README.md) explains
+live configurations, runner/provider selection, pricing, and installation.
+With the installed plugin, ask in chat to run the AWS CDK smoke test or plan
+an upstream benchmark. `python3.12 bench.py suites` lists the integrated suites;
+`smoke --suite aws-cdk-smoke --execute` validates real CDK compilation,
+synthesis, and grading in Docker without model calls or AWS deployment.
 
 **Bedrock model comparisons:** Start with the [ARC-AGI-2 and ARC-AGI-3 guide](docs/arc-benchmarks.md).
 `python run_bedrock_arc.py --discover --output-dir runs/bedrock-catalog` inventories
@@ -91,7 +106,7 @@ flowchart TD
     end
 ```
 
-Every backend runs through the **same Responses-API streaming code path** — same prompts, same token budgets, same retry logic — so any difference you see is the platform, not the harness. Every run records per-call raw measurements (including reasoning-token and cached-token counts, which matter a lot for reasoning models) alongside mean/stddev/p50/p95/p99/min/max summaries.
+The streaming performance suite runs every backend through the **same Responses-API streaming code path**, with matching prompts, token budgets, and retry logic. It records raw measurements, including reasoning and cache usage, alongside percentile summaries. Bedrock Bench additionally supports complete agent-system comparisons through Codex, OpenCode, Harbor, and AWS-Bench; those comparisons include differences in the agent runners.
 
 ## ⏱️ Performance suite
 
