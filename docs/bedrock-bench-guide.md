@@ -1,5 +1,8 @@
 # Run Bedrock Bench from Codex
 
+For a first run, start with the [plugin quickstart](../plugins/bedrock-bench/README.md).
+This walkthrough covers the full feature set and prepared model comparisons.
+
 Bedrock Bench **0.2.0** is an installed Codex plugin for comparing agent task
 success, time, token usage, and cost per successful task. Select **Bedrock Bench**
 in the chat composer and describe the experiment. The skill handles the
@@ -75,7 +78,8 @@ marketplace registration, then repeat the add/install commands above:
 codex plugin marketplace remove openai-on-aws
 ```
 
-Open a fresh Codex chat and select **Bedrock Bench** from the plugin picker.
+Open the project folder where you want to save plans and results. Start a fresh
+Codex chat there and select **Bedrock Bench** from the plugin picker.
 
 ## Start with checks that do not invoke a model
 

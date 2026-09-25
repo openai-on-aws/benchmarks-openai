@@ -23,7 +23,7 @@ flowchart LR
 | ⏱️ **performance/** | How fast? TTFT, inter-token latency, tokens/sec, E2E — p50/p95/p99 | `run_all.sh` · `benchmark.py` |
 | 🎯 **quality/** | How accurate, per benchmark *and* per dollar? AIME, GPQA, MMLU-Pro, MATH-500, GSM8K, HumanEval — with cost-per-success | `quick_evals.py` |
 | 🤖 **quality/ (agentic)** | How do multi-turn agents behave? Turn counts, trajectory cost, live web research | `agentic_evals.py` · `deepsearchqa/` |
-| **[Bedrock Bench plugin](plugins/bedrock-bench/)** | Cost per successful agent task: starter tasks, CDK repair, Terminal-Bench, SWE-bench, and AWS-Bench | [Codex quick guide](docs/bedrock-bench-guide.md) · [GPT-6 experiment plans](examples/bedrock-bench/) · `bench.py` |
+| **[Bedrock Bench plugin](plugins/bedrock-bench/)** | Cost per successful agent task: starter tasks, CDK repair, Terminal-Bench, SWE-bench, and AWS-Bench | [Get started](plugins/bedrock-bench/README.md#install) · [GPT-6 experiment plans](examples/bedrock-bench/) · `bench.py` |
 | 📝 **quality/ (deliverables)** | Can it produce professional work products? Rubric-judged GDPval slice | `gdpval_eval.py` |
 | 🧩 **parity/** | Which Responses-API features work on Bedrock? 34 live checks | `run_parity.py` |
 | **ARC pilots** | How do Bedrock's OpenAI models handle grid reasoning and interactive learning? | [Run guide](docs/arc-benchmarks.md) · `run_bedrock_arc.py` |
