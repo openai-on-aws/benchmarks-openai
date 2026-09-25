@@ -55,6 +55,15 @@ You will get a report for six synthetic attempts, including one intentional
 failure. This shows how success, timing, and cost appear in a report. It makes
 no model calls and needs no credentials.
 
+Ask for the interactive view:
+
+> Open the results explorer. Show the failed attempt and explain its evidence.
+
+Choose a target or task to compare outcomes, timing, and cost. Inspect an attempt's
+grader result, token usage, settings, and saved files. Supported Codex inline
+views let you continue with **Explain in chat**; the standalone HTML report
+provides a copyable prompt.
+
 Then check a real coding task:
 
 > Prepare and run the AWS CDK reference smoke test. Explain what passed.
@@ -111,9 +120,13 @@ options and which runners each suite supports.
 
 ## Understand the results
 
-Each run saves a readable `REPORT.md`, a `run.json`, and per-attempt evidence in
-your project's `bench-results` directory. Ask Codex to explain the report or
-compare compatible runs.
+Each run saves an interactive `REPORT.html`, readable `REPORT.md`, structured
+results, and per-attempt evidence in your project's `bench-results` directory.
+The HTML works offline; its evidence links need the original run files.
+Ask Codex to explore a saved run or compare compatible runs:
+
+> Compare my latest live run with the previous run using the same task protocol.
+> Show the cost coverage and explain any new failures.
 
 **Cost per successful task** includes spend on failed attempts. Check cost
 coverage and whether the figure comes from a rate card or runner estimate.
@@ -131,6 +144,7 @@ general model ranking.
 - [CLI and configuration reference](skills/benchmark-agent-tasks/references/cli.md)
 - [Cost accounting reference](skills/benchmark-agent-tasks/references/accounting.md)
 - [Agent operating instructions](skills/benchmark-agent-tasks/SKILL.md)
+- [Results inspection skill](skills/inspect-results/SKILL.md)
 - [Contributor guidance](AGENTS.md)
 - [Upstream task sources and licenses](benchmarks/UPSTREAM.md)
 

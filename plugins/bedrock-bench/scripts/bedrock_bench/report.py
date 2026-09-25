@@ -156,10 +156,16 @@ def markdown(summary):
     return "\n".join(lines)
 
 
-def write_report(runs, directory):
+def write_report(runs, directory, *, sources=None, inline=False):
+    from .explorer import render_explorer
     summary = compare(runs)
     directory = Path(directory)
+    html = render_explorer(runs, summary, directory, sources)
+    fragment = render_explorer(runs, summary, directory, sources, inline=True) if inline else None
     directory.mkdir(parents=True, exist_ok=True)
     (directory / "comparison.json").write_text(json.dumps(summary, indent=2, allow_nan=False) + "\n")
     (directory / "REPORT.md").write_text(markdown(summary))
+    (directory / "REPORT.html").write_text(html)
+    if fragment is not None:
+        (directory / "REPORT.inline.html").write_text(fragment)
     return summary

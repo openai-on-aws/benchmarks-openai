@@ -9,6 +9,7 @@ Keep documentation focused on its reader:
 
 - `README.md`: human onboarding, installation, first report, and chat examples.
 - `skills/benchmark-agent-tasks/SKILL.md`: agent workflow and execution guidance.
+- `skills/inspect-results/SKILL.md`: saved-result exploration and evidence guidance.
 - `skills/benchmark-agent-tasks/references/`: conditional CLI, suite, and
   accounting details.
 - This file: contributor guidance for changes to the plugin.
@@ -24,3 +25,8 @@ environments in `.bench-tools`. For documentation changes, check referenced
 paths and anchors; validate skill frontmatter when changing the skill entrypoint.
 Reference smoke checks and live model measurements are different validation
 stages; describe which stage was actually exercised.
+
+`assets/report.html` is the shared standalone/inline report template.
+Render untrusted labels and evidence as text, keep evidence paths inside the
+source run directory, and use the Python accounting aggregates in every view.
+The explorer must remain usable without a Codex host bridge or network access.

@@ -3,7 +3,7 @@
 For a first run, start with the [plugin quickstart](../plugins/bedrock-bench/README.md).
 This walkthrough covers the full feature set and prepared model comparisons.
 
-Bedrock Bench **0.2.0** is an installed Codex plugin for comparing agent task
+Bedrock Bench **0.3.0** is a Codex plugin for comparing agent task
 success, time, token usage, and cost per successful task. Select **Bedrock Bench**
 in the chat composer and describe the experiment. The skill handles the
 underlying commands.
@@ -40,7 +40,9 @@ The plugin includes:
   resource wiring, scoped IAM, table preservation, and batch failure handling.
 - **Evidence and accounting:** per-attempt outcomes, agent and total wall time,
   usage, cost coverage, raw upstream outputs, source/version metadata, and
-  Markdown/JSON comparison reports. Failed attempts contribute to spend.
+  interactive HTML and Markdown/JSON comparison reports. Failed attempts contribute to spend.
+- **Results exploration:** filter targets and tasks, inspect recorded attempts,
+  open saved evidence, and continue with contextual chat prompts.
 - **AWS-Bench lifecycle commands** to plan or execute environment setup,
   verification, reset, and cleanup. A model run does not create an environment.
 
@@ -156,8 +158,16 @@ it before running those scenarios.
 
 ## Read the results
 
-Each run writes `run.json`, `REPORT.md`, and per-attempt evidence under a new
-directory in `bench-results`. Compare completed runs only when they have
+Each run writes `run.json`, `comparison.json`, `REPORT.html`, `REPORT.md`, and
+per-attempt evidence under a new directory in `bench-results`. Ask:
+
+> Open the results explorer for my latest saved run. Show the failed attempts.
+
+The explorer works as an offline HTML file. Supported Codex inline views add
+**Explain in chat** and **Compare a baseline** actions; standalone browsers
+provide copyable prompts. Evidence inspection uses the original run files.
+
+Compare completed runs only when they have
 identical suites, task sources, repetitions, seed, and limits:
 
 > Use Bedrock Bench to compare these two `run.json` files. Show success rate,

@@ -6,10 +6,10 @@ container runtimes, also read [Repository suites](suites.md). For pricing fields
 and interpretation, read [Cost accounting](accounting.md).
 
 Run commands from the project directory selected by the user. Set `BENCH_PLUGIN`
-to the installed directory printed by `codex plugin add`; for version 0.2.0:
+to the installed directory printed by `codex plugin add`; for version 0.3.0:
 
 ```bash
-BENCH_PLUGIN="$HOME/.codex/plugins/cache/openai-on-aws/bedrock-bench/0.2.0"
+BENCH_PLUGIN="$HOME/.codex/plugins/cache/openai-on-aws/bedrock-bench/0.3.0"
 ```
 
 From a source checkout, set it to that checkout's `plugins/bedrock-bench`
@@ -33,7 +33,7 @@ The demo uses invented token counts, costs, and model latency,
 including an intentional task failure. It makes no network calls.
 
 Each run gets a new directory with `run.json`, `comparison.json`, `REPORT.md`,
-and per-attempt workspaces, event logs, and stderr. Results are saved after
+`REPORT.html`, and per-attempt workspaces, event logs, and stderr. Results are saved after
 every attempt. `trace_sha256` links an attempt to its captured events.
 
 ## Create a real experiment
@@ -121,7 +121,35 @@ python3.12 "$BENCH_PLUGIN/scripts/bench.py" report \
   --out bench-results/comparison
 ```
 
+Markdown, JSON, and a self-contained HTML explorer are written together. Add
+`--format html` to print the HTML path, or `--format inline` to also write and
+print `REPORT.inline.html` for supported inline visualization hosts. The default
+still prints the Markdown path. Inline output has a 1 MB limit; full HTML does
+not impose that display limit.
+
 Runs must have identical tasks, fixtures, repetitions, seed, and configured
 limits. Synthetic/live mixes, duplicate run IDs, and interrupted runs are
 rejected. Different runners compare complete agent systems; use the same
 native loop when investigating model/provider differences.
+
+## Inspect saved evidence
+
+```bash
+python3.12 "$BENCH_PLUGIN/scripts/bench.py" runs bench-results
+python3.12 "$BENCH_PLUGIN/scripts/bench.py" inspect \
+  bench-results/RUN_A/run.json --attempt ATTEMPT_ID
+```
+
+`runs` lists the selected directory and its immediate child run directories.
+It includes interrupted runs and reports unreadable files separately.
+`inspect` accepts an exact attempt ID and returns its recorded grading,
+accounting, source paths, and up to 16 KiB from each supported text evidence
+file. Previews can be truncated; workspace directories are identified but are
+not recursively read. Evidence paths must resolve inside the source run directory.
+Neither command invokes a model or prepares a runtime.
+
+The HTML embeds result metadata and works offline. Deep evidence links depend on
+the original run files. A supported Codex inline host offers contextual chat
+actions; ordinary browsers provide copyable analysis prompts. Report filters
+only change the view, and an outcome filter affects the attempt inspector rather
+than recalculating success or cost from successful attempts alone.

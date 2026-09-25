@@ -1,7 +1,7 @@
 {
   "name": "bedrock-bench",
-  "version": "0.2.0",
-  "description": "Run CDK repair, Terminal-Bench, SWE-bench, AWS-Bench, and starter agent tasks with explicit success and cost accounting.",
+  "version": "0.3.0",
+  "description": "Benchmark agents on real tasks and explore success, time, cost, and per-attempt evidence in interactive reports.",
   "author": {
     "name": "OpenAI on AWS",
     "url": "https://github.com/openai-on-aws"
@@ -14,7 +14,7 @@
   "interface": {
     "displayName": "Bedrock Bench",
     "shortDescription": "Measure agent task economics",
-    "longDescription": "Run AWS CDK repair tasks, Terminal-Bench, SWE-bench, AWS-Bench, and starter agent benchmarks from chat. Use a fixed native loop or Codex and OpenCode through isolated harnesses. Compare verified outcomes, latency, token usage, and cost per successful task, retaining upstream evidence and pricing provenance.",
+    "longDescription": "Run AWS CDK repair tasks, Terminal-Bench, SWE-bench, AWS-Bench, and starter agent benchmarks from chat. Compare verified outcomes, time, token usage, and cost in interactive reports. Select failed attempts to inspect saved evidence or ask a follow-up question, with pricing provenance retained.",
     "developerName": "OpenAI on AWS",
     "category": "Productivity",
     "capabilities": ["Read", "Write"],
@@ -26,7 +26,8 @@
       "Run the AWS CDK reference smoke test.",
       "Plan a Terminal-Bench model comparison on Bedrock.",
       "Show the offline Bedrock Bench demonstration.",
-      "Compare these runs by cost per successful task."
+      "Compare these runs by cost per successful task.",
+      "Explore my saved benchmark results and explain the failures."
     ]
   }
 }

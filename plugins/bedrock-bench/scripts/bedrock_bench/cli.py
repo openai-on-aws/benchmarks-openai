@@ -102,6 +102,13 @@ def main(argv=None):
     report = sub.add_parser("report", help="Compare run.json files with identical task protocols")
     report.add_argument("runs", nargs="+")
     report.add_argument("--out", required=True)
+    report.add_argument("--format", choices=["markdown", "html", "inline"], default="markdown",
+                        help="Report to print/open; HTML, Markdown, and JSON are always saved")
+    saved_runs = sub.add_parser("runs", help="List saved runs without executing benchmarks")
+    saved_runs.add_argument("directory", nargs="?", default="bench-results")
+    inspect = sub.add_parser("inspect", help="Read one saved attempt and bounded evidence previews")
+    inspect.add_argument("run")
+    inspect.add_argument("--attempt", required=True)
     args = parser.parse_args(argv)
     try:
         if args.command == "doctor":
@@ -110,6 +117,12 @@ def main(argv=None):
             print(json.dumps(catalog(), indent=2))
         elif args.command == "tasks":
             print("\n".join(task_catalog(args.suite)))
+        elif args.command == "runs":
+            from .explorer import list_runs
+            print(json.dumps(list_runs(args.directory), indent=2, allow_nan=False))
+        elif args.command == "inspect":
+            from .explorer import inspect_attempt
+            print(json.dumps(inspect_attempt(args.run, args.attempt), indent=2, allow_nan=False))
         elif args.command == "prepare":
             from .tooling import prepare as prepare_tools
             print(json.dumps(prepare_tools(args.suite, args.tools_dir, execute=args.execute), indent=2))
@@ -157,9 +170,11 @@ def main(argv=None):
                 output.write(json.dumps(experiment.to_dict(), indent=2) + "\n")
             print(Path(args.out).resolve())
         elif args.command == "report":
-            runs = [json.loads(Path(path).read_text()) for path in args.runs]
-            write_report(runs, args.out)
-            print(Path(args.out).resolve() / "REPORT.md")
+            from .explorer import load_run
+            runs = [load_run(path) for path in args.runs]
+            write_report(runs, args.out, sources=args.runs, inline=args.format == "inline")
+            filename = {"markdown": "REPORT.md", "html": "REPORT.html", "inline": "REPORT.inline.html"}[args.format]
+            print(Path(args.out).resolve() / filename)
         else:
             if args.command == "demo":
                 experiment = demo_experiment()
