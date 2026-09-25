@@ -1,8 +1,8 @@
 # OpenAI benchmarks on AWS
 
 Compare OpenAI models on [Amazon Bedrock](https://aws.amazon.com/bedrock/) and
-the OpenAI API (1P) by **task success, speed, and cost**. Run agent tasks, measure API performance, and
-keep the evidence behind every result.
+the OpenAI API (1P) by **task success, speed, and cost**. Run agent tasks, measure
+API performance, and keep the evidence behind every result.
 
 **Start with [Bedrock Bench](plugins/bedrock-bench/)**, the Codex plugin for
 running AWS CDK repairs, Terminal-Bench, SWE-bench, and AWS-Bench from chat.
@@ -29,54 +29,13 @@ and prepare your first model comparison.
 
 ## Workflow
 
-```mermaid
-flowchart LR
-    subgraph execution["1 · Configure and run"]
-        direction TB
-        plan["Plan a comparison<br/>Models, tasks, reasoning, limits<br/>e.g. GPT-6 Astra / Sol / Luna<br/>Bedrock regions, e.g.<br/>us-west-2 / us-east-1"]
-        run["Run a benchmark<br/>Bedrock Bench: agent tasks<br/>Scripts: latency, quality,<br/>parity, ARC"]
-        plan --> run
-    end
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/benchmark-workflow-dark.svg">
+  <img src="docs/assets/benchmark-workflow-light.svg" width="960" alt="Choose Bedrock (Mantle or Runtime) or OpenAI API (1P), run Bedrock Bench or API suites, and compare success, latency, and cost using saved evidence and reports.">
+</picture>
 
-    subgraph endpoints["2 · Main model endpoints"]
-        direction TB
-        mantle["Bedrock Mantle<br/>bedrock-mantle.&lt;region&gt;.api.aws<br/>openai.* model IDs"]
-        runtime["Bedrock Runtime<br/>bedrock-runtime.&lt;region&gt;.amazonaws.com<br/>us.openai.* / global.openai.* profiles"]
-        openai["OpenAI API · 1P<br/>api.openai.com<br/>gpt-* model IDs"]
-        mantle ~~~ runtime ~~~ openai
-    end
-
-    subgraph results["3 · Evidence and comparison"]
-        direction TB
-        evidence["Timestamped evidence<br/>JSON results + run config<br/>Agent traces + verifier logs<br/>TXT parity checks"]
-        metrics["Comparison metrics<br/>Success / accuracy / turns<br/>TTFT / ITL / end-to-end<br/>p50 / p95 / p99; tokens/sec<br/>Input/output tokens<br/>Reasoning/cache tokens<br/>Cost per successful task"]
-        reports["Shareable outputs<br/>Markdown + PNG charts<br/>HTML / DOCX (performance)"]
-        evidence --> metrics --> reports
-    end
-
-    execution --> endpoints --> results
-
-    classDef runner fill:#eff6ff,stroke:#2563eb,color:#172554
-    classDef bedrock fill:#fff4e6,stroke:#b45309,color:#451a03
-    classDef firstparty fill:#f1f5f9,stroke:#475569,color:#0f172a
-    classDef result fill:#ecfdf5,stroke:#047857,color:#064e3b
-    class plan,run runner
-    class mantle,runtime bedrock
-    class openai firstparty
-    class evidence,metrics,reports result
-    style execution fill:#ffffff,stroke:#cbd5e1,color:#334155
-    style endpoints fill:#ffffff,stroke:#cbd5e1,color:#334155
-    style results fill:#ffffff,stroke:#cbd5e1,color:#334155
-```
-
-Choose models from the selected endpoint's catalogue; availability depends on
-region and account access. See the [model and endpoint reference](docs/benchmark-reference.md#choosing-models)
-and [prepared GPT-6 comparisons](examples/bedrock-bench/) for specific configurations.
-
-Keep tasks and settings matched, and record the runner and pricing assumptions.
-Providers, evidence, and metrics vary by suite; the ARC pilots use Bedrock only.
-Agent results reflect both the model and its runner. TTFT is time to first token;
-ITL is inter-token latency.
+Model and region choices depend on the suite and endpoint.
+[Setup, metrics, and output details →](docs/benchmark-reference.md)
 
 ## Choose a benchmark
 
