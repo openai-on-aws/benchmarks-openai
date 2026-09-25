@@ -1,0 +1,4 @@
+-r requirements.txt
+# Optional public ARC-AGI-3 toolkit, kept separate from existing benchmark installs.
+arc-agi==0.9.9
+arcengine==0.9.3
