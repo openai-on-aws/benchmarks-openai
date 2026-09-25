@@ -1,0 +1,93 @@
+[
+  {
+    "name": "aws-bench-quickstart",
+    "version": "0.7.2",
+    "description": "Test dataset to try out aws-bench and run a smoke test to confirm that the framework is configured correctly. It uses the same tasks as the ec2-multiregion scenario.",
+    "tasks": [
+      {
+        "name": "describe-cloudformation-stack-resources",
+        "git_url": "https://github.com/aws-bench/aws-bench-datasets.git",
+        "git_commit_id": "a45996f548e588d1a6c4c2faeeeaac1b177e83fe",
+        "path": "tasks/ec2-multiregion/describe-cloudformation-stack-resources"
+      },
+      {
+        "name": "describe-ec-instances-cross-region-connectivity",
+        "git_url": "https://github.com/aws-bench/aws-bench-datasets.git",
+        "git_commit_id": "a45996f548e588d1a6c4c2faeeeaac1b177e83fe",
+        "path": "tasks/ec2-multiregion/describe-ec-instances-cross-region-connectivity"
+      },
+      {
+        "name": "ec-instances-without-default-vpc",
+        "git_url": "https://github.com/aws-bench/aws-bench-datasets.git",
+        "git_commit_id": "a45996f548e588d1a6c4c2faeeeaac1b177e83fe",
+        "path": "tasks/ec2-multiregion/ec-instances-without-default-vpc"
+      },
+      {
+        "name": "find-ec-instances-in-public-subnets",
+        "git_url": "https://github.com/aws-bench/aws-bench-datasets.git",
+        "git_commit_id": "a45996f548e588d1a6c4c2faeeeaac1b177e83fe",
+        "path": "tasks/ec2-multiregion/find-ec-instances-in-public-subnets"
+      },
+      {
+        "name": "list-ec-instances-all-regions",
+        "git_url": "https://github.com/aws-bench/aws-bench-datasets.git",
+        "git_commit_id": "a45996f548e588d1a6c4c2faeeeaac1b177e83fe",
+        "path": "tasks/ec2-multiregion/list-ec-instances-all-regions"
+      },
+      {
+        "name": "list-ec-instances-all-regions-1",
+        "git_url": "https://github.com/aws-bench/aws-bench-datasets.git",
+        "git_commit_id": "a45996f548e588d1a6c4c2faeeeaac1b177e83fe",
+        "path": "tasks/ec2-multiregion/list-ec-instances-all-regions-1"
+      },
+      {
+        "name": "list-ec-instances-by-vpc-across-regions",
+        "git_url": "https://github.com/aws-bench/aws-bench-datasets.git",
+        "git_commit_id": "a45996f548e588d1a6c4c2faeeeaac1b177e83fe",
+        "path": "tasks/ec2-multiregion/list-ec-instances-by-vpc-across-regions"
+      },
+      {
+        "name": "list-ec-private-ips-all-regions",
+        "git_url": "https://github.com/aws-bench/aws-bench-datasets.git",
+        "git_commit_id": "a45996f548e588d1a6c4c2faeeeaac1b177e83fe",
+        "path": "tasks/ec2-multiregion/list-ec-private-ips-all-regions"
+      },
+      {
+        "name": "list-unused-security-groups-all-regions",
+        "git_url": "https://github.com/aws-bench/aws-bench-datasets.git",
+        "git_commit_id": "a45996f548e588d1a6c4c2faeeeaac1b177e83fe",
+        "path": "tasks/ec2-multiregion/list-unused-security-groups-all-regions"
+      }
+    ],
+    "scenarios": [
+      {
+        "name": "ec2-multiregion",
+        "git_url": "https://github.com/aws-bench/aws-bench-datasets.git",
+        "git_commit_id": "a45996f548e588d1a6c4c2faeeeaac1b177e83fe",
+        "path": "scenarios/ec2-multiregion"
+      }
+    ],
+    "extra_instruction_paths": [
+      {
+        "git_url": "https://github.com/aws-bench/aws-bench-datasets.git",
+        "git_commit_id": "023e7485be29d0e239c81f08d95b0cf11d0802cb",
+        "path": "shared/steering/aws-awareness.md"
+      },
+      {
+        "git_url": "https://github.com/aws-bench/aws-bench-datasets.git",
+        "git_commit_id": "023e7485be29d0e239c81f08d95b0cf11d0802cb",
+        "path": "shared/steering/concise-answer.md"
+      }
+    ],
+    "metrics": [
+      {
+        "type": "uv-script",
+        "kwargs": {
+          "git_url": "https://github.com/aws-bench/aws-bench-datasets.git",
+          "git_commit_id": "023e7485be29d0e239c81f08d95b0cf11d0802cb",
+          "script_path": "metric/metric.py"
+        }
+      }
+    ]
+  }
+]

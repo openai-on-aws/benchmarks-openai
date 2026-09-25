@@ -23,7 +23,7 @@ flowchart LR
 | ⏱️ **performance/** | How fast? TTFT, inter-token latency, tokens/sec, E2E — p50/p95/p99 | `run_all.sh` · `benchmark.py` |
 | 🎯 **quality/** | How accurate, per benchmark *and* per dollar? AIME, GPQA, MMLU-Pro, MATH-500, GSM8K, HumanEval — with cost-per-success | `quick_evals.py` |
 | 🤖 **quality/ (agentic)** | How do multi-turn agents behave? Turn counts, trajectory cost, live web research | `agentic_evals.py` · `deepsearchqa/` |
-| **[Bedrock Bench plugin](plugins/bedrock-bench/)** | What does it cost to finish an agent task correctly? Compare native, Codex, and OpenCode runners | `bench.py` · [Plan](docs/bedrock-bench-plan.md) |
+| **[Bedrock Bench plugin](plugins/bedrock-bench/)** | Cost per successful agent task: starter tasks, CDK repair, Terminal-Bench, SWE-bench, and AWS-Bench | `bench.py` · [Suite guide](plugins/bedrock-bench/skills/benchmark-agent-tasks/references/suites.md) |
 | 📝 **quality/ (deliverables)** | Can it produce professional work products? Rubric-judged GDPval slice | `gdpval_eval.py` |
 | 🧩 **parity/** | Which Responses-API features work on Bedrock? 34 live checks | `run_parity.py` |
 | 📊 **[GPT-4.1 vs GPT-5.6 comparison](comparisons/gpt-4.1-vs-gpt-5.6/)** | How do quality, recorded cost, and latency compare across 12 workloads and reasoning settings? Cross-platform saved-run evidence | [Results](comparisons/gpt-4.1-vs-gpt-5.6/RESULTS.md) · [Offline verification](comparisons/gpt-4.1-vs-gpt-5.6/README.md#reproduce-the-report) |
@@ -40,6 +40,10 @@ python3 bench.py demo --out bench-results
 This creates a clearly labeled synthetic report and exercises task scoring and
 cost accounting. The [plugin guide](plugins/bedrock-bench/README.md) explains
 live configurations, runner/provider selection, pricing, and installation.
+With the installed plugin, ask in chat to run the AWS CDK smoke test or plan
+an upstream benchmark. `python3.12 bench.py suites` lists the integrated suites;
+`smoke --suite aws-cdk-smoke --execute` validates real CDK compilation,
+synthesis, and grading in Docker without model calls or AWS deployment.
 
 **Adding GPT-6 Astra:** [coverage, model settings and run guide](docs/astra-benchmarks.md).
 Preview all runnable suites on Mantle, Runtime and OpenAI with
@@ -94,7 +98,7 @@ flowchart TD
     end
 ```
 
-Every backend runs through the **same Responses-API streaming code path** — same prompts, same token budgets, same retry logic — so any difference you see is the platform, not the harness. Every run records per-call raw measurements (including reasoning-token and cached-token counts, which matter a lot for reasoning models) alongside mean/stddev/p50/p95/p99/min/max summaries.
+The streaming performance suite runs every backend through the **same Responses-API streaming code path**, with matching prompts, token budgets, and retry logic. It records raw measurements, including reasoning and cache usage, alongside percentile summaries. Bedrock Bench additionally supports complete agent-system comparisons through Codex, OpenCode, Harbor, and AWS-Bench; those comparisons include differences in the agent runners.
 
 ## ⏱️ Performance suite
 

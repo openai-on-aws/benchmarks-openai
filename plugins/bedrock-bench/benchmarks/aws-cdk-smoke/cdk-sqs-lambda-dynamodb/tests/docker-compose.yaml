@@ -1,0 +1,13 @@
+services:
+  main:
+    # Static isolation also works on Docker Desktop kernels without Harbor's
+    # optional dynamic egress controls. Dependencies are installed at build time.
+    network_mode: none
+    build:
+      context: ${CONTEXT_DIR}/../environment
+      dockerfile: Dockerfile
+    volumes:
+      - type: bind
+        source: ${CONTEXT_DIR}
+        target: /tests
+        read_only: true

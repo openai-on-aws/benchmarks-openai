@@ -4,8 +4,71 @@ Measure whether an agent finishes a task, what the attempt costs, and how long
 it takes. The plugin bundles its complete Python implementation, so it also
 works from Codex's installed plugin cache.
 
-The first release provides a native tool loop, Codex and OpenCode CLI adapters,
-three deterministic filesystem tasks, and JSON/Markdown reports.
+Use the installed **Bedrock Bench** plugin in chat:
+
+> Run the AWS CDK smoke test and explain what passed.
+
+> Use Terminal-Bench to compare these two models on the fix-git task.
+
+> Plan an AWS-Bench run against my testing environment, including setup and cleanup.
+
+The skill selects tasks, prepares the tools, runs the authorized experiment,
+and explains its report. The commands below are also available for automation.
+
+## Benchmark suites
+
+| Suite | Execution | Tasks |
+|---|---|---|
+| `starter` | Built-in native loop or local Codex/OpenCode | Three deterministic JSON tasks |
+| `aws-cdk-smoke` | Harbor containers | CDK repair: SQS → Lambda → DynamoDB |
+| `terminal-bench` | Harbor | Pinned Terminal-Bench 2.0 tasks |
+| `swe-bench` | Harbor | Pinned SWE-bench Verified task conversion |
+| `aws-bench` | AWS-Bench | Pinned quickstart tasks against a real AWS environment |
+
+Every suite uses `plan`, `run`, and `report`. Upstream selections default to one
+task; `--task` and `--all-tasks` make expansion explicit. Models and prices are
+never selected silently. Repository suites need Python 3.12+ and Docker.
+
+```bash
+python3.12 bench.py suites
+python3.12 bench.py tasks --suite terminal-bench
+python3.12 bench.py prepare --suite aws-cdk-smoke --execute
+python3.12 bench.py smoke --suite aws-cdk-smoke --execute
+```
+
+The CDK smoke executes real compilation, synthesis, and grading in separate
+containers. The unchanged baseline must fail and the reference repair must
+pass. It makes no model calls and deploys no AWS resources. Reference smokes
+are also available for the default Terminal-Bench and SWE-bench tasks.
+
+To measure a real agent:
+
+```bash
+python3.12 bench.py init --suite aws-cdk-smoke \
+  --runner codex --provider amazon-bedrock \
+  --model "$BEDROCK_MODEL" --region us-west-2 --out cdk-experiment.json
+python3.12 bench.py plan cdk-experiment.json
+python3.12 bench.py run cdk-experiment.json --execute
+```
+
+Set `BEDROCK_MODEL` to an accessible model. Container agents require
+`AWS_BEARER_TOKEN_BEDROCK`; local desktop authentication alone is not container
+authentication. `--agent-version` pins the agent CLI. `--skill PATH` adds a
+local skill to a Harbor target for controlled skill comparisons.
+
+AWS-Bench uses a separate prepared runtime and an explicitly named AWS testing
+environment. `aws-env init/setup/verify/reset/cleanup` exposes its lifecycle;
+each command plans by default and requires `--execute` to act. Setup provisions
+billable AWS resources. The default quickstart also uses a model judge.
+See the [suite integration guide](skills/benchmark-agent-tasks/references/suites.md)
+for the exact flow, provider support, limits, and interpretation.
+
+Upstream results retain raw trial files, task commit/checksum, agent version,
+and installed harness versions. Failed or missing trials remain visible.
+Agent-only and total wall time are reported separately. Upstream cost figures
+are estimates; infrastructure and verifier/judge costs are excluded.
+
+The sections below describe the original `starter` suite unless stated otherwise.
 
 ## Try it without credentials
 
@@ -112,6 +175,7 @@ Cost bases:
 - `rate_card_estimate`: an explicit rate card applied to recorded usage.
 - `runner_estimate`: OpenCode's emitted catalog-based estimate.
 - `synthetic`: invented demonstration data.
+- `reference_no_model`: a reference/oracle check, excluded from model comparisons.
 - `unknown`: insufficient pricing or usage evidence.
 
 An OpenCode estimate of zero can mean missing catalog prices. It remains
@@ -193,13 +257,13 @@ OpenAI's public Plugins Directory.
 
 ### Test the installed package from a terminal
 
-The following commands use Python 3.12 and the installed `0.1.0` package.
+The following commands use Python 3.12 and the installed `0.2.0` package.
 `codex plugin add` prints the installed directory; use that directory if your
 Codex home or package version differs. Run from your own working directory so
 results are saved outside the plugin cache.
 
 ```bash
-BENCH_PLUGIN="$HOME/.codex/plugins/cache/openai-on-aws/bedrock-bench/0.1.0"
+BENCH_PLUGIN="$HOME/.codex/plugins/cache/openai-on-aws/bedrock-bench/0.2.0"
 python3.12 "$BENCH_PLUGIN/scripts/bench.py" doctor
 python3.12 "$BENCH_PLUGIN/scripts/bench.py" tasks
 python3.12 "$BENCH_PLUGIN/scripts/bench.py" demo --out ./bench-results
@@ -255,10 +319,13 @@ process execution/timeout, native tool-loop behavior, and copied-package use.
 Run them from the repository with:
 
 ```bash
-python3 -m unittest discover -s tests -p test_bedrock_bench.py -v
+python3.12 -m unittest discover -s tests -p 'test_bedrock_bench*.py' -v
 ```
 
 Live model and CLI compatibility must be checked with the user's installed
 versions and account access before treating their output as validated results.
+Reference Docker smokes validate the task/grader/report path independently
+of model quality. Pinned upstream sources and license references are listed
+in [benchmarks/UPSTREAM.md](benchmarks/UPSTREAM.md).
 
 Code: MIT-0. Documentation: CC-BY-SA-4.0. See the included license files.

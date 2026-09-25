@@ -15,6 +15,7 @@ def aggregate(rows):
     successes = sum(row["success"] is True for row in rows)
     costs = [row["cost_usd"] for row in rows]
     total = complete_sum(costs)
+    agent_times = [row.get("agent_wall_seconds") for row in rows]
     return {
         "attempts": len(rows), "successes": successes,
         "success_rate": successes / len(rows),
@@ -24,6 +25,7 @@ def aggregate(rows):
         "cost_per_attempt_usd": total / len(rows) if total is not None else None,
         "cost_per_success_usd": total / successes if total is not None and successes else None,
         "median_wall_seconds": statistics.median(row["wall_seconds"] for row in rows),
+        "median_agent_seconds": statistics.median(agent_times) if all(t is not None for t in agent_times) else None,
         "cost_basis": sorted({basis for row in rows for basis in row["cost_basis"]}),
         "failures": dict(sorted((status, sum(row["status"] == status for row in rows if not row["success"]))
                                for status in {row["status"] for row in rows if not row["success"]})),
@@ -41,6 +43,8 @@ def compare(runs):
         raise ValueError("Task protocols differ: use matching tasks, fixtures, repetitions, seed, and limits")
     if len({run["synthetic"] for run in runs}) != 1:
         raise ValueError("Synthetic and live results cannot be combined")
+    if len({run.get("validation_only", False) for run in runs}) != 1:
+        raise ValueError("Reference validation cannot be compared with model measurements")
     if len({run["run_id"] for run in runs}) != len(runs):
         raise ValueError("The same run was supplied more than once")
     groups, task_groups = defaultdict(list), defaultdict(list)
@@ -56,12 +60,18 @@ def compare(runs):
             task_groups[(key, row["task_id"])].append(row)
     return {
         "schema_version": 1, "synthetic": runs[0]["synthetic"],
+        "validation_only": runs[0].get("validation_only", False),
         "protocol_hash": runs[0]["protocol_hash"],
         "run_ids": [run["run_id"] for run in runs],
         "targets": [{"target": target_info[key], **aggregate(rows)} for key, rows in groups.items()],
         "tasks": [{"target": target_info[key], "target_id": target_info[key]["id"], "task_id": task, **aggregate(rows)}
                   for (key, task), rows in task_groups.items()],
         "scope": "Inference only. Infrastructure, subscriptions, external tools, and judge costs are excluded.",
+        "upstream_trials": [
+            {**row["upstream"], "run_id": run["run_id"], "attempt_id": row["attempt_id"],
+             "task_id": row["task_id"], "source": row["upstream"].get("task_id")}
+            for run in runs for row in run["attempts"] if row.get("upstream")
+        ],
     }
 
 
@@ -75,21 +85,24 @@ def dollars(value):
 
 def markdown(summary):
     label = "Synthetic demonstration — no model measurements" if summary["synthetic"] else "Agent task results"
+    if summary.get("validation_only"):
+        label = "Reference validation — no model measurements"
     lines = [
         f"# Bedrock Bench — {label}", "",
         summary["scope"], "",
         "Cost per success includes spend on failed attempts. An incomplete cost total remains unknown. "
         "Zero successes has no finite cost per success.", "",
-        "| Target | Runner / provider / model | Attempts | Passed | Cost coverage | Total cost | Cost / success | Median seconds | Basis |",
-        "|---|---|---:|---:|---:|---:|---:|---:|---|",
+        "| Target | Runner / provider / model | Attempts | Passed | Cost coverage | Total cost | Cost / success | Median wall seconds | Median agent seconds | Basis |",
+        "|---|---|---:|---:|---:|---:|---:|---:|---:|---|",
     ]
     for row in summary["targets"]:
         target = row["target"]
         identity = f"{target['runner']} / {target['provider']} / {target['model']}"
         cps = "no successes" if not row["successes"] else dollars(row["cost_per_success_usd"])
+        agent_time = "unavailable" if row["median_agent_seconds"] is None else f"{row['median_agent_seconds']:.3f}"
         lines.append(f"| {cell(target['id'])} | {cell(identity)} | {row['attempts']} | {row['successes']} | "
                      f"{row['cost_coverage']:.0%} | {dollars(row['total_cost_usd'])} | {cps} | "
-                     f"{row['median_wall_seconds']:.3f} | {cell(', '.join(row['cost_basis']))} |")
+                     f"{row['median_wall_seconds']:.3f} | {agent_time} | {cell(', '.join(row['cost_basis']))} |")
     lines += [
         "", "## Per-task results", "",
         "| Target | Task | Passed / attempts | Total cost | Cost / success |",
@@ -108,6 +121,25 @@ def markdown(summary):
         lines.append(f"- **{cell(target['id'])}**: runner `{cell(target['runner_version'])}`; "
                      f"region `{cell(target['region'])}`; reasoning `{cell(target['reasoning_effort'])}`; "
                      f"tier `{cell(target['service_tier'])}`; routing `{cell(target['routing'])}`.")
+        if target.get("agent_version"):
+            lines.append(f"  Requested agent version: `{cell(target['agent_version'])}`.")
+        if target.get("skill_sha256"):
+            lines.append(f"  Skill source digests: `{cell(json.dumps(target['skill_sha256'], sort_keys=True))}`.")
+    if summary.get("upstream_trials"):
+        lines += ["", "## Upstream evidence", ""]
+        for row in summary["upstream_trials"]:
+            result = row.get("result")
+            evidence = f"`attempts/{row['attempt_id']}/{result}`" if result else "missing upstream result"
+            lines.append(f"- `{cell(row['task_id'])}` ({cell(row['harness'])}): {evidence}; "
+                         f"task checksum `{cell(row.get('task_checksum'))}`; run `{cell(row['run_id'])}`.")
+        lines += [
+            "", "Reported wall time includes harness setup, the agent, verification, and cleanup. "
+            "Agent-only time is retained separately in run.json. Upstream numeric reward=1 is a pass; "
+            "missing results, verifier errors, and timeouts remain visible as failed attempts.",
+        ]
+    if summary.get("validation_only"):
+        lines += ["", "This run checks benchmark plumbing using a reference solution and/or an unchanged "
+                  "baseline. Zero inference cost reflects no model calls and is not a model cost comparison."]
     lines += [
         "", "## Interpretation", "",
         "- Native runs hold the agent loop and filesystem tools fixed.",

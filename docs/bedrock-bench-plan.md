@@ -1,7 +1,7 @@
 # Bedrock Bench: agent task economics
 
-Status: first implementation complete; offline validation passed. Live model
-and CLI smoke runs are the next validation stage.
+Status: starter tasks and upstream suite integration implemented. Reference
+container checks and live model benchmarks are distinct validation stages.
 
 Build an installable **Bedrock Bench** plugin, published by **OpenAI on AWS**,
 inside `openai-on-aws/benchmarks-openai`. Its first question is: **What does it
@@ -48,6 +48,29 @@ these with portable workspaces, explicit scoring, and consistent accounting.
 These starter tasks validate the measurement system; they are not a
 representative public leaderboard or a replacement for customer workloads.
 
+## Repository suites
+
+The plugin now routes `aws-cdk-smoke`, Terminal-Bench 2.0, and SWE-bench Verified
+through Harbor, and the AWS-Bench quickstart through its own runner. Common
+commands select, prepare, plan, execute, and report these suites. Task sources
+are commit-pinned; the default selection is one task. The registry is packaged
+with the plugin, so catalog and planning commands remain offline.
+
+The CDK task repairs an SQS → Lambda → DynamoDB project. A fresh verifier
+container receives only submitted source files and checks compilation,
+synthesis, resource wiring, scoped permissions, table preservation, and
+handler behavior. Its reference smoke requires the unchanged baseline to
+fail and the reference repair to pass.
+
+Separate tool environments preserve AWS-Bench's pinned Harbor dependency.
+AWS environment setup is exposed through explicit `aws-env` operations.
+Upstream model costs are runner estimates or sourced rate-card estimates;
+judge and infrastructure costs remain outside the reported agent spend.
+
+Harbor can inject local skills, recording their content digests alongside
+agent versions. This supports same-model, same-runner comparisons with and
+without AWS skill guidance.
+
 ## Accounting contract
 
 - Cost per attempt = all attributable inference spend for that attempt.
@@ -84,11 +107,12 @@ an exact billing cap while a request is in flight.
 
 Native tools can access only the attempt workspace. Grading uses immutable
 expected data retained by the controller, outside the candidate workspace.
-CLI agents retain their installed client's permission behavior; a temporary
+Starter CLI agents retain their installed client's permission behavior; a temporary
 directory is not itself an OS security boundary. OpenCode receives a task-only
 agent configuration with external network tools, shell, and delegation disabled.
 Codex uses its workspace-write sandbox. No generated code is executed by the
-artifact graders.
+starter artifact graders. Repository-suite agents and graders execute code
+inside their upstream container environments.
 
 Fixtures, task prompts, tool schemas, limits, and repetitions contribute to
 comparison identity. A fixed seed creates the same task instances for every
@@ -96,8 +120,7 @@ target. Model sampling is not claimed to be deterministic.
 
 ## Subsequent releases
 
-- Customer task packs and genuine repository repair tasks with grading in
-  disposable containers.
+- More customer task packs and AWS/CDK repair scenarios.
 - Controlled provider routing, cache-state experiments, repeat confidence
   intervals, and paired comparisons at useful sample sizes.
 - Import existing `quality/agentic_evals.py` trajectories and inspect-format
@@ -138,3 +161,5 @@ costs. A provider-reported charge can be recorded without a rate card.
 - [OpenRouter usage accounting](https://openrouter.ai/docs/cookbook/administration/usage-accounting)
 - [OpenRouter request schema](https://openrouter.ai/docs/api/api-reference/chat/create-a-chat-completion)
 - [Existing agentic evaluations](../quality/agentic_evals.py)
+- [Pinned upstream suites and licenses](../plugins/bedrock-bench/benchmarks/UPSTREAM.md)
+- [Repository-suite usage](../plugins/bedrock-bench/skills/benchmark-agent-tasks/references/suites.md)
