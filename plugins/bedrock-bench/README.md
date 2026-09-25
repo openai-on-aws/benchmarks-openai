@@ -162,9 +162,87 @@ native loop when investigating model/provider differences.
 
 ## Install in Codex
 
-Use `$plugin-creator` to add this plugin folder to a local marketplace, then
-install **Bedrock Bench** from that source. The manifest supplies the display
-name, composer icon, and brand color for its native plugin mention.
+The repository includes an `openai-on-aws` marketplace pointing to this
+self-contained plugin. Install the current preview from GitHub:
+
+```bash
+codex plugin marketplace add openai-on-aws/benchmarks-openai \
+  --ref codex/bedrock-bench-agentic-harness \
+  --sparse .agents/plugins --sparse plugins/bedrock-bench
+codex plugin add bedrock-bench@openai-on-aws
+codex plugin list --marketplace openai-on-aws
+```
+
+After the feature branch is merged, use `--ref main` to follow the main branch.
+If you already have this revision checked out, you can instead register the
+checkout with `codex plugin marketplace add .` from the repository root.
+Both sources use the same marketplace name; choose one source.
+
+In the Codex app, select **Bedrock Bench** from the plugin picker and try:
+
+> Show the offline Bedrock Bench demonstration and explain cost per successful task.
+
+Or prepare a live experiment without running it:
+
+> Plan a three-task benchmark using the native runner on Amazon Bedrock in
+> us-west-2. Ask me which model to use and show the run limits before execution.
+
+The manifest supplies the display name, composer icon, and brand color for the
+native plugin mention. This is repository distribution; it is not a listing in
+OpenAI's public Plugins Directory.
+
+### Test the installed package from a terminal
+
+The following commands use Python 3.12 and the installed `0.1.0` package.
+`codex plugin add` prints the installed directory; use that directory if your
+Codex home or package version differs. Run from your own working directory so
+results are saved outside the plugin cache.
+
+```bash
+BENCH_PLUGIN="$HOME/.codex/plugins/cache/openai-on-aws/bedrock-bench/0.1.0"
+python3.12 "$BENCH_PLUGIN/scripts/bench.py" doctor
+python3.12 "$BENCH_PLUGIN/scripts/bench.py" tasks
+python3.12 "$BENCH_PLUGIN/scripts/bench.py" demo --out ./bench-results
+```
+
+The demo runs six synthetic attempts, including one intentional task failure.
+The printed path points to the report. It does not call a model.
+
+For a native Bedrock run, set `BEDROCK_MODEL` to a model ID available to your
+account, and use your existing AWS credentials or `AWS_PROFILE`. Install the
+optional dependencies in a virtual environment:
+
+```bash
+python3.12 -m venv .bench-venv
+.bench-venv/bin/python -m pip install -r "$BENCH_PLUGIN/requirements.txt"
+.bench-venv/bin/python "$BENCH_PLUGIN/scripts/bench.py" init \
+  --runner native --provider bedrock-mantle \
+  --model "${BEDROCK_MODEL:?Set BEDROCK_MODEL to your Bedrock model ID}" \
+  --region us-west-2 --repetitions 1 --timeout-seconds 120 \
+  --out bedrock-experiment.json
+.bench-venv/bin/python "$BENCH_PLUGIN/scripts/bench.py" plan bedrock-experiment.json
+```
+
+This prepares three tasks and makes no model calls. Add a sourced rate card to
+the experiment if you want dollar estimates; Bedrock usage without a matching
+rate card leaves cost unknown. When ready, explicitly run the experiment:
+
+```bash
+.bench-venv/bin/python "$BENCH_PLUGIN/scripts/bench.py" run \
+  bedrock-experiment.json --execute --out ./bench-results
+```
+
+For a Codex-runner experiment, use `init --runner codex --provider amazon-bedrock`
+with a model ID supported by your installed Codex client and an explicit region.
+The `plan` and `run` commands are the same. The Codex adapter uses the installed
+client's authentication and does not need the optional Python SDK dependencies.
+
+To pick up a later revision from the configured Git branch:
+
+```bash
+codex plugin marketplace upgrade openai-on-aws
+codex plugin add bedrock-bench@openai-on-aws
+```
 
 The Codex plugin package and OpenCode's JavaScript plugin system are separate.
 OpenCode is supported here as a benchmark runner, invoked by the packaged CLI.
