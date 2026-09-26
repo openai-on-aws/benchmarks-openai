@@ -32,7 +32,9 @@ stages; describe which stage was actually exercised.
 
 `assets/report.html`, `assets/library.html`, and `assets/replay.html` are the
 standalone/inline view templates. Keep model replay positions independent and
-the selected call visible while scrubbing. Avoid hardcoded run IDs or local paths.
+the full tool list visible. Playback and scrubbing select the latest call reached,
+holding it between events; clicking a call pauses playback for inspection.
+Avoid hardcoded run IDs or local paths.
 Render untrusted labels and evidence as text, keep evidence paths inside the
 source run directory, and use the Python accounting aggregates in every view.
 The explorer must remain usable without a Codex host bridge or network access.

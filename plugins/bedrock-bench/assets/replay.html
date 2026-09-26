@@ -157,6 +157,18 @@
         function selectedCall(model) {
           return model.calls.find(call => call.id === state.models[model.id].callId);
         }
+        function setPosition(model, value, callId) {
+          const position = state.models[model.id];
+          position.time = clamp(value, 0, duration(model));
+          let reached = null;
+          for (const call of model.calls) {
+            if (localTime(model, call.start) > position.time) break;
+            reached = call.id;
+          }
+          // Keep the latest reached call selected between events. Next event
+          // can select its specific reply, including replies to overlapping calls.
+          position.callId = callId ?? reached;
+        }
         function stage(model, call) {
           const time = state.models[model.id].time;
           if (time < localTime(model, call.start)) return "later";
@@ -245,10 +257,10 @@
           get("mt-announcement").textContent = "Showing " + model.name + " tools. Replay at " + clock(state.models[model.id].time, true) + ".";
           save();
         }
-        function seek(model, value, persist = true) {
+        function seek(model, value, persist = true, callId) {
           pause(model);
           state.focus = model.id;
-          state.models[model.id].time = round(clamp(value, 0, duration(model)));
+          setPosition(model, round(value), callId);
           render(model);
           if (persist) { announce(model); save(); }
         }
@@ -265,7 +277,10 @@
           if (panel.detailKey === (call?.id ?? "")) return;
           panel.detailKey = call?.id ?? "";
           panel.detail.replaceChildren();
-          if (!call) return;
+          if (!call) {
+            panel.detail.append(node("div", "ra-note", "No tool call has started at this replay position."));
+            return;
+          }
           panel.detail.append(node("div", "ra-feed-head", "Saved tool detail"));
           panel.detail.append(node("h3", "", call.title));
           panel.detail.append(node("div", "ra-meta", call.tool + " · " + recordedStatus(call)));
@@ -404,20 +419,19 @@
           const events = [...model.calls.filter(call => call.replyRecorded).map(call => ({ time: localTime(model, call.end), callId: call.id })), { time: total, callId: null }].sort((a, b) => a.time - b.time);
           next.addEventListener("click", () => {
             const event = events.find(item => item.time > state.models[model.id].time + .0005);
-            if (event?.callId) state.models[model.id].callId = event.callId;
-            seek(model, event?.time ?? total);
+            seek(model, event?.time ?? total, true, event?.callId);
           });
           play.addEventListener("click", () => {
             state.focus = model.id;
             if (panel.timer !== null) { pause(model); announce(model); save(); return; }
-            if (state.models[model.id].time >= total) state.models[model.id].time = 0;
+            setPosition(model, state.models[model.id].time >= total ? 0 : state.models[model.id].time);
             play.textContent = "Pause"; play.setAttribute("aria-label", "Pause " + model.name + " replay");
             panel.lastTick = performance.now();
             const delay = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 1000 : 100;
             panel.timer = setInterval(() => {
               if (!root.isConnected) { pause(model); return; }
               const now = performance.now();
-              state.models[model.id].time = clamp(state.models[model.id].time + (now - panel.lastTick) / 1000, 0, total);
+              setPosition(model, state.models[model.id].time + (now - panel.lastTick) / 1000);
               panel.lastTick = now; render(model);
               if (state.models[model.id].time >= total) { pause(model); announce(model); save(); }
             }, delay);
