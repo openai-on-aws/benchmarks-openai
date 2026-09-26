@@ -1,7 +1,7 @@
 {
   "name": "bedrock-bench",
   "version": "0.3.0",
-  "description": "Benchmark agents on real tasks and explore success, time, cost, and per-attempt evidence in interactive reports.",
+  "description": "Benchmark agents on real tasks; browse saved runs, replay tools, and explore success, time, and cost with contextual chat follow-ups.",
   "author": {
     "name": "OpenAI on AWS",
     "url": "https://github.com/openai-on-aws"
@@ -9,15 +9,28 @@
   "homepage": "https://github.com/openai-on-aws/benchmarks-openai",
   "repository": "https://github.com/openai-on-aws/benchmarks-openai",
   "license": "MIT-0 AND CC-BY-SA-4.0",
-  "keywords": ["bedrock", "benchmarks", "agents", "cost", "codex", "opencode", "openrouter", "cdk", "harbor"],
+  "keywords": [
+    "bedrock",
+    "benchmarks",
+    "agents",
+    "cost",
+    "codex",
+    "opencode",
+    "openrouter",
+    "cdk",
+    "harbor"
+  ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Bedrock Bench",
     "shortDescription": "Measure agent task economics",
-    "longDescription": "Run AWS CDK repair tasks, Terminal-Bench, SWE-bench, AWS-Bench, and starter agent benchmarks from chat. Compare verified outcomes, time, token usage, and cost in interactive reports. Select failed attempts to inspect saved evidence or ask a follow-up question, with pricing provenance retained.",
+    "longDescription": "Run AWS CDK repair tasks, Terminal-Bench, SWE-bench, AWS-Bench, and starter benchmarks from chat. Browse a searchable library of saved runs, compare matching results, and replay recorded Harbor/Codex tools. Ask for charts or diagrams and follow contextual next-step prompts, with cost coverage and pricing provenance retained.",
     "developerName": "OpenAI on AWS",
     "category": "Productivity",
-    "capabilities": ["Read", "Write"],
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
     "websiteURL": "https://github.com/openai-on-aws/benchmarks-openai",
     "brandColor": "#D36D11",
     "composerIcon": "./assets/icon.png",
@@ -26,8 +39,8 @@
       "Run the AWS CDK reference smoke test.",
       "Plan a Terminal-Bench model comparison on Bedrock.",
       "Show the offline Bedrock Bench demonstration.",
-      "Compare these runs by cost per successful task.",
-      "Explore my saved benchmark results and explain the failures."
+      "Browse my recent benchmark runs and replay the latest live run.",
+      "Plot cost versus success for my saved benchmark results."
     ]
   }
 }

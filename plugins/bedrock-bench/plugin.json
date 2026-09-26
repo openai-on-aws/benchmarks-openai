@@ -2,7 +2,7 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "bedrock-bench",
   "version": "0.3.0",
-  "description": "Benchmark agents on real tasks and explore success, time, cost, and per-attempt evidence in interactive reports.",
+  "description": "Benchmark agents on real tasks; browse saved runs, replay tools, and explore success, time, and cost with contextual chat follow-ups.",
   "author": {
     "name": "OpenAI on AWS",
     "url": "https://github.com/openai-on-aws"

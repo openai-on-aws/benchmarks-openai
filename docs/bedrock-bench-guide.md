@@ -42,7 +42,11 @@ The plugin includes:
   usage, cost coverage, raw upstream outputs, source/version metadata, and
   interactive HTML and Markdown/JSON comparison reports. Failed attempts contribute to spend.
 - **Results exploration:** filter targets and tasks, inspect recorded attempts,
-  open saved evidence, and continue with contextual chat prompts.
+  search a library of saved runs, compare matching runs, and open saved evidence.
+- **Recorded replay:** select a model, scrub its own clock, and inspect stable
+  tool-call lists and public task prompts from Harbor/Codex sessions.
+- **Charts and follow-ups:** ask for plots or diagrams from saved evidence;
+  each substantive response offers contextual next-step prompts.
 - **AWS-Bench lifecycle commands** to plan or execute environment setup,
   verification, reset, and cleanup. A model run does not create an environment.
 
@@ -166,6 +170,20 @@ per-attempt evidence under a new directory in `bench-results`. Ask:
 The explorer works as an offline HTML file. Supported Codex inline views add
 **Explain in chat** and **Compare a baseline** actions; standalone browsers
 provide copyable prompts. Evidence inspection uses the original run files.
+
+Browse and drill down from chat:
+
+> Show my recent run library. Open the latest live run and replay its tools.
+
+> Plot cost versus success for that run, with the sample counts and cost coverage.
+
+> Diagram the selected attempt's recorded commands, replies, and grader outcome.
+
+The library has search, evidence-type filters, matching-run comparisons, and
+time/cost bars. Replay keeps one model's tools visible while you move its slider.
+Both are snapshots of saved evidence. Use **Refresh in chat** to rebuild the
+library after new results arrive. Follow-up buttons and suggested prompts can
+create a new view; they do not automatically run another benchmark.
 
 Compare completed runs only when they have
 identical suites, task sources, repetitions, seed, and limits:

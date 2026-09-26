@@ -106,6 +106,17 @@ def main(argv=None):
                         help="Report to print/open; HTML, Markdown, and JSON are always saved")
     saved_runs = sub.add_parser("runs", help="List saved runs without executing benchmarks")
     saved_runs.add_argument("directory", nargs="?", default="bench-results")
+    library = sub.add_parser("library", help="Build an offline, searchable library of saved runs")
+    library.add_argument("directory", nargs="?", default="bench-results")
+    library.add_argument("--out", required=True)
+    library.add_argument("--format", choices=["html", "inline"], default="html")
+    library.add_argument("--limit", type=int, default=50, help="Most recent runs to include (1–1000)")
+    library.add_argument("--replay-limit", type=int, default=5, help="Replays to embed (0–50)")
+    replay = sub.add_parser("replay", help="Show recorded Harbor/Codex prompts and tool activity")
+    replay.add_argument("run")
+    replay.add_argument("--out", required=True)
+    replay.add_argument("--attempt", help="Restrict replay to one saved attempt")
+    replay.add_argument("--format", choices=["html", "inline"], default="html")
     inspect = sub.add_parser("inspect", help="Read one saved attempt and bounded evidence previews")
     inspect.add_argument("run")
     inspect.add_argument("--attempt", required=True)
@@ -120,6 +131,13 @@ def main(argv=None):
         elif args.command == "runs":
             from .explorer import list_runs
             print(json.dumps(list_runs(args.directory), indent=2, allow_nan=False))
+        elif args.command == "library":
+            from .library import write_library
+            print(write_library(args.directory, args.out, inline=args.format == "inline",
+                                limit=args.limit, replay_limit=args.replay_limit))
+        elif args.command == "replay":
+            from .activity import write_replay
+            print(write_replay(args.run, args.out, inline=args.format == "inline", attempt=args.attempt))
         elif args.command == "inspect":
             from .explorer import inspect_attempt
             print(json.dumps(inspect_attempt(args.run, args.attempt), indent=2, allow_nan=False))

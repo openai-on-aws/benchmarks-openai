@@ -115,6 +115,7 @@
       <div class="bb-actions">
         <button class="bb-action bb-primary cursor-interaction" type="button" id="bb-explain">Copy analysis prompt</button>
         <button class="bb-action cursor-interaction" type="button" id="bb-baseline">Copy comparison prompt</button>
+        <button class="bb-action cursor-interaction" type="button" id="bb-chart">Graph these results</button>
       </div>
       <div class="bb-small" id="bb-action-note" role="status"></div>
       <label for="bb-prompt" id="bb-prompt-label" hidden>Analysis prompt</label>
@@ -273,19 +274,22 @@
         const bridge = typeof window.openai?.sendFollowUpMessage === "function";
         get("bb-explain").textContent = bridge ? "Explain in chat" : "Copy analysis prompt";
         get("bb-baseline").textContent = bridge ? "Compare a baseline" : "Copy comparison prompt";
+        get("bb-chart").disabled = targets.length === 0;
         get("bb-action-note").textContent = bridge ? "Follow-ups use saved evidence." : "Paste the prompt into Codex, OpenCode, or another assistant with access to these run files.";
       }
       async function followUp(kind) {
         const row = data.attempts.find(item => item.key === state.attempt);
         if (kind === "attempt" && !row) return;
         const source = row?.source || data.runs[0].source;
-        const identity = JSON.stringify(kind === "attempt" ? { run: row.run_id, source, attempt: row.attempt_id, task: row.task_id } : data.runs.map(run => ({ run: run.run_id, source: run.source })));
+        const identity = JSON.stringify(kind === "attempt" ? { run: row.run_id, source, attempt: row.attempt_id, task: row.task_id, model: row.target.model } : data.runs.map(run => ({ run: run.run_id, source: run.source })));
         const prompt = kind === "attempt"
-          ? "Use Bedrock Bench to inspect this saved attempt: " + identity + ". Explain its grader outcome, relevant recorded tool evidence, and contribution to cost per successful task. Identify incomplete accounting. Analyze saved results only."
-          : "Use Bedrock Bench to compare these saved runs with a compatible saved baseline: " + identity + ". Find existing run files near the sources and match task protocols. Ask which baseline to use if ambiguous. Compare success counts, time, cost per success, and cost coverage. Analyze saved results only.";
+          ? "Use $bedrock-bench:benchmark-agent-tasks to inspect this saved attempt: " + identity + ". Explain its grader outcome, relevant recorded tool evidence, and contribution to cost per successful task. Identify incomplete accounting. Analyze saved results only."
+          : kind === "chart"
+          ? "Use $bedrock-bench:visualize-results to graph success, time and cost for these saved runs: " + identity + ". Current view: " + JSON.stringify({task:state.task || "all",runner:state.runner || "all",outcome:state.outcome || "all"}) + ". Use the task and runner filters, but retain failed-attempt spend and full attempt counts in cost-per-success metrics. State the evidence type and cost coverage. Analyze saved evidence only."
+          : "Use $bedrock-bench:benchmark-agent-tasks to compare these saved runs with a compatible saved baseline: " + identity + ". Find existing run files near the sources and match task protocols. Ask which baseline to use if ambiguous. Compare success counts, time, cost per success, and cost coverage. Analyze saved results only.";
         const fullPrompt = prompt + " Evidence type: " + (data.synthetic ? "synthetic demonstration; no model measurements." : data.validation_only ? "reference validation; no model measurements." : "live model measurements.");
         if (typeof window.openai?.sendFollowUpMessage === "function") {
-          try { await window.openai.sendFollowUpMessage({ prompt: fullPrompt, title: kind === "attempt" ? "Explain this benchmark attempt" : "Compare saved benchmark runs" }); return; }
+          try { await window.openai.sendFollowUpMessage({ prompt: fullPrompt, title: kind === "attempt" ? "Explain this benchmark attempt" : kind === "chart" ? "Graph these benchmark results" : "Compare saved benchmark runs" }); return; }
           catch (_) { /* Keep the portable prompt available when the bridge fails. */ }
         }
         try {
@@ -315,6 +319,7 @@
       }
       get("bb-explain").addEventListener("click", () => followUp("attempt"));
       get("bb-baseline").addEventListener("click", () => followUp("baseline"));
+      get("bb-chart").addEventListener("click", () => followUp("chart"));
       window.addEventListener("openai:set_globals", event => {
         if (Object.prototype.hasOwnProperty.call(event.detail?.globals || {}, "widgetState")) { restore(event.detail.globals.widgetState); render(); }
       });

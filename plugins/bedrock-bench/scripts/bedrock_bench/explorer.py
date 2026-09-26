@@ -31,9 +31,13 @@ def load_run(path):
     value = json.loads(Path(path).read_text(), parse_constant=_reject_constant)
     if (not isinstance(value, dict) or value.get("schema_version") != 1
             or not isinstance(value.get("run_id"), str)
+            or not value["run_id"]
             or not isinstance(value.get("attempts"), list)
             or any(not isinstance(row, dict) for row in value["attempts"])):
         raise ValueError("Expected a schema_version=1 run.json with run_id and attempts")
+    for key in ("name", "status", "started_at", "finished_at"):
+        if value.get(key) is not None and not isinstance(value[key], str):
+            raise ValueError(f"Expected {key} to be a string or null")
     return value
 
 

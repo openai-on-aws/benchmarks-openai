@@ -64,6 +64,15 @@ grader result, token usage, settings, and saved files. Supported Codex inline
 views let you continue with **Explain in chat**; the standalone HTML report
 provides a copyable prompt.
 
+To browse your history:
+
+> Show my run library. Open the latest live run and replay its tool activity.
+
+Search by model, task, region, or run ID; compare matching runs; then select a
+model to scrub through its own recorded tools. Each result comes with suggested
+follow-up prompts. Try **Plot cost vs success**, **Diagram this attempt**, or ask
+for your own graph. Replays currently support saved Harbor/Codex sessions.
+
 Then check a real coding task:
 
 > Prepare and run the AWS CDK reference smoke test. Explain what passed.
@@ -145,6 +154,7 @@ general model ranking.
 - [Cost accounting reference](skills/benchmark-agent-tasks/references/accounting.md)
 - [Agent operating instructions](skills/benchmark-agent-tasks/SKILL.md)
 - [Results inspection skill](skills/inspect-results/SKILL.md)
+- [Charts and diagrams skill](skills/visualize-results/SKILL.md)
 - [Contributor guidance](AGENTS.md)
 - [Upstream task sources and licenses](benchmarks/UPSTREAM.md)
 

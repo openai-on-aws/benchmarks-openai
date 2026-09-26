@@ -148,6 +148,39 @@ file. Previews can be truncated; workspace directories are identified but are
 not recursively read. Evidence paths must resolve inside the source run directory.
 Neither command invokes a model or prepares a runtime.
 
+## Browse runs and replay tools
+
+```bash
+python3.12 "$BENCH_PLUGIN/scripts/bench.py" library bench-results \
+  --out bench-results/library --format html
+python3.12 "$BENCH_PLUGIN/scripts/bench.py" replay \
+  bench-results/RUN_A/run.json --out bench-results/replay --format html
+```
+
+The library saves `LIBRARY.html` and `LIBRARY.json`. It searches the most recent
+50 runs, separates live/reference/demo evidence, and embeds up to five available
+replays. Use `--limit 1..1000` or `--replay-limit 0..50` to change those bounds.
+It is a snapshot; rebuild it to include later results. Archives below the
+immediate child directories are not indexed.
+
+The library can use `run-accounting-reviewed.json` beside the original result.
+Its `accounting_review` must name an existing local `source`, `original_run`,
+and matching `original_sha256`. Outcomes, settings, timings, and evidence paths
+must remain unchanged. Rejected reviews are reported; the original is never
+modified. This checks provenance, not the correctness of a manual price audit.
+
+Replay saves `REPLAY.html` and `REPLAY.json` with recorded Harbor/Codex task
+prompts and tool exchanges. Each attempt has its own clock. Add
+`--attempt ATTEMPT_ID` to select one. Other runners and missing sessions remain
+unavailable rather than acquiring invented traces. Session reads are bounded
+to 16 MiB each, eight sessions and 200 calls per attempt, and 32 attempts per
+view; clipped content is labeled. Recorded model reasoning is excluded.
+
+Both commands accept `--format inline`. If that exceeds 1 MB, the full HTML/JSON
+are still saved; reduce the library limits or open a single replay. These
+commands use the standard library and never invoke models. To create other plots
+or diagrams, use [visualize-results](../../visualize-results/SKILL.md).
+
 The HTML embeds result metadata and works offline. Deep evidence links depend on
 the original run files. A supported Codex inline host offers contextual chat
 actions; ordinary browsers provide copyable analysis prompts. Report filters
