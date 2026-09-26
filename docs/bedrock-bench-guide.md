@@ -3,7 +3,7 @@
 For a first run, start with the [plugin quickstart](../plugins/bedrock-bench/README.md).
 This walkthrough covers the full feature set and prepared model comparisons.
 
-Bedrock Bench **0.2.0** is an installed Codex plugin for comparing agent task
+Bedrock Bench **0.3.0** is a Codex plugin for comparing agent task
 success, time, token usage, and cost per successful task. Select **Bedrock Bench**
 in the chat composer and describe the experiment. The skill handles the
 underlying commands.
@@ -40,7 +40,13 @@ The plugin includes:
   resource wiring, scoped IAM, table preservation, and batch failure handling.
 - **Evidence and accounting:** per-attempt outcomes, agent and total wall time,
   usage, cost coverage, raw upstream outputs, source/version metadata, and
-  Markdown/JSON comparison reports. Failed attempts contribute to spend.
+  interactive HTML and Markdown/JSON comparison reports. Failed attempts contribute to spend.
+- **Results exploration:** filter targets and tasks, inspect recorded attempts,
+  search a library of saved runs, compare matching runs, and open saved evidence.
+- **Recorded replay:** select a model, scrub its own clock, and inspect stable
+  tool-call lists and public task prompts from Harbor/Codex sessions.
+- **Charts and follow-ups:** ask for plots or diagrams from saved evidence;
+  each substantive response offers contextual next-step prompts.
 - **AWS-Bench lifecycle commands** to plan or execute environment setup,
   verification, reset, and cleanup. A model run does not create an environment.
 
@@ -156,8 +162,30 @@ it before running those scenarios.
 
 ## Read the results
 
-Each run writes `run.json`, `REPORT.md`, and per-attempt evidence under a new
-directory in `bench-results`. Compare completed runs only when they have
+Each run writes `run.json`, `comparison.json`, `REPORT.html`, `REPORT.md`, and
+per-attempt evidence under a new directory in `bench-results`. Ask:
+
+> Open the results explorer for my latest saved run. Show the failed attempts.
+
+The explorer works as an offline HTML file. Supported Codex inline views add
+**Explain in chat** and **Compare a baseline** actions; standalone browsers
+provide copyable prompts. Evidence inspection uses the original run files.
+
+Browse and drill down from chat:
+
+> Show my recent run library. Open the latest live run and replay its tools.
+
+> Plot cost versus success for that run, with the sample counts and cost coverage.
+
+> Diagram the selected attempt's recorded commands, replies, and grader outcome.
+
+The library has search, evidence-type filters, matching-run comparisons, and
+time/cost bars. Replay keeps one model's tools visible while you move its slider.
+Both are snapshots of saved evidence. Use **Refresh in chat** to rebuild the
+library after new results arrive. Follow-up buttons and suggested prompts can
+create a new view; they do not automatically run another benchmark.
+
+Compare completed runs only when they have
 identical suites, task sources, repetitions, seed, and limits:
 
 > Use Bedrock Bench to compare these two `run.json` files. Show success rate,

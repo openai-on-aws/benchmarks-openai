@@ -1,0 +1,329 @@
+<div id="bedrock-bench-report" aria-label="Bedrock Bench results explorer">
+  <style>
+    #bedrock-bench-report {
+      --bb-bg: light-dark(#fafafa,#171819); --bb-fg: light-dark(#24262a,#ededee);
+      --bb-muted: light-dark(#62666c,#afb3ba); --bb-line: light-dark(#dedfe1,#36393d);
+      --bb-selected: light-dark(#eff0f2,#25282c); --bb-accent: light-dark(#a94b0c,#f3a568);
+      --bb-good: light-dark(#286c4c,#94c9a6); --bb-bad: light-dark(#a33b35,#eba19c);
+      --bb-button: light-dark(#24262a,#e6e8ec); --bb-button-fg: light-dark(#fff,#222426);
+      font: 400 14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      color: var(--bb-fg); width: 100%; max-width: 1120px; margin: auto; background: transparent;
+    }
+    #bedrock-bench-report * { box-sizing: border-box; }
+    #bedrock-bench-report [hidden] { display: none !important; }
+    #bedrock-bench-report .bb-window { background: var(--bb-bg); border: 1px solid var(--bb-line); border-radius: 16px; overflow: hidden; }
+    #bedrock-bench-report .bb-header { padding: 18px 22px; border-bottom: 1px solid var(--bb-line); display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+    #bedrock-bench-report .bb-brand { font-size: 15px; font-weight: 600; margin: 0; }
+    #bedrock-bench-report .bb-brand span { color: var(--bb-accent); margin-right: 8px; }
+    #bedrock-bench-report .bb-kind { color: var(--bb-accent); font-size: 12px; }
+    #bedrock-bench-report .bb-main { padding: 20px 22px; }
+    #bedrock-bench-report .bb-context, #bedrock-bench-report .bb-muted { color: var(--bb-muted); }
+    #bedrock-bench-report .bb-context { margin-bottom: 15px; font-size: 13px; overflow-wrap: anywhere; }
+    #bedrock-bench-report .bb-controls { display: flex; align-items: end; flex-wrap: wrap; gap: 10px 16px; margin-bottom: 14px; }
+    #bedrock-bench-report label { color: var(--bb-muted); font-size: 12px; display: flex; align-items: center; gap: 8px; min-width: 0; }
+    #bedrock-bench-report button, #bedrock-bench-report select, #bedrock-bench-report textarea { font: inherit; }
+    #bedrock-bench-report button, #bedrock-bench-report select { min-height: 34px; }
+    #bedrock-bench-report select { color: var(--bb-fg); background: var(--bb-bg); padding: 6px 9px; border: 1px solid var(--bb-line); border-radius: 7px; min-width: 0; max-width: 320px; }
+    #bedrock-bench-report a { color: var(--bb-accent); overflow-wrap: anywhere; }
+    #bedrock-bench-report .bb-exports { display: flex; gap: 12px; margin-left: auto; font-size: 12px; }
+    #bedrock-bench-report .bb-row { display: grid; grid-template-columns: minmax(135px,1.45fr) repeat(2,minmax(85px,.8fr)) minmax(115px,1fr); gap: 14px; align-items: start; padding: 14px 12px; border-radius: 9px; }
+    #bedrock-bench-report .bb-column-head { color: var(--bb-muted); font-size: 12px; padding-top: 0; padding-bottom: 4px; }
+    #bedrock-bench-report .bb-result[data-selected="true"] { background: var(--bb-selected); }
+    #bedrock-bench-report .bb-target { border: 0; background: transparent; color: var(--bb-fg); text-align: left; padding: 0; width: 100%; overflow-wrap: anywhere; }
+    #bedrock-bench-report .bb-target-name { font-weight: 500; display: block; }
+    #bedrock-bench-report .bb-target-name::before { content: "•"; color: var(--bb-line); margin-right: 7px; }
+    #bedrock-bench-report .bb-target[aria-pressed="true"] .bb-target-name::before { color: var(--bb-accent); }
+    #bedrock-bench-report .bb-target-info { color: var(--bb-muted); font-size: 12px; display: block; margin-top: 3px; }
+    #bedrock-bench-report .bb-value { font-variant-numeric: tabular-nums; font-size: 16px; font-weight: 500; }
+    #bedrock-bench-report .bb-value.bb-unknown { font-size: 14px; }
+    #bedrock-bench-report .bb-meter { height: 4px; border-radius: 2px; background: var(--bb-line); margin-top: 7px; overflow: hidden; }
+    #bedrock-bench-report .bb-meter span { height: 100%; display: block; border-radius: 2px; background: var(--bb-muted); opacity: .7; }
+    #bedrock-bench-report .bb-cost .bb-meter span { background: var(--bb-accent); opacity: 1; }
+    #bedrock-bench-report .bb-small { font-size: 12px; color: var(--bb-muted); margin-top: 6px; overflow-wrap: anywhere; }
+    #bedrock-bench-report .bb-mobile-label { display: none; }
+    #bedrock-bench-report .bb-notes { color: var(--bb-muted); font-size: 12px; display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 14px 12px 0; }
+    #bedrock-bench-report hr { border: 0; border-top: 1px solid var(--bb-line); margin: 21px 0; }
+    #bedrock-bench-report .bb-detail-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 13px; }
+    #bedrock-bench-report h2 { font-size: 14px; font-weight: 500; margin: 0; overflow-wrap: anywhere; }
+    #bedrock-bench-report .bb-detail-controls { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+    #bedrock-bench-report .bb-detail-controls label:first-child { flex: 1 1 250px; }
+    #bedrock-bench-report .bb-detail-controls select { max-width: 100%; }
+    #bedrock-bench-report #bb-attempt { flex: 1; }
+    #bedrock-bench-report .bb-evidence { border-left: 2px solid var(--bb-line); padding-left: 14px; }
+    #bedrock-bench-report .bb-attempt-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+    #bedrock-bench-report .bb-status { font-weight: 500; color: var(--bb-bad); }
+    #bedrock-bench-report .bb-status[data-pass="true"] { color: var(--bb-good); }
+    #bedrock-bench-report .bb-attempt-numbers { color: var(--bb-muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+    #bedrock-bench-report .bb-reason { margin-top: 7px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    #bedrock-bench-report .bb-errors { margin: 7px 0 0; padding-left: 18px; color: var(--bb-bad); overflow-wrap: anywhere; white-space: pre-wrap; }
+    #bedrock-bench-report details { margin-top: 16px; }
+    #bedrock-bench-report summary { color: var(--bb-muted); padding: 4px 0; }
+    #bedrock-bench-report .bb-fields { display: grid; grid-template-columns: minmax(100px,.6fr) minmax(0,2fr); gap: 6px 14px; margin: 10px 0 0; font-size: 12px; }
+    #bedrock-bench-report dt { color: var(--bb-muted); }
+    #bedrock-bench-report dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+    #bedrock-bench-report .bb-files { list-style: none; padding: 0; margin: 10px 0 0; font-size: 12px; }
+    #bedrock-bench-report .bb-files li { margin: 8px 0; overflow-wrap: anywhere; }
+    #bedrock-bench-report .bb-path { display: block; color: var(--bb-muted); font-family: ui-monospace,SFMono-Regular,Consolas,monospace; font-size: 11px; }
+    #bedrock-bench-report .bb-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+    #bedrock-bench-report .bb-action { border: 1px solid var(--bb-line); border-radius: 8px; padding: 8px 12px; color: var(--bb-fg); background: transparent; }
+    #bedrock-bench-report .bb-primary { background: var(--bb-button); color: var(--bb-button-fg); border-color: transparent; font-weight: 500; }
+    #bedrock-bench-report .bb-action:disabled { opacity: .5; }
+    #bedrock-bench-report textarea { width: 100%; min-height: 135px; resize: vertical; margin-top: 10px; padding: 10px; color: var(--bb-fg); background: var(--bb-bg); border: 1px solid var(--bb-line); border-radius: 8px; }
+    #bedrock-bench-report .bb-scope { color: var(--bb-muted); font-size: 12px; margin: 20px 0 0; }
+    #bedrock-bench-report .bb-empty { padding: 16px 12px; color: var(--bb-muted); }
+    @media (max-width: 640px) {
+      #bedrock-bench-report .bb-header, #bedrock-bench-report .bb-main { padding: 16px 14px; }
+      #bedrock-bench-report .bb-column-head { display: none; }
+      #bedrock-bench-report .bb-row { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px 14px; padding: 12px; }
+      #bedrock-bench-report .bb-target { grid-column: 1/-1; }
+      #bedrock-bench-report .bb-mobile-label { display: block; color: var(--bb-muted); font-size: 12px; min-height: 36px; line-height: 18px; }
+      #bedrock-bench-report .bb-result + .bb-result { margin-top: 8px; }
+      #bedrock-bench-report .bb-notes { margin-left: 0; margin-right: 0; }
+      #bedrock-bench-report .bb-controls label { width: 100%; }
+      #bedrock-bench-report .bb-controls select { flex: 1; max-width: 100%; }
+      #bedrock-bench-report .bb-exports { margin-left: 0; }
+      #bedrock-bench-report .bb-detail-controls label { flex-wrap: wrap; }
+      #bedrock-bench-report .bb-fields { grid-template-columns: minmax(80px,.8fr) minmax(0,1.5fr); }
+    }
+    @media (pointer: coarse) {
+      #bedrock-bench-report button, #bedrock-bench-report select, #bedrock-bench-report summary { min-height: 44px; }
+      #bedrock-bench-report select, #bedrock-bench-report textarea { font-size: 16px; }
+    }
+  </style>
+  <div class="bb-window">
+    <header class="bb-header">
+      <h1 class="bb-brand"><span aria-hidden="true">◈</span>Bedrock Bench</h1>
+      <div class="bb-kind" id="bb-kind"></div>
+    </header>
+    <main class="bb-main">
+      <div class="bb-context" id="bb-context"></div>
+      <div class="bb-controls">
+        <label id="bb-task-control" for="bb-task">Task<select id="bb-task"><option value="">All tasks</option></select></label>
+        <label id="bb-runner-control" for="bb-runner">Runner<select id="bb-runner"><option value="">All runners</option></select></label>
+        <div class="bb-exports" id="bb-exports"><a href="./REPORT.md">Markdown</a><a href="./comparison.json">JSON</a></div>
+      </div>
+      <div class="bb-row bb-column-head" aria-hidden="true"><span>Target</span><span>Successful attempts</span><span>Median wall time</span><span>Cost / success · USD</span></div>
+      <div id="bb-results" aria-label="Target comparisons"></div>
+      <div class="bb-notes"><span>Failed-attempt spend included</span><span>Unknown cost stays unknown</span><span id="bb-measurement-note"></span></div>
+      <hr>
+      <div class="bb-detail-head"><h2 id="bb-detail-title">Attempt evidence</h2><span class="bb-small" id="bb-detail-count"></span></div>
+      <div class="bb-detail-controls">
+        <label for="bb-attempt">Attempt<select id="bb-attempt"></select></label>
+        <label for="bb-outcome">Show<select id="bb-outcome"><option value="">All outcomes</option><option value="failed">Failures only</option><option value="passed">Passed only</option></select></label>
+      </div>
+      <div id="bb-detail" aria-live="polite" aria-atomic="true"></div>
+      <div class="bb-actions">
+        <button class="bb-action bb-primary cursor-interaction" type="button" id="bb-explain">Copy analysis prompt</button>
+        <button class="bb-action cursor-interaction" type="button" id="bb-baseline">Copy comparison prompt</button>
+        <button class="bb-action cursor-interaction" type="button" id="bb-chart">Graph these results</button>
+      </div>
+      <div class="bb-small" id="bb-action-note" role="status"></div>
+      <label for="bb-prompt" id="bb-prompt-label" hidden>Analysis prompt</label>
+      <textarea id="bb-prompt" readonly hidden></textarea>
+      <p class="bb-scope" id="bb-scope"></p>
+      <details><summary>Run provenance</summary><div id="bb-provenance"></div></details>
+    </main>
+  </div>
+  <script id="bb-data" type="application/json">__BEDROCK_BENCH_DATA__</script>
+  <script>
+    (() => {
+      "use strict";
+      const root = document.getElementById("bedrock-bench-report");
+      const data = JSON.parse(root.querySelector("#bb-data").textContent);
+      const get = id => root.querySelector("#" + id);
+      const state = { task: "", runner: "", target: "", attempt: "", outcome: "" };
+      const basisNames = { synthetic: "Synthetic", provider_reported: "Provider reported", rate_card_estimate: "Rate card estimate", runner_estimate: "Runner estimate", reference_no_model: "No model calls" };
+      const pretty = value => value == null ? "Not reported" : typeof value === "object" ? JSON.stringify(value, null, 2) : String(value);
+      const count = (value, noun) => value + " " + noun + (value === 1 ? "" : "s");
+      const dollars = value => typeof value === "number" && Number.isFinite(value) ? "$" + value.toLocaleString("en-US", { minimumFractionDigits: 3, maximumFractionDigits: 6 }) : "Unknown";
+      const seconds = value => typeof value === "number" && Number.isFinite(value) ? value.toLocaleString("en-US", { maximumFractionDigits: 2 }) + " s" : "Not reported";
+      function element(tag, className, text) {
+        const el = document.createElement(tag);
+        if (className) el.className = className;
+        if (text !== undefined) el.textContent = text;
+        return el;
+      }
+      function fillOptions(select, options) {
+        select.replaceChildren();
+        for (const [value, label] of options) {
+          const option = element("option", "", label); option.value = value; select.append(option);
+        }
+      }
+      function fields(values) {
+        const list = element("dl", "bb-fields");
+        for (const [label, value] of values) list.append(element("dt", "", label), element("dd", "", pretty(value)));
+        return list;
+      }
+      function disclosure(label, content) {
+        const details = element("details"); details.append(element("summary", "cursor-interaction", label), content); return details;
+      }
+      function save() {
+        if (typeof window.openai?.setWidgetState !== "function") return;
+        const row = data.attempts.find(item => item.key === state.attempt);
+        window.openai.setWidgetState({
+          modelContent: { tool: "Bedrock Bench", synthetic: data.synthetic, validationOnly: data.validation_only, runIds: data.runs.map(run => run.run_id), selectedRun: row?.run_id, selectedAttempt: row?.attempt_id, task: state.task || null, runner: state.runner || null },
+          privateContent: { viewId: data.view_id, ...state }
+        }).catch(() => {});
+      }
+      function restore(saved) {
+        const value = saved?.privateContent;
+        if (value?.viewId !== data.view_id) return;
+        for (const key of Object.keys(state)) if (typeof value[key] === "string") state[key] = value[key];
+      }
+      function filteredTargets() {
+        return data.targets.filter(row => !state.runner || row.target.runner === state.runner).map(row => {
+          const stats = state.task ? data.tasks.find(item => item.target_key === row.key && item.task_id === state.task) : row;
+          return stats ? { ...row, ...stats, key: row.key } : null;
+        }).filter(Boolean);
+      }
+      function meter(parent, value, max) {
+        if (typeof value !== "number" || !Number.isFinite(value) || max <= 0) return;
+        const track = element("div", "bb-meter"); track.setAttribute("aria-hidden", "true");
+        const fill = element("span"); fill.style.width = Math.max(0, Math.min(100, 100 * value / max)) + "%";
+        track.append(fill); parent.append(track);
+      }
+      function metric(label, text, value, max, extra, className) {
+        const cell = element("div", className || "");
+        cell.setAttribute("aria-label", label + ": " + text + (extra ? "; " + extra : ""));
+        cell.append(element("span", "bb-mobile-label", label), element("div", "bb-value" + (value == null ? " bb-unknown" : ""), text));
+        meter(cell, value, max);
+        if (extra) cell.append(element("div", "bb-small", extra));
+        return cell;
+      }
+      function showResults(targets) {
+        const results = get("bb-results"); results.replaceChildren();
+        if (!targets.length) { results.append(element("div", "bb-empty", "No recorded attempts match these filters.")); return; }
+        const maxTime = Math.max(0, ...targets.map(row => row.median_wall_seconds || 0));
+        const maxCost = Math.max(0, ...targets.map(row => row.cost_per_success_usd || 0));
+        for (const row of targets) {
+          const line = element("div", "bb-row bb-result"); line.dataset.selected = String(row.key === state.target);
+          const button = element("button", "bb-target cursor-interaction"); button.type = "button"; button.setAttribute("aria-pressed", String(row.key === state.target));
+          button.append(element("span", "bb-target-name", row.target.id), element("span", "bb-target-info", [row.target.runner, row.target.provider, row.target.model].join(" / ")));
+          button.addEventListener("click", () => { state.target = row.key; state.attempt = ""; render(); save(); });
+          const costText = !row.successes ? "No successes" : dollars(row.cost_per_success_usd);
+          const basis = (row.cost_basis || []).map(item => basisNames[item] || item).join(", ");
+          const costNote = Math.round(row.cost_coverage * 100) + "% cost coverage · " + basis;
+          line.append(button,
+            metric("Successes", row.successes + " / " + row.attempts, row.success_rate, 1),
+            metric("Median wall time", seconds(row.median_wall_seconds), row.median_wall_seconds, maxTime),
+            metric("USD / success", costText, row.cost_per_success_usd, maxCost, costNote, "bb-cost"));
+          results.append(line);
+        }
+      }
+      function showDetail() {
+        const target = data.targets.find(row => row.key === state.target);
+        get("bb-detail-title").textContent = target ? target.target.id + " · attempt evidence" : "Attempt evidence";
+        const rows = data.attempts.filter(row => row.target_key === state.target && (!state.task || row.task_id === state.task)
+          && (!state.outcome || (state.outcome === "passed" ? row.success === true : row.success !== true)));
+        if (!rows.some(row => row.key === state.attempt)) state.attempt = (rows.find(row => !row.success) || rows[0])?.key || "";
+        fillOptions(get("bb-attempt"), rows.map(row => [row.key, row.task_id + " · repetition " + row.repetition + (data.runs.length > 1 ? " · " + row.run_id : "")]));
+        get("bb-attempt").value = state.attempt;
+        get("bb-attempt").disabled = !rows.length;
+        get("bb-detail-count").textContent = rows.length + " recorded attempt" + (rows.length === 1 ? "" : "s");
+        const detail = get("bb-detail"); detail.replaceChildren();
+        const row = rows.find(item => item.key === state.attempt);
+        get("bb-explain").disabled = !row;
+        if (!row) { detail.append(element("div", "bb-empty", "No attempts match this outcome filter.")); return; }
+        const evidence = element("div", "bb-evidence");
+        const line = element("div", "bb-attempt-line");
+        const status = element("span", "bb-status", row.success ? "Passed" : row.status.replaceAll("_", " "));
+        status.dataset.pass = String(row.success === true);
+        line.append(status, element("span", "bb-attempt-numbers", dollars(row.cost_usd) + " · " + seconds(row.wall_seconds) + " · repetition " + row.repetition));
+        evidence.append(line, element("div", "bb-reason", row.grading?.reason || "No grader explanation recorded."),
+          element("div", "bb-small", "Run " + row.run_id + " · attempt " + row.attempt_id));
+        if (row.errors?.length) {
+          const errors = element("ul", "bb-errors"); row.errors.forEach(error => errors.append(element("li", "", String(error)))); evidence.append(errors);
+        }
+        detail.append(evidence);
+        const usage = row.usage || {};
+        detail.append(disclosure("Usage and accounting", fields([
+          ["Input tokens", usage.input_tokens], ["Cached input", usage.cached_input_tokens], ["Output tokens", usage.output_tokens],
+          ["Reasoning tokens", usage.reasoning_output_tokens], ["Cost basis", (row.cost_basis || []).map(item => basisNames[item] || item).join(", ")],
+          ["Known-cost subtotal", dollars(row.known_cost_subtotal_usd)], ["Agent-only time", seconds(row.agent_wall_seconds)], ["Usage granularity", row.usage_granularity]
+        ])));
+        detail.append(disclosure("Model and runner settings", fields([
+          ["Runner", row.target.runner], ["Runner version", row.runner_version], ["Provider", row.target.provider],
+          ["Model", row.target.model], ["Region", row.target.region], ["Reasoning", row.target.reasoning_effort],
+          ["Service tier", row.target.service_tier], ["Skill hashes", row.target.skill_sha256], ["Grader rewards", row.grading?.rewards]
+        ])));
+        const files = element("ul", "bb-files");
+        for (const file of row.evidence) {
+          const item = element("li");
+          if (file.href && !data.inline) {
+            const link = element("a", "", file.label); link.href = file.href; link.target = "_blank"; link.rel = "noopener"; item.append(link);
+          } else item.append(element("span", "", file.label));
+          if (file.status !== "available") item.append(element("span", "bb-muted", " · " + file.status.replaceAll("_", " ")));
+          item.append(element("span", "bb-path", file.path || file.relative_path));
+          if (file.reason) item.append(element("span", "bb-small", file.reason));
+          files.append(item);
+        }
+        if (!row.evidence.length) files.append(element("li", "bb-muted", "No evidence paths were recorded."));
+        detail.append(disclosure("Saved evidence files", files));
+      }
+      function render() {
+        const tasks = [...new Set(data.tasks.map(row => row.task_id))].sort();
+        const runners = [...new Set(data.targets.map(row => row.target.runner))].sort();
+        if (!tasks.includes(state.task)) state.task = "";
+        if (!runners.includes(state.runner)) state.runner = "";
+        if (!["", "failed", "passed"].includes(state.outcome)) state.outcome = "";
+        get("bb-task").value = state.task; get("bb-runner").value = state.runner; get("bb-outcome").value = state.outcome;
+        const targets = filteredTargets();
+        if (!targets.some(row => row.key === state.target)) state.target = (targets.find(row => row.successes < row.attempts) || targets[0])?.key || "";
+        showResults(targets); showDetail();
+        get("bb-prompt").hidden = true; get("bb-prompt-label").hidden = true;
+        const bridge = typeof window.openai?.sendFollowUpMessage === "function";
+        get("bb-explain").textContent = bridge ? "Explain in chat" : "Copy analysis prompt";
+        get("bb-baseline").textContent = bridge ? "Compare a baseline" : "Copy comparison prompt";
+        get("bb-chart").disabled = targets.length === 0;
+        get("bb-action-note").textContent = bridge ? "Follow-ups use saved evidence." : "Paste the prompt into Codex, OpenCode, or another assistant with access to these run files.";
+      }
+      async function followUp(kind) {
+        const row = data.attempts.find(item => item.key === state.attempt);
+        if (kind === "attempt" && !row) return;
+        const source = row?.source || data.runs[0].source;
+        const identity = JSON.stringify(kind === "attempt" ? { run: row.run_id, source, attempt: row.attempt_id, task: row.task_id, model: row.target.model } : data.runs.map(run => ({ run: run.run_id, source: run.source })));
+        const prompt = kind === "attempt"
+          ? "Use $bedrock-bench:benchmark-agent-tasks to inspect this saved attempt: " + identity + ". Explain its grader outcome, relevant recorded tool evidence, and contribution to cost per successful task. Identify incomplete accounting. Analyze saved results only."
+          : kind === "chart"
+          ? "Use $bedrock-bench:visualize-results to graph success, time and cost for these saved runs: " + identity + ". Current view: " + JSON.stringify({task:state.task || "all",runner:state.runner || "all",outcome:state.outcome || "all"}) + ". Use the task and runner filters, but retain failed-attempt spend and full attempt counts in cost-per-success metrics. State the evidence type and cost coverage. Analyze saved evidence only."
+          : "Use $bedrock-bench:benchmark-agent-tasks to compare these saved runs with a compatible saved baseline: " + identity + ". Find existing run files near the sources and match task protocols. Ask which baseline to use if ambiguous. Compare success counts, time, cost per success, and cost coverage. Analyze saved results only.";
+        const fullPrompt = prompt + " Evidence type: " + (data.synthetic ? "synthetic demonstration; no model measurements." : data.validation_only ? "reference validation; no model measurements." : "live model measurements.");
+        if (typeof window.openai?.sendFollowUpMessage === "function") {
+          try { await window.openai.sendFollowUpMessage({ prompt: fullPrompt, title: kind === "attempt" ? "Explain this benchmark attempt" : kind === "chart" ? "Graph these benchmark results" : "Compare saved benchmark runs" }); return; }
+          catch (_) { /* Keep the portable prompt available when the bridge fails. */ }
+        }
+        try {
+          if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
+          await navigator.clipboard.writeText(fullPrompt);
+          get("bb-action-note").textContent = "Prompt copied. Paste it into your benchmarking chat.";
+        } catch (_) {
+          get("bb-prompt").value = fullPrompt; get("bb-prompt").hidden = false; get("bb-prompt-label").hidden = false;
+          get("bb-action-note").textContent = "Copy the prompt below into your benchmarking chat.";
+        }
+      }
+      const taskNames = [...new Set(data.tasks.map(row => row.task_id))].sort();
+      const runnerNames = [...new Set(data.targets.map(row => row.target.runner))].sort();
+      fillOptions(get("bb-task"), [["", "All tasks"], ...taskNames.map(name => [name, name])]);
+      fillOptions(get("bb-runner"), [["", "All runners"], ...runnerNames.map(name => [name, name])]);
+      get("bb-task-control").hidden = taskNames.length < 2;
+      get("bb-runner-control").hidden = runnerNames.length < 2;
+      get("bb-exports").hidden = data.inline === true;
+      get("bb-kind").textContent = data.synthetic ? "Synthetic demonstration" : data.validation_only ? "Reference validation" : "Live model measurements";
+      get("bb-context").textContent = [[...new Set(data.runs.map(run => run.suite))].join(", "), count(taskNames.length, "task"), count(data.targets.length, "target"), count(data.attempts.length, "recorded attempt")].join(" · ");
+      get("bb-measurement-note").textContent = data.synthetic || data.validation_only ? "No model measurements" : "Small samples do not establish a general model ranking";
+      get("bb-scope").textContent = data.scope + " Wall time includes runner setup, agent execution, verification, and cleanup where recorded.";
+      get("bb-provenance").append(fields([["Protocol", data.protocol_hash], ["Report version", data.plugin_version]]));
+      for (const run of data.runs) get("bb-provenance").append(fields([["Run", run.run_id], ["Name", run.name], ["Source", run.source], ["Started", run.started_at], ["Finished", run.finished_at]]));
+      for (const [id, key] of [["bb-task","task"], ["bb-runner","runner"], ["bb-outcome","outcome"], ["bb-attempt","attempt"]]) {
+        get(id).addEventListener("change", () => { state[key] = get(id).value; if (key !== "attempt") state.attempt = ""; render(); save(); });
+      }
+      get("bb-explain").addEventListener("click", () => followUp("attempt"));
+      get("bb-baseline").addEventListener("click", () => followUp("baseline"));
+      get("bb-chart").addEventListener("click", () => followUp("chart"));
+      window.addEventListener("openai:set_globals", event => {
+        if (Object.prototype.hasOwnProperty.call(event.detail?.globals || {}, "widgetState")) { restore(event.detail.globals.widgetState); render(); }
+      });
+      restore(window.openai?.widgetState); render();
+    })();
+  </script>
+</div>

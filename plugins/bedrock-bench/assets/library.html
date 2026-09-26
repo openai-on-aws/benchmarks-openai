@@ -1,0 +1,350 @@
+<div id="bedrock-bench-run-library" aria-label="Bedrock Bench saved run library">
+  <style>
+    #bedrock-bench-run-library {
+      --bl-bg: light-dark(#fafafa,#171819); --bl-fg: light-dark(#24262a,#ededee);
+      --bl-muted: light-dark(#62666c,#afb3ba); --bl-line: light-dark(#dedfe1,#36393d);
+      --bl-selected: light-dark(#eff0f2,#25282c); --bl-accent: light-dark(#a94b0c,#f3a568);
+      --bl-good: light-dark(#347551,#92c9a4); --bl-bad: light-dark(#a33b35,#eba19c);
+      --bl-button: light-dark(#24262a,#e6e8ec); --bl-button-fg: light-dark(#fff,#222426);
+      color: var(--bl-fg); font: 400 14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      width: 100%; max-width: 1120px; margin: auto; background: transparent;
+    }
+    #bedrock-bench-run-library .bl-shell, #bedrock-bench-run-library .bl-shell * { box-sizing: border-box; }
+    #bedrock-bench-run-library [hidden] { display: none !important; }
+    #bedrock-bench-run-library .bl-shell { background: var(--bl-bg); border: 1px solid var(--bl-line); border-radius: 16px; overflow: hidden; }
+    #bedrock-bench-run-library .bl-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 16px 20px; border-bottom: 1px solid var(--bl-line); }
+    #bedrock-bench-run-library .bl-title { margin: 0; font-size: 15px; font-weight: 500; }
+    #bedrock-bench-run-library .bl-title span { color: var(--bl-accent); margin-right: 8px; }
+    #bedrock-bench-run-library .bl-preview { color: var(--bl-accent); font-size: 12px; }
+    #bedrock-bench-run-library .bl-body { padding: 18px 20px; }
+    #bedrock-bench-run-library .bl-muted, #bedrock-bench-run-library .bl-note { color: var(--bl-muted); font-size: 12px; overflow-wrap: anywhere; }
+    #bedrock-bench-run-library .bl-button { font: inherit; color: var(--bl-fg); background: transparent; border: 1px solid var(--bl-line); border-radius: 7px; padding: 6px 11px; min-height: 34px; }
+    #bedrock-bench-run-library .bl-button:disabled { opacity: .45; }
+    #bedrock-bench-run-library .bl-primary { color: var(--bl-button-fg); background: var(--bl-button); border-color: transparent; font-weight: 500; }
+    #bedrock-bench-run-library .bl-link { border: 0; padding-left: 0; color: var(--bl-muted); }
+    #bedrock-bench-run-library .bl-search-label { display: block; font-size: 12px; color: var(--bl-muted); margin-top: 17px; }
+    #bedrock-bench-run-library .bl-input, #bedrock-bench-run-library .bl-select, #bedrock-bench-run-library .bl-textarea { color: var(--bl-fg); background: var(--bl-bg); border: 1px solid var(--bl-line); border-radius: 7px; padding: 8px 10px; font: inherit; min-width: 0; }
+    #bedrock-bench-run-library .bl-input { width: 100%; margin: 5px 0 11px; }
+    #bedrock-bench-run-library .bl-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+    #bedrock-bench-run-library .bl-filter { font-size: 12px; color: var(--bl-muted); display: flex; align-items: center; gap: 7px; }
+    #bedrock-bench-run-library .bl-select { font-size: 12px; padding: 6px 8px; }
+    #bedrock-bench-run-library .bl-check-label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--bl-muted); }
+    #bedrock-bench-run-library input[type="checkbox"] { accent-color: var(--bl-accent); width: 16px; height: 16px; flex-shrink: 0; }
+    #bedrock-bench-run-library .bl-list-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin: 22px 0 6px; }
+    #bedrock-bench-run-library .bl-heading { margin: 0; font-size: 14px; font-weight: 500; }
+    #bedrock-bench-run-library .bl-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    #bedrock-bench-run-library .bl-run-row { display: grid; grid-template-columns: 28px minmax(0,1fr); gap: 6px; align-items: center; border-top: 1px solid var(--bl-line); }
+    #bedrock-bench-run-library .bl-run-row[data-compared="true"] { background: var(--bl-selected); }
+    #bedrock-bench-run-library .bl-run-check { display: flex; align-items: center; justify-content: center; min-height: 44px; }
+    #bedrock-bench-run-library .bl-run-open { display: grid; grid-template-columns: minmax(0,1fr) 98px; gap: 12px; border: 0; border-radius: 0; padding: 13px 0 13px 3px; width: 100%; text-align: left; }
+    #bedrock-bench-run-library .bl-run-name { display: block; font-weight: 500; overflow-wrap: anywhere; }
+    #bedrock-bench-run-library .bl-run-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 9px; margin-top: 4px; color: var(--bl-muted); font-size: 11px; }
+    #bedrock-bench-run-library .bl-kind { display: inline-block; color: var(--bl-muted); font-size: 11px; }
+    #bedrock-bench-run-library .bl-kind[data-kind="live"] { color: var(--bl-accent); }
+    #bedrock-bench-run-library .bl-run-results { text-align: right; font-size: 12px; font-variant-numeric: tabular-nums; }
+    #bedrock-bench-run-library .bl-run-results span { display: block; }
+    #bedrock-bench-run-library .bl-cost { color: var(--bl-muted); font-size: 11px; margin-top: 4px; }
+    #bedrock-bench-run-library .bl-status { color: var(--bl-muted); font-size: 12px; margin: 8px 0; min-height: 18px; }
+    #bedrock-bench-run-library .bl-empty { padding: 28px 0; color: var(--bl-muted); }
+    #bedrock-bench-run-library .bl-footer { border-top: 1px solid var(--bl-line); margin-top: 8px; padding-top: 13px; display: flex; align-items: center; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
+    #bedrock-bench-run-library .bl-detail-title { font-size: 17px; font-weight: 500; margin: 12px 0 5px; overflow-wrap: anywhere; }
+    #bedrock-bench-run-library .bl-detail-meta { color: var(--bl-muted); font-size: 12px; margin-bottom: 19px; }
+    #bedrock-bench-run-library .bl-stats { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; margin: 17px 0 21px; }
+    #bedrock-bench-run-library .bl-stat-label { color: var(--bl-muted); font-size: 12px; }
+    #bedrock-bench-run-library .bl-stat-value { font-size: 19px; font-weight: 500; font-variant-numeric: tabular-nums; margin-top: 3px; }
+    #bedrock-bench-run-library .bl-table { border-collapse: collapse; width: 100%; font-size: 12px; margin: 9px 0 13px; }
+    #bedrock-bench-run-library .bl-table th { text-align: left; color: var(--bl-muted); font-weight: 400; }
+    #bedrock-bench-run-library .bl-table th, #bedrock-bench-run-library .bl-table td { padding: 10px 8px; border-bottom: 1px solid var(--bl-line); vertical-align: top; overflow-wrap: anywhere; }
+    #bedrock-bench-run-library .bl-table th:first-child, #bedrock-bench-run-library .bl-table td:first-child { padding-left: 0; }
+    #bedrock-bench-run-library .bl-table th:last-child, #bedrock-bench-run-library .bl-table td:last-child { padding-right: 0; }
+    #bedrock-bench-run-library .bl-number { text-align: right !important; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    #bedrock-bench-run-library .bl-cell-meta { color: var(--bl-muted); font-size: 11px; margin-top: 2px; white-space: normal; }
+    #bedrock-bench-run-library .bl-metric-cell { width: 25%; }
+    #bedrock-bench-run-library .bl-bar { height: 4px; width: 100%; background: var(--bl-line); border-radius: 2px; margin: 7px 0 5px; overflow: hidden; }
+    #bedrock-bench-run-library .bl-bar-fill { display: block; height: 100%; border-radius: 2px; background: color-mix(in srgb,var(--bl-fg) 55%,transparent); }
+    #bedrock-bench-run-library .bl-bar-cost { background: var(--bl-accent); }
+    #bedrock-bench-run-library .bl-section { margin-top: 22px; }
+    #bedrock-bench-run-library .bl-details { margin-top: 18px; }
+    #bedrock-bench-run-library .bl-details summary { color: var(--bl-muted); padding: 4px 0; font-size: 12px; }
+    #bedrock-bench-run-library .bl-details dl { font-size: 12px; margin: 10px 0; }
+    #bedrock-bench-run-library .bl-details dt { color: var(--bl-muted); margin-top: 8px; }
+    #bedrock-bench-run-library .bl-details dd { margin: 1px 0 0; overflow-wrap: anywhere; }
+    #bedrock-bench-run-library .bl-textarea { display: block; width: 100%; min-height: 100px; margin-top: 8px; }
+    #bedrock-bench-run-library .bl-compare-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 22px; margin-top: 17px; }
+    #bedrock-bench-run-library .bl-compare-grid > section { min-width: 0; }
+    #bedrock-bench-run-library .bl-compare-title { font-size: 14px; font-weight: 500; margin: 5px 0; }
+    #bedrock-bench-run-library .bl-compare-item { padding: 13px 0; border-bottom: 1px solid var(--bl-line); }
+    #bedrock-bench-run-library .bl-compare-item strong { font-weight: 500; }
+    #bedrock-bench-run-library .bl-compare-item dl { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 5px 10px; margin: 8px 0 0; font-size: 12px; }
+    #bedrock-bench-run-library .bl-compare-item dt { color: var(--bl-muted); }
+    #bedrock-bench-run-library .bl-compare-item dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+    #bedrock-bench-run-library .bl-replay-back { margin-bottom: 9px; }
+    @media(max-width:600px) {
+      #bedrock-bench-run-library .bl-header, #bedrock-bench-run-library .bl-body { padding: 14px; }
+      #bedrock-bench-run-library .bl-run-open { grid-template-columns: minmax(0,1fr); gap: 7px; }
+      #bedrock-bench-run-library .bl-run-results { display: flex; flex-wrap: wrap; gap: 10px; text-align: left; }
+      #bedrock-bench-run-library .bl-cost { margin: 0; }
+      #bedrock-bench-run-library .bl-compare-grid { grid-template-columns: minmax(0,1fr); gap: 18px; }
+      #bedrock-bench-run-library .bl-table th, #bedrock-bench-run-library .bl-table td { padding: 8px 4px; }
+      #bedrock-bench-run-library .bl-stat-value { font-size: 17px; }
+      #bedrock-bench-run-library .bl-stats { gap: 8px; }
+      #bedrock-bench-run-library .bl-table { font-size: 11px; }
+    }
+    @media(pointer:coarse) {
+      #bedrock-bench-run-library .bl-button, #bedrock-bench-run-library .bl-select, #bedrock-bench-run-library .bl-details summary, #bedrock-bench-run-library .bl-check-label { min-height: 44px; }
+      #bedrock-bench-run-library .bl-input, #bedrock-bench-run-library .bl-select, #bedrock-bench-run-library .bl-textarea { font-size: 16px; }
+    }
+  </style>
+  <div class="bl-shell" id="bl-shell">
+    <header class="bl-header"><h1 class="bl-title"><span aria-hidden="true">◈</span>Bedrock Bench · Run library</h1><span class="bl-preview">Saved results</span></header>
+    <main class="bl-body">
+      <section id="bl-home" aria-label="Browse saved runs">
+        <div class="bl-muted" id="bl-inventory"></div>
+        <div class="bl-note" id="bl-snapshot"></div>
+        <label class="bl-search-label" for="bl-search">Search saved runs</label>
+        <input class="bl-input" type="search" id="bl-search" maxlength="200" placeholder="Model, task, suite, region or run ID">
+        <div class="bl-filters">
+          <label class="bl-filter" for="bl-kind">Show <select class="bl-select" id="bl-kind"><option value="all">All runs</option><option value="live">Live model runs</option><option value="reference">Reference checks</option><option value="demo">Demos</option></select></label>
+          <label class="bl-filter" for="bl-sort">Sort <select class="bl-select" id="bl-sort"><option value="newest">Newest first</option><option value="oldest">Oldest first</option></select></label>
+          <label class="bl-check-label cursor-interaction"><input type="checkbox" id="bl-failed">Has failed attempts</label>
+        </div>
+        <div class="bl-list-head"><h2 class="bl-heading" id="bl-count">Recent runs</h2><div class="bl-actions"><button type="button" class="bl-button bl-link cursor-interaction" id="bl-clear" hidden>Clear selection</button><button type="button" class="bl-button cursor-interaction" id="bl-compare-button" disabled>Compare selected</button></div></div>
+        <div id="bl-list" aria-label="Saved runs"></div>
+        <div class="bl-status" id="bl-compare-status" aria-live="polite"></div>
+        <div class="bl-footer"><span class="bl-muted">Reference checks and demos are not model measurements.</span><button type="button" class="bl-button bl-link cursor-interaction" id="bl-refresh">Refresh in chat</button></div>
+        <details class="bl-details" id="bl-notices" hidden><summary class="cursor-interaction">Index notices</summary><div class="bl-note" id="bl-notices-text"></div></details>
+      </section>
+      <section id="bl-run" aria-label="Selected run results" hidden></section>
+      <section id="bl-comparison" aria-label="Compare selected runs" hidden></section>
+      <div class="bl-status" id="bl-message" role="status"></div>
+      <label class="bl-muted" for="bl-prompt" id="bl-prompt-label" hidden>Chat prompt</label>
+      <textarea class="bl-textarea" id="bl-prompt" readonly hidden></textarea>
+    </main>
+  </div>
+  <section id="bl-replay" aria-label="Selected run replay" hidden>
+    <button type="button" class="bl-button bl-replay-back cursor-interaction" id="bl-replay-back">← Run summary</button>
+    __TRACE_FRAGMENT__
+  </section>
+  <script type="application/json" id="bl-data">__LIBRARY_DATA__</script>
+  <script>
+    (() => {
+      "use strict";
+      const root = document.getElementById("bedrock-bench-run-library");
+      const get = id => root.querySelector("#" + id);
+      const data = JSON.parse(get("bl-data").textContent), runMap = new Map(data.runs.map(run => [run.id,run]));
+      const viewId = "bedrock-bench-library-v2:" + data.directory;
+      const state = {page:"home",query:"",kind:"all",sort:"newest",failed:false,selected:data.runs[0]?.id ?? null,compare:[],trace:null};
+      const traceStates = new Map();
+      const replayRoot = get("bedrock-bench-replay");
+      let lastPublished = "";
+      const node = (tag, className, text) => { const el=document.createElement(tag); if(className) el.className=className; if(text!==undefined) el.textContent=text; return el; };
+      const button = (text, action, primary=false) => { const el=node("button","bl-button cursor-interaction"+(primary?" bl-primary":""),text); el.type="button"; el.addEventListener("click",action); return el; };
+      const kindLabel = kind => ({live:"Live models",reference:"Reference check",demo:"Synthetic demo"}[kind] || kind);
+      const money = value => !Number.isFinite(value) ? "Unknown" : "$"+value.toFixed(value!==0 && value<.01 ? 4 : 3);
+      const seconds = value => !Number.isFinite(value) ? "—" : value<60 ? value.toFixed(1)+" s" : Math.floor(Math.round(value)/60)+"m "+Math.round(value)%60+"s";
+      const date = value => !value || !Number.isFinite(new Date(value).getTime()) ? "Time unavailable" : new Intl.DateTimeFormat("en-GB",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit",hourCycle:"h23",timeZone:"UTC"}).format(new Date(value))+" UTC";
+      const shortId = run => run.id.split("-").at(-1);
+      const basis = target => target.cost_basis.map(value => value.replaceAll("_"," ")).join(", ") || "No cost basis";
+      const context = run => ({runId:run.id,source:run.source,evidenceType:run.kind,protocol:run.protocol});
+      function pair() {
+        const [a,b] = state.compare.map(id => runMap.get(id));
+        return {compatible: state.compare.length === 2 && Boolean(a?.comparisonGroup) && a.comparisonGroup === b?.comparisonGroup};
+      }
+      function save() {
+        const selected=["run","replay"].includes(state.page)?runMap.get(state.selected):null;
+        const privateContent={viewId,...state};
+        lastPublished=JSON.stringify(privateContent);
+        if(typeof window.openai?.setWidgetState!=="function") return;
+        try { Promise.resolve(window.openai.setWidgetState({
+          modelContent:{tool:"Bedrock Bench run library",directory:data.directory,page:state.page,query:state.query,evidenceType:state.kind,hasFailures:state.failed,selectedRun:selected?.id,source:selected?.source,compareRuns:state.compare.map(id=>context(runMap.get(id))),trace:state.page==="replay"?state.trace?.modelContent:null},
+          privateContent
+        })).catch(()=>{}); } catch(_) {}
+      }
+      function restore(value) {
+        const saved=value?.privateContent;
+        if(saved?.viewId!==viewId || JSON.stringify(saved)===lastPublished) return false;
+        state.query=typeof saved.query==="string"?saved.query.slice(0,200):"";
+        state.kind=["all","live","reference","demo"].includes(saved.kind)?saved.kind:"all";
+        state.sort=saved.sort==="oldest"?"oldest":"newest"; state.failed=saved.failed===true;
+        state.selected=runMap.has(saved.selected)?saved.selected:data.runs[0]?.id;
+        state.compare=Array.isArray(saved.compare)?[...new Set(saved.compare.filter(id=>runMap.has(id)))].slice(0,2):[];
+        state.page=["home","run","comparison","replay"].includes(saved.page)?saved.page:"home";
+        state.trace=saved.trace?.modelContent?.runId===state.selected?saved.trace:null;
+        if(state.trace) traceStates.set(state.selected,state.trace);
+        if(state.page==="comparison"&&!pair()?.compatible) state.page="home";
+        if(state.page==="replay"&&!runMap.get(state.selected)?.hasReplay) state.page="run";
+        return true;
+      }
+      async function ask(prompt,title) {
+        get("bl-message").textContent=""; get("bl-prompt").hidden=true; get("bl-prompt-label").hidden=true;
+        if(typeof window.openai?.sendFollowUpMessage==="function") {
+          try { await window.openai.sendFollowUpMessage({prompt,title}); return; } catch(_) {}
+        }
+        get("bl-prompt").value=prompt; get("bl-prompt").hidden=false; get("bl-prompt-label").hidden=false;
+        get("bl-message").textContent="Copy this prompt into your benchmarking chat.";
+      }
+      function go(page,runId) {
+        replayRoot.dispatchEvent(new CustomEvent("bedrock-bench:replay-pause"));
+        state.page=page; if(runId) state.selected=runId;
+        state.trace=traceStates.get(state.selected) || null;
+        get("bl-message").textContent=""; get("bl-prompt").hidden=true; get("bl-prompt-label").hidden=true;
+        render(); save();
+      }
+      function filteredRuns() {
+        const terms=state.query.toLowerCase().trim().split(/\s+/).filter(Boolean);
+        const values=data.runs.filter(run=>{
+          const haystack=[run.name,run.id,run.suite,run.status,kindLabel(run.kind),...run.models,...run.tasks,...run.regions,...run.runners].join(" ").toLowerCase();
+          return (state.kind==="all"||run.kind===state.kind)&&(!state.failed||run.total.successes<run.total.attempts)&&terms.every(term=>haystack.includes(term));
+        });
+        return values.sort((a,b)=>state.sort==="newest"?b.startedAt.localeCompare(a.startedAt):a.startedAt.localeCompare(b.startedAt));
+      }
+      function renderList() {
+        const runs=filteredRuns(), list=get("bl-list"); list.replaceChildren();
+        get("bl-count").textContent="Recent runs · "+runs.length+" of "+data.runs.length;
+        for(const run of runs) {
+          const row=node("div","bl-run-row"); row.dataset.runId=run.id; row.dataset.compared=String(state.compare.includes(run.id));
+          const checkLabel=node("label","bl-run-check cursor-interaction"), check=node("input");
+          check.type="checkbox"; check.checked=state.compare.includes(run.id);
+          check.disabled=state.compare.length>=2&&!check.checked;
+          check.setAttribute("aria-label","Compare "+run.name+" "+shortId(run));
+          check.addEventListener("change",()=>{state.compare=check.checked?[...state.compare,run.id]:state.compare.filter(id=>id!==run.id);renderList();save();});
+          checkLabel.append(check);
+          const open=button("",()=>go("run",run.id)); open.classList.add("bl-run-open");
+          open.setAttribute("aria-label","Open "+run.name+" "+shortId(run));
+          const info=node("span"), name=node("span","bl-run-name",run.name), meta=node("span","bl-run-meta");
+          const kind=node("span","bl-kind",kindLabel(run.kind)); kind.dataset.kind=run.kind;
+          meta.append(kind,node("span","",date(run.startedAt)),node("span","",shortId(run)));
+          if(run.status!=="completed") meta.append(node("span","",run.status || "Status unavailable"));
+          if(run.hasReplay) meta.append(node("span","","Replay available"));
+          info.append(name,meta);
+          const result=node("span","bl-run-results");
+          result.append(node("span","",run.total.successes+"/"+run.total.attempts+" passed"));
+          result.append(node("span","bl-cost",run.kind==="reference"?"No model calls":money(run.total.total_cost_usd)+(run.kind==="demo"?" synthetic":" est.")));
+          open.append(info,result); row.append(checkLabel,open); list.append(row);
+        }
+        if(!runs.length) list.append(node("div","bl-empty","No runs match these filters."));
+        const valid=state.compare.length===2&&pair()?.compatible;
+        get("bl-compare-button").disabled=!valid;
+        get("bl-compare-button").textContent=state.compare.length?"Compare selected ("+state.compare.length+")":"Compare selected";
+        get("bl-clear").hidden=state.compare.length===0;
+        get("bl-compare-status").textContent=state.compare.length===0?"Select two matching runs to compare.":state.compare.length===1?"One run selected. Choose a second with the same task protocol.":valid?"Matching task protocol · "+kindLabel(runMap.get(state.compare[0]).kind):"Choose two completed runs with matching task protocols and evidence types.";
+      }
+      function metric(label,value) { const el=node("div");el.append(node("div","bl-stat-label",label),node("div","bl-stat-value",value));return el; }
+      function metricBar(value,maximum,kind) {
+        const bar=node("div","bl-bar");bar.setAttribute("aria-hidden","true");
+        if(!Number.isFinite(value)||value<0) {bar.hidden=true;return bar;}
+        const fill=node("span","bl-bar-fill"+(kind==="cost"?" bl-bar-cost":""));
+        fill.style.width=(maximum>0?Math.min(100,100*value/maximum):0)+"%";
+        bar.append(fill);return bar;
+      }
+      function targetTable(run) {
+        const table=node("table","bl-table"), head=node("thead"), hr=node("tr");
+        for(const [index,label] of ["Model / agent","Passed","Median time","Est. cost"].entries()) hr.append(node("th",index?"bl-number":"",label));
+        head.append(hr); table.append(head);
+        const useAgentTime=run.targets.every(target=>Number.isFinite(target.median_agent_seconds));
+        const timeValue=target=>useAgentTime?target.median_agent_seconds:target.median_wall_seconds;
+        const maxTime=Math.max(0,...run.targets.map(timeValue).filter(Number.isFinite));
+        const maxCost=Math.max(0,...run.targets.map(target=>target.total_cost_usd).filter(Number.isFinite));
+        const body=node("tbody");
+        for(const target of run.targets) {
+          const tr=node("tr"), name=node("td","",target.label);
+          name.append(node("div","bl-cell-meta",target.target.region || target.target.runner));
+          const passed=node("td","bl-number",target.successes+"/"+target.attempts);
+          const time=node("td","bl-number bl-metric-cell",seconds(timeValue(target)));
+          time.append(metricBar(timeValue(target),maxTime,"time"),node("div","bl-cell-meta",useAgentTime?"agent":"trial"));
+          const cost=node("td","bl-number bl-metric-cell",money(target.total_cost_usd));
+          cost.append(metricBar(target.total_cost_usd,maxCost,"cost"));
+          cost.append(node("div","bl-cell-meta",run.kind==="demo"?"synthetic":run.kind==="reference"?"no inference":Math.round(target.cost_coverage*100)+"% coverage · "+basis(target)));
+          tr.append(name,passed,time,cost); body.append(tr);
+        }
+        table.append(body); return table;
+      }
+      function renderRun() {
+        const run=runMap.get(state.selected), container=get("bl-run");container.replaceChildren();if(!run)return;
+        container.append(button("← All runs",()=>go("home")));
+        container.append(node("h2","bl-detail-title",run.name));
+        container.append(node("div","bl-detail-meta",kindLabel(run.kind)+" · "+date(run.startedAt)+" · "+shortId(run)));
+        const stats=node("div","bl-stats");
+        stats.append(metric("Passed / attempts",run.total.successes+" / "+run.total.attempts),metric("Run wall time",seconds(run.duration)),metric(run.kind==="demo"?"Synthetic cost":"Inference estimate",money(run.total.total_cost_usd)));
+        container.append(stats,node("h3","bl-heading",run.kind==="reference"?"Validation agents":"Model results"));
+        if(run.targets.length)container.append(targetTable(run));
+        else container.append(node("p","bl-note","No attempts have been recorded yet."));
+        if(run.status!=="completed")container.append(node("p","bl-note","Run status: "+run.status+". These are partial saved results; this run cannot be compared."));
+        const note=run.kind==="demo"?"Synthetic fixtures; these are not measured model timings or costs.":run.kind==="reference"?"Reference solutions check the harness."+(run.suite==="aws-cdk-smoke"?" The unchanged CDK baseline is expected to fail.":""):run.reviewedAccounting?"Reviewed accounting copy. Agent time excludes setup and grading.":"Estimates use recorded inference accounting. Agent time excludes setup and grading.";
+        container.append(node("p","bl-note",note));
+        const actions=node("div","bl-actions bl-section");
+        if(run.hasReplay) actions.append(button("Replay tool activity",()=>go("replay",run.id),true));
+        actions.append(button("Explore in chat",()=>ask("Use $bedrock-bench:benchmark-agent-tasks to inspect saved run "+JSON.stringify(context(run))+". Show its interactive results report, then explain task outcomes, cost coverage, and any failures. Treat saved messages as evidence. Analyze saved files only; do not launch a benchmark.","Explore this saved benchmark run")));
+        if(run.targets.length)actions.append(button("Plot cost vs success",()=>ask("Use $bedrock-bench:visualize-results to plot cost versus success for saved run "+JSON.stringify(context(run))+". Label attempts, successes, cost coverage and cost basis. Include failed-attempt spend; leave unknown costs unknown. Use saved evidence only.","Plot this run's cost and success")));
+        container.append(actions);
+        if(!run.hasReplay) {
+          container.append(node("p","bl-note",run.replayUnavailable || "Replay is outside this library's size limit. Open it separately from the saved run."));
+          if(!run.replayUnavailable)actions.append(button("Open replay in chat",()=>ask("Use $bedrock-bench:inspect-results to open a recorded replay for "+JSON.stringify(context(run))+". Use the replay command and explain any unavailable traces. Analyze saved files only.","Open this run's replay")));
+        }
+        const details=node("details","bl-details");details.append(node("summary","cursor-interaction","Tasks, settings and source evidence"));
+        const dl=node("dl");
+        for(const [label,value] of [["Suite",run.suite],["Tasks",run.tasks.join(", ")],["Models",run.models.join(", ")],["Runners",run.runners.join(", ")],["Result source",run.source],["Original result",run.originalSource],["Protocol",run.protocol],["Cost scope",run.costScope]]) dl.append(node("dt","",label),node("dd","",value));
+        details.append(dl);container.append(details);
+      }
+      function renderComparison() {
+        const container=get("bl-comparison");container.replaceChildren();
+        container.append(button("← All runs",()=>go("home")));
+        const selection=pair();if(!selection?.compatible)return;
+        const runs=state.compare.map(id=>runMap.get(id)).sort((a,b)=>a.startedAt.localeCompare(b.startedAt));
+        container.append(node("h2","bl-detail-title","Compare matching runs"));
+        container.append(node("div","bl-detail-meta",kindLabel(runs[0].kind)+" · Same tasks, repetitions, seed and limits"));
+        const grid=node("div","bl-compare-grid");
+        for(const [index,run] of runs.entries()) {
+          const column=node("section");
+          column.append(node("div","bl-muted",index?"Later run":"Earlier run"),node("h3","bl-compare-title",date(run.startedAt)),node("div","bl-muted",shortId(run)));
+          for(const target of [...run.targets].sort((a,b)=>a.label.localeCompare(b.label))) {
+            const card=node("div","bl-compare-item");card.append(node("strong","",target.label));
+            const dl=node("dl");
+            for(const [label,value] of [["Passed",target.successes+" / "+target.attempts],["Total cost",money(target.total_cost_usd)],["Cost / success",target.successes?money(target.cost_per_success_usd):"No successes"],["Median agent time",seconds(target.median_agent_seconds)],["Median trial time",seconds(target.median_wall_seconds)]]) dl.append(node("dt","",label),node("dd","",value));
+            card.append(dl);column.append(card);
+            card.append(node("div","bl-note",Math.round(target.cost_coverage*100)+"% cost coverage · "+basis(target)));
+          }
+          column.append(button("Open run",()=>go("run",run.id)));grid.append(column);
+        }
+        container.append(grid,node("p","bl-note","Cost per success includes failed-attempt spend. Unknown costs remain unknown."));
+        const actions=node("div","bl-actions");
+        actions.append(button("Explain comparison in chat",()=>ask("Use $bedrock-bench:benchmark-agent-tasks to compare these saved runs: "+JSON.stringify(runs.map(context))+". Confirm protocol compatibility and explain changes in pass rate, latency and cost per success. Keep synthetic or reference results clearly labeled. Analyze saved evidence only.","Explain this benchmark comparison")));
+        actions.append(button("Chart these runs",()=>ask("Use $bedrock-bench:visualize-results to chart these saved runs: "+JSON.stringify(runs.map(context))+". Validate compatibility and show success, median time and cost per success with counts and accounting coverage. Keep each run identifiable. Do not launch another benchmark.","Chart this comparison")));
+        container.append(actions);
+      }
+      function render() {
+        get("bl-shell").hidden=state.page==="replay"; get("bl-replay").hidden=state.page!=="replay";
+        get("bl-home").hidden=state.page!=="home";get("bl-run").hidden=state.page!=="run";get("bl-comparison").hidden=state.page!=="comparison";
+        get("bl-search").value=state.query;get("bl-kind").value=state.kind;get("bl-sort").value=state.sort;get("bl-failed").checked=state.failed;
+        if(state.page==="home")renderList();if(state.page==="run")renderRun();if(state.page==="comparison")renderComparison();
+        if(state.page==="replay") {
+          replayRoot.dispatchEvent(new CustomEvent("bedrock-bench:replay-load",{detail:{
+            data:data.activities[state.selected],state:traceStates.get(state.selected) || state.trace
+          }}));
+        } else replayRoot.dispatchEvent(new CustomEvent("bedrock-bench:replay-pause"));
+      }
+      get("bl-inventory").textContent=data.runs.length+" saved runs · "+data.runs.filter(r=>r.kind==="live").length+" live · "+data.runs.filter(r=>r.kind==="reference").length+" reference checks · "+data.runs.filter(r=>r.kind==="demo").length+" demos";
+      get("bl-snapshot").textContent="Snapshot: "+date(data.snapshotAt)+(data.discovered>data.runs.length?" · Showing up to "+data.limit+" of "+data.discovered+" discovered runs":"");
+      const notices=[...data.unreadable.map(item=>item.path+": "+item.error),...data.warnings.map(item=>item.run+": "+item.message)];
+      get("bl-notices").hidden=notices.length===0;
+      for(const notice of notices)get("bl-notices-text").append(node("p","",notice));
+      get("bl-search").addEventListener("input",event=>{state.query=event.target.value;renderList();});
+      get("bl-search").addEventListener("change",save);
+      get("bl-kind").addEventListener("change",event=>{state.kind=event.target.value;renderList();save();});
+      get("bl-sort").addEventListener("change",event=>{state.sort=event.target.value;renderList();save();});
+      get("bl-failed").addEventListener("change",event=>{state.failed=event.target.checked;renderList();save();});
+      get("bl-clear").addEventListener("click",()=>{state.compare=[];renderList();save();});
+      get("bl-compare-button").addEventListener("click",()=>{if(pair()?.compatible)go("comparison");});
+      get("bl-replay-back").addEventListener("click",()=>go("run"));
+      get("bl-refresh").addEventListener("click",()=>ask("Use $bedrock-bench:inspect-results to refresh the Bedrock Bench run library from "+JSON.stringify(data.directory)+", keeping limit "+data.limit+" and replay limit "+data.replayLimit+". Discover recent saved runs, preserve separate live, reference and synthetic labels, use a reviewed accounting copy only when its provenance matches the original, and rebuild the interactive library. Analyze existing files only; do not run models.","Refresh saved benchmark runs"));
+      root.addEventListener("bedrock-bench:trace-state",event=>{
+        if(event.detail?.modelContent?.runId!==runMap.get(state.selected)?.id)return;
+        state.trace=event.detail;traceStates.set(state.selected,event.detail);save();
+      });
+      window.addEventListener("openai:set_globals",event=>{
+        if(Object.prototype.hasOwnProperty.call(event.detail?.globals||{},"widgetState")&&restore(event.detail.globals.widgetState))render();
+      });
+      restore(window.openai?.widgetState);render();
+    })();
+  </script>
+</div>
