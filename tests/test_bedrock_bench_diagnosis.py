@@ -882,12 +882,14 @@ class DiagnosisTests(unittest.TestCase):
         self.assertLess(len(json.dumps(data["details"])), 20_000)
 
     def test_private_trace_fields_raw_errors_and_credentials_are_not_projected(self):
-        secret = "fixture-secret-known-to-environment"
+        # Public, synthetic marker: exercise environment-based redaction without
+        # reading or persisting any real credential.
+        fixture_marker = "PUBLIC_REDACTION_TEST_MARKER"
         source, run = self.run_file([failed(
             status="runner_error",
-            errors=[f"TimeoutError; PRIVATE_ERROR_TEXT; token={secret}; sk-test_abcdefghijklmnopqrstuvwxyz"],
+            errors=[f"TimeoutError; PRIVATE_ERROR_TEXT; token={fixture_marker}; sk-test_abcdefghijklmnopqrstuvwxyz"],
             final_text="PRIVATE_FINAL_TEXT",
-            target={**TARGET, "model": f"model-{secret}"},
+            target={**TARGET, "model": f"model-{fixture_marker}"},
         )])
         run["protocol"] = {"system_prompt": "PRIVATE_SYSTEM_PROMPT"}
         run["runtime"] = {"credentials": "PRIVATE_RUNTIME_CREDENTIALS"}
@@ -898,15 +900,15 @@ class DiagnosisTests(unittest.TestCase):
              "content": [{"type": "input_text", "text": "PRIVATE_SYSTEM_MESSAGE"}]}},
             {"type": "response_item", "payload": {"type": "function_call", "arguments": "PRIVATE_COMMAND"}},
             {"type": "response_item", "payload": {"type": "function_call_output",
-             "output": "PRIVATE_TOOL_OUTPUT " + secret}},
+             "output": "PRIVATE_TOOL_OUTPUT " + fixture_marker}},
             {"type": "error", "error": {"message": "TimeoutError", "stack": "PRIVATE_STACK",
                                       "system_prompt": "PRIVATE_NESTED_PROMPT"}},
         ])
-        with patch.dict(os.environ, {"DIAGNOSIS_TEST_TOKEN": secret}):
+        with patch.dict(os.environ, {"DIAGNOSIS_TEST_TOKEN": fixture_marker}):
             path = diagnosis.write_diagnosis([source], self.directory / "safe-output")
         text = path.read_text() + path.with_suffix(".json").read_text()
         self.assertNotIn("PRIVATE_", text)
-        self.assertNotIn(secret, text)
+        self.assertNotIn(fixture_marker, text)
         self.assertNotIn("sk-test_abcdefghijklmnopqrstuvwxyz", text)
         data = json.loads(path.with_suffix(".json").read_text())
         self.assertEqual(data["records"][0]["category"], "timeout")
