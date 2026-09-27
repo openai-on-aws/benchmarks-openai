@@ -117,7 +117,8 @@ missing values, source paths/checksums, and tiny-sample limitations against
 the engine output. Sorting or filtering a view must not rerun benchmarks,
 change saved data, or silently recompute confidence intervals.
 
-Offer chart/evidence next steps using the shared
+After a Bedrock Bench skill invocation in the current turn, offer chart/evidence
+next steps using the shared
 [follow-up guidance](../../benchmark-agent-tasks/references/follow-ups.md).
 For chart prompts, use `$bedrock-bench:visualize-results` with the exact
 comparison artifact and recorded source/run IDs.

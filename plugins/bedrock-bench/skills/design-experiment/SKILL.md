@@ -63,8 +63,10 @@ Route follow-on work by purpose:
 Preserve downstream protocol, completion, evidence-type, and accounting checks.
 A planned condition label never overrides a rejected comparison.
 
-After a substantive plan or explanation, offer two or three contextual prompts
-using the shared
+Only when this skill is invoked in the current turn, offer two or three
+contextual prompts after its substantive plan or experiment explanation.
+Do not carry this behavior into ordinary chat or plugin/repository maintenance.
+Use the shared
 [follow-up guidance](../benchmark-agent-tasks/references/follow-ups.md).
 Use its exact pre-text and quoted clickable labels. For a plan, carry the
 absolute brief/design/config paths and concrete attempts/limits instead of

@@ -16,9 +16,11 @@ The user interacts through chat. Select the suite, prepare its runtime, execute
 authorized checks, and explain the results yourself; terminal commands are an
 implementation detail unless the user asks for them.
 
-After each substantive response or visualization, offer two or three contextual
-next-step prompts using the [follow-up guidance](references/follow-ups.md).
-These are user-selectable suggestions, not automatic execution.
+Only when this skill is invoked in the current turn, offer two or three
+contextual next-step prompts after its substantive result or visualization using
+the [follow-up guidance](references/follow-ups.md). Do not carry this behavior
+into ordinary chat or plugin/repository maintenance. These are user-selectable
+suggestions, not automatic execution.
 
 - Use [design-experiment](../design-experiment/SKILL.md) for a research brief,
   controlled conditions, repetitions, and a budgeted plan. Use

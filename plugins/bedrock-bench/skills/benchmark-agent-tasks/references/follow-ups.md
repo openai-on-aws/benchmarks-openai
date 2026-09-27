@@ -1,9 +1,31 @@
-# Follow-ups after Bedrock Bench responses
+# Follow-ups after a Bedrock Bench skill invocation
 
-After each substantive Bedrock Bench turn—including a plan, explanation, report,
-library, replay, or custom visualization—offer two or three short, contextual
-next steps. Put them after the result or visualization. Progress updates do not
-need suggestions. Respect a user request to omit them.
+Apply this policy only when a Bedrock Bench skill is actually invoked in the
+current turn, either explicitly by the user or selected to fulfill their
+benchmark/results request. The skill may produce a plan, benchmark or audit
+result, evidence analysis, report, library, replay, or custom visualization.
+
+Check this condition separately for every turn. A previous invocation, a mention
+of Bedrock Bench, an open result widget, or working in its repository does not
+activate suggestions for later replies. Reading or editing these instructions
+while maintaining the plugin is not a runtime skill invocation.
+
+Do not append Bedrock Bench suggestions to ordinary conversation, installation
+or removal help, plugin development, README edits, PR updates, or status questions
+that do not invoke one of its skills. Do not copy this policy into global
+instructions or a general-purpose after-message hook.
+
+| Current turn | Add Bedrock Bench suggestions? |
+| --- | --- |
+| Invoke `benchmark-agent-tasks` to prepare or run a benchmark | Yes, after its substantive result |
+| Invoke a results or research skill to analyze evidence or create a chart | Yes, after its substantive result or visualization |
+| Ask why two plugin installations appear, or remove the duplicate | No |
+| Edit the plugin, review its PR, or ask whether its implementation tests passed | No |
+| Continue with ordinary chat after an earlier benchmark invocation | No |
+
+For a qualifying invocation, offer two or three short, contextual next steps
+after the result or visualization. Do not add them to progress updates. Respect
+a user request to omit them.
 
 Introduce the suggestions with a short, friendly sentence explaining how to
 use them. For clickable follow-ups, use “You can try these next—click a

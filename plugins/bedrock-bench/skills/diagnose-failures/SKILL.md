@@ -74,7 +74,9 @@ paths. These deliberately synthetic records include recoverable tool errors,
 timeouts, missing evidence, incomplete accounting, interruptions, and missing
 attempts under two protocols. They test the inventory, not model capability.
 
-After a substantive result, use the shared
+Only when this skill is invoked in the current turn, add suggestions after its
+substantive diagnosis. Do not carry this behavior into ordinary chat or
+plugin/repository maintenance. Use the shared
 [follow-up guidance](../benchmark-agent-tasks/references/follow-ups.md).
 Preserve its introductory sentence and double-quoted visible suggestions;
 keep surrounding quotation marks out of the actual prompt. Carry exact run IDs,

@@ -129,4 +129,5 @@ accounting evidence, and
 Execution or expansion uses
 [benchmark-agent-tasks](../../benchmark-agent-tasks/SKILL.md). Follow the
 [shared suggestion rules](../../benchmark-agent-tasks/references/follow-ups.md)
-for quoted next steps with the user's actual design or saved-result paths.
+only after a Bedrock Bench skill invocation in the current turn, using quoted
+next steps with the user's actual design or saved-result paths.

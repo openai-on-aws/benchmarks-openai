@@ -16,12 +16,20 @@ Keep documentation focused on its reader:
 - `skills/compare-experiments/SKILL.md`: matched task comparisons and uncertainty.
 - `skills/diagnose-failures/SKILL.md`: failure patterns grounded in saved evidence.
 - `skills/audit-benchmark/SKILL.md`: local positive and negative grader controls.
-- `skills/benchmark-agent-tasks/references/follow-ups.md`: the shared after-turn
-  suggestion behavior, linked from every runtime skill. Keep it in the shipped
-  skills; contributor instructions alone are not plugin runtime memory.
+- `skills/benchmark-agent-tasks/references/follow-ups.md`: suggestion behavior
+  scoped to an actual Bedrock Bench skill invocation in the current turn, linked
+  from every runtime skill. Keep it in the shipped skills; contributor
+  instructions alone are not plugin runtime memory.
 - `skills/benchmark-agent-tasks/references/`: conditional CLI, suite, and
   accounting details.
 - This file: contributor guidance for changes to the plugin.
+
+Working on the plugin does not invoke its runtime skills. Do not add Bedrock
+Bench follow-up suggestions to plugin administration, code or documentation
+maintenance, PR updates, or ordinary chat. Preserve the current-turn invocation
+check in every skill entrypoint; an earlier benchmark invocation does not enable
+suggestions for the rest of a conversation. Keep this behavior out of global
+instructions and general-purpose message hooks.
 
 For runtime or adapter changes, run the relevant checks from the repository root:
 

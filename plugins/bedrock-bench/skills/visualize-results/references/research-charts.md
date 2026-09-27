@@ -51,9 +51,10 @@ documented tabular outputs. Their owning skills explain the schemas and
 limitations. Keep the original report path and source run checksums with the
 visualization; do not extract rounded numbers from Markdown or screenshots.
 
-Embed only the needed summary and public evidence identifiers. A selected
-task/attempt can offer **Inspect evidence**, **Explain this difference**, or
-**Plan another condition** using the shared
+Embed only the needed summary and public evidence identifiers. In a visualization
+produced through a Bedrock Bench skill, a selected task/attempt can offer
+**Inspect evidence**, **Explain this difference**, or **Plan another condition**
+using the shared
 [follow-up guidance](../../benchmark-agent-tasks/references/follow-ups.md).
 Pass the exact analysis path, source runs, target IDs, and selected task.
 Filtering or selection changes the view; it does not launch a benchmark.

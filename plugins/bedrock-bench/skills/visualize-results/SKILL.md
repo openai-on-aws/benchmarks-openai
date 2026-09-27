@@ -48,7 +48,9 @@ For the existing library, report, or replay, use
   interaction, readable light/dark appearance, and narrow layout when inline.
   Use standard plotting tools for publication/export figures.
 
-After the chart or explanation, offer contextual next steps using the shared
+Only when this skill is invoked in the current turn, offer contextual next
+steps after its chart or evidence explanation. Do not carry this behavior into
+ordinary chat or plugin/repository maintenance. Use the shared
 [follow-up guidance](../benchmark-agent-tasks/references/follow-ups.md).
 New benchmark execution belongs to
 [benchmark-agent-tasks](../benchmark-agent-tasks/SKILL.md); analyzing results

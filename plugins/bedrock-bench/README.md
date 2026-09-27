@@ -69,9 +69,10 @@ To browse your history:
 > Show my run library. Open the latest live run and replay its tool activity.
 
 Search by model, task, region, or run ID; compare matching runs; then select a
-model to scrub through its own recorded tools. Each result comes with suggested
-follow-up prompts. Try **Plot cost vs success**, **Diagram this attempt**, or ask
-for your own graph. Replays currently support saved Harbor/Codex sessions.
+model to scrub through its own recorded tools. When a Bedrock Bench skill
+presents a result, it suggests follow-up prompts. Try **Plot cost vs success**,
+**Diagram this attempt**, or ask for your own graph. Replays currently support
+saved Harbor/Codex sessions.
 
 Then check a real coding task:
 

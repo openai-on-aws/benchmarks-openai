@@ -7,8 +7,10 @@ Use the packaged CLI at `../../scripts/bench.py`, resolved relative to this
 skill directory. Report generation and inspection use Python's standard library.
 Keep generated reports in the user's selected project or results directory.
 
-After each substantive response or visualization, offer two or three contextual
-next-step prompts using the shared
+Only when this skill is invoked in the current turn, offer two or three
+contextual next-step prompts after its substantive result or visualization.
+Do not carry this behavior into ordinary chat or plugin/repository maintenance.
+Use the shared
 [follow-up guidance](../benchmark-agent-tasks/references/follow-ups.md).
 
 - For an "Open in Codex" file request, use the exact `filePath` from the

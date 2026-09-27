@@ -73,8 +73,9 @@ the comparison path and the [chart recipes](references/chart-recipes.md).
 The [analytical fixtures](resources/analytical-fixtures.json) are invented
 observations for offline math checks; do not present them as live results.
 
-After a substantive response or visualization, offer contextual suggestions
-using the shared
+Only when this skill is invoked in the current turn, offer contextual
+suggestions after its substantive comparison or visualization. Do not carry this
+behavior into ordinary chat or plugin/repository maintenance. Use the shared
 [follow-up guidance](../benchmark-agent-tasks/references/follow-ups.md).
 Carry exact run IDs, source paths, selectors, and the comparison artifact into
 chart or evidence-inspection suggestions. New benchmark execution belongs to

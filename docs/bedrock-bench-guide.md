@@ -46,7 +46,8 @@ The plugin includes:
 - **Recorded replay:** select a model, scrub its own clock, and inspect stable
   tool-call lists and public task prompts from Harbor/Codex sessions.
 - **Charts and follow-ups:** ask for plots or diagrams from saved evidence;
-  each substantive response offers contextual next-step prompts.
+  contextual next-step prompts appear only when a Bedrock Bench skill is invoked
+  in that turn.
 - **Research skills:** [design experiments](../plugins/bedrock-bench/skills/design-experiment/SKILL.md)
   with explicit conditions and budgets, [compare matched tasks](../plugins/bedrock-bench/skills/compare-experiments/SKILL.md)
   with uncertainty, [diagnose failures](../plugins/bedrock-bench/skills/diagnose-failures/SKILL.md)
