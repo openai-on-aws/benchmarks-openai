@@ -11,6 +11,11 @@ Keep documentation focused on its reader:
 - `skills/benchmark-agent-tasks/SKILL.md`: agent workflow and execution guidance.
 - `skills/inspect-results/SKILL.md`: saved-result exploration and evidence guidance.
 - `skills/visualize-results/SKILL.md`: on-demand charts and recorded-sequence diagrams.
+- `skills/design-experiment/SKILL.md`: research briefs, controlled conditions,
+  runnable configurations, and budget assumptions.
+- `skills/compare-experiments/SKILL.md`: matched task comparisons and uncertainty.
+- `skills/diagnose-failures/SKILL.md`: failure patterns grounded in saved evidence.
+- `skills/audit-benchmark/SKILL.md`: local positive and negative grader controls.
 - `skills/benchmark-agent-tasks/references/follow-ups.md`: the shared after-turn
   suggestion behavior, linked from every runtime skill. Keep it in the shipped
   skills; contributor instructions alone are not plugin runtime memory.
@@ -40,3 +45,12 @@ source run directory, and use the Python accounting aggregates in every view.
 The explorer must remain usable without a Codex host bridge or network access.
 Follow-up actions carry exact run/attempt context and qualified skill names.
 Filtering and state restoration never send messages or execute benchmarks.
+
+Research commands use the same saved schemas and accounting as the explorer.
+Keep repeated attempts within their task when estimating uncertainty; one task
+does not support a general ranking. Comparisons retain protocol and evidence-type
+gates. Diagnosis may inventory different protocols but must label those groups.
+Plans are not executions, budget estimates are not enforced spend caps, and
+unavailable audit tooling is not evidence that a grader rejected a mutant.
+Keep research helpers dependency-free where possible and exercise the installed
+plugin from outside a source checkout.

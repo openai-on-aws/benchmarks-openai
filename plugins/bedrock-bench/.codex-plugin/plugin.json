@@ -1,7 +1,7 @@
 {
   "name": "bedrock-bench",
   "version": "0.3.0",
-  "description": "Benchmark agents on real tasks; browse saved runs, replay tools, and explore success, time, and cost with contextual chat follow-ups.",
+  "description": "Plan agent experiments, benchmark real tasks, compare saved results, diagnose failures, audit graders, and explore charts and tool replays.",
   "author": {
     "name": "OpenAI on AWS",
     "url": "https://github.com/openai-on-aws"
@@ -18,13 +18,15 @@
     "opencode",
     "openrouter",
     "cdk",
-    "harbor"
+    "harbor",
+    "research",
+    "evaluations"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Bedrock Bench",
     "shortDescription": "Measure agent task economics",
-    "longDescription": "Run AWS CDK repair tasks, Terminal-Bench, SWE-bench, AWS-Bench, and starter benchmarks from chat. Browse a searchable library of saved runs, compare matching results, and replay recorded Harbor/Codex tools. Ask for charts or diagrams and follow contextual next-step prompts, with cost coverage and pricing provenance retained.",
+    "longDescription": "Run AWS CDK repair tasks, Terminal-Bench, SWE-bench, AWS-Bench, and starter benchmarks from chat. Design controlled experiments, compare matched tasks with uncertainty, diagnose recorded failures, and audit graders with reference and mutation checks. Browse saved runs, replay Harbor/Codex tools, and ask for charts or diagrams with evidence, cost coverage, and contextual follow-up prompts.",
     "developerName": "OpenAI on AWS",
     "category": "Productivity",
     "capabilities": [
@@ -40,7 +42,8 @@
       "Plan a Terminal-Bench model comparison on Bedrock.",
       "Show the offline Bedrock Bench demonstration.",
       "Browse my recent benchmark runs and replay the latest live run.",
-      "Plot cost versus success for my saved benchmark results."
+      "Plot cost versus success for my saved benchmark results.",
+      "Plan an experiment comparing the same model with and without an AWS skill."
     ]
   }
 }

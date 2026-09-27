@@ -11,6 +11,14 @@ numbers from rendered labels, whose values may be rounded.
 | Which tasks fail? | `comparison.json` → `tasks`; `run.json` → `attempts` | Target/task grid with success counts |
 | How were tokens used? | Per-attempt `usage` | Input/cache/output breakdown with missing categories shown |
 | What did the agent do? | `REPLAY.json` → `models[].calls` and `promptSources` | Recorded sequence, tool timeline, or attempt diagram |
+| Does a controlled change improve results? | `COMPARISON.json` from `compare-experiments` | Paired task differences with task-cluster uncertainty |
+| Which failure patterns recur? | `DIAGNOSIS.json` from `diagnose` | Category bars or task heatmap with evidence drill-down |
+| Can the grader detect broken solutions? | `AUDIT.json` from `audit` | Expected versus observed control matrix |
+
+For these research views, read the [research chart recipes](research-charts.md).
+`comparison.json` from `report` contains ordinary aggregates;
+`COMPARISON.json` from `compare-experiments` contains a selected paired analysis.
+Distinguish them by their producing command and schema, not filename case alone.
 
 `library RESULTS_DIRECTORY --out LIBRARY_DIRECTORY` saves `LIBRARY.json` with
 each run's `source`, evidence type, `comparisonGroup`, per-target aggregates, and

@@ -20,6 +20,12 @@ After each substantive response or visualization, offer two or three contextual
 next-step prompts using the [follow-up guidance](references/follow-ups.md).
 These are user-selectable suggestions, not automatic execution.
 
+- Use [design-experiment](../design-experiment/SKILL.md) for a research brief,
+  controlled conditions, repetitions, and a budgeted plan. Use
+  [compare-experiments](../compare-experiments/SKILL.md) for matched task deltas
+  and uncertainty, [diagnose-failures](../diagnose-failures/SKILL.md) for failure
+  patterns across saved runs, and [audit-benchmark](../audit-benchmark/SKILL.md)
+  to challenge the grader with correct and deliberately flawed solutions.
 - Use `suites` and `tasks --suite NAME` to discover the packaged task catalogs.
   `starter` uses the existing fixed agent loop. `aws-cdk-smoke`, `terminal-bench`,
   and `swe-bench` use Harbor. `aws-bench` uses the upstream AWS-Bench runner.

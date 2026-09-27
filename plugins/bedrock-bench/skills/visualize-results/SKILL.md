@@ -21,6 +21,14 @@ For the existing library, report, or replay, use
 - Use `replay RUN_JSON --out REPLAY_DIRECTORY [--attempt ATTEMPT_ID]` for public
   prompts and recorded tool exchanges. `REPLAY.json` includes evidence sources,
   limits, and unavailable traces. An absent trace is not a zero-tool attempt.
+- For paired differences or uncertainty, use
+  [compare-experiments](../compare-experiments/SKILL.md) to calculate the
+  statistics before plotting them. Use
+  [diagnose-failures](../diagnose-failures/SKILL.md) for failure categories and
+  [audit-benchmark](../audit-benchmark/SKILL.md) for grader-control outcomes.
+  Their JSON and tabular outputs retain provenance and missing-data warnings;
+  preserve those in the chart. Read the
+  [research chart recipes](references/research-charts.md) for these views.
 - Prefer an available host visualization skill for interactive inline plots.
   Follow its rendering contract and preserve the artifact in the authorized
   output directory. Do not depend on a particular host, plugin version, or

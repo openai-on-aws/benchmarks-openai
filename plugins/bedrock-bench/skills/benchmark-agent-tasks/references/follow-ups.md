@@ -36,6 +36,17 @@ Use the qualified skill invocation:
 - `$bedrock-bench:benchmark-agent-tasks` for benchmark analysis or preparing a run.
 - `$bedrock-bench:inspect-results` for the library, reports, replay, and evidence.
 - `$bedrock-bench:visualize-results` for a new plot or diagram.
+- `$bedrock-bench:design-experiment` for a research question, conditions, or a
+  bounded follow-on plan.
+- `$bedrock-bench:compare-experiments` for matched task differences and uncertainty.
+- `$bedrock-bench:diagnose-failures` for evidence-backed patterns across attempts.
+- `$bedrock-bench:audit-benchmark` for reference and mutation checks of a grader.
+
+For research outputs, carry the actual brief, design, comparison, diagnosis,
+or audit path as well as any selected source runs. After a plan, suggest reviewing
+its controls or budget assumptions. After a comparison, suggest plotting its
+task differences or inspecting failures. After an audit, suggest inspecting
+surviving mutants. Do not imply that a statistical result authorizes a new run.
 
 In Codex hosts that support artifact follow-ups, render each suggestion as a
 Markdown list item:

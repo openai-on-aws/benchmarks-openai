@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "question": "For the selected agent and model, does injecting the chosen AWS CDK skill improve repair success on the packaged CDK fixture?",
+  "contrast": "single-factor",
+  "base_experiment": {
+    "schema_version": 2,
+    "name": "AWS CDK skill ablation pilot",
+    "suite": "aws-cdk-smoke",
+    "targets": [
+      {
+        "id": "candidate",
+        "runner": "codex",
+        "provider": "amazon-bedrock",
+        "model": null,
+        "region": null,
+        "agent_version": null,
+        "skills": []
+      }
+    ],
+    "tasks": [
+      "cdk-sqs-lambda-dynamodb"
+    ],
+    "repetitions": 3,
+    "seed": 42,
+    "limits": {
+      "timeout_seconds": 300,
+      "setup_timeout_seconds": 600,
+      "verifier_timeout_seconds": 120,
+      "process_timeout_seconds": 1500
+    },
+    "tools_dir": ".bench-tools",
+    "rate_cards": []
+  },
+  "conditions": [
+    {
+      "id": "baseline",
+      "label": "No injected skill",
+      "target_changes": {}
+    },
+    {
+      "id": "with-skills",
+      "label": "Chosen AWS CDK skill injected",
+      "target_changes": {
+        "candidate": {
+          "skills": [
+            "./skills/aws-cdk"
+          ]
+        }
+      }
+    }
+  ],
+  "budget": {
+    "max_usd": null,
+    "reserve_fraction": 0,
+    "usage_per_attempt": []
+  },
+  "notes": [
+    "Planning template, deliberately incomplete: fill the user's exact model ID and AWS region, and choose the agent version before use. Preserve a different runner or provider if the user selected one.",
+    "Place the actual chosen skill at ./skills/aws-cdk relative to this copied brief, or replace that value with its existing path. Do not fabricate a skill or copy a grader or reference solution into it.",
+    "This is one distinct SQS/Lambda/DynamoDB repair task with three repetitions per condition, six attempts total. It is not a broad AWS or CDK benchmark.",
+    "The CDK task compiles, synthesizes, and grades locally without AWS deployment. Later model inference and container preparation require the normal execution workflow.",
+    "Choose a budget ceiling and reserve deliberately. Add exact sourced rate cards and per-condition whole-attempt token assumptions if available; absent inputs leave costs unknown.",
+    "No live results, success-rate assumptions, pricing, or claims of statistical power are supplied."
+  ]
+}

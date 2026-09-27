@@ -147,6 +147,24 @@ tasks. Your first live smoke run still needs to establish model access,
 agent behavior, and usable accounting. Small smoke runs do not establish a
 general model ranking.
 
+## Explore a research question
+
+The plugin can help you plan an experiment, analyze saved results, and check
+whether the benchmark is measuring what you intended.
+
+| Ask in chat | Skill |
+| --- | --- |
+| “Plan a comparison with and without an AWS skill. Show attempts and budget assumptions.” | [Design an experiment](skills/design-experiment/SKILL.md) |
+| “Compare these two targets on the same tasks. Show the differences and uncertainty.” | [Compare experiments](skills/compare-experiments/SKILL.md) |
+| “Group the failures in these runs and show the evidence for each pattern.” | [Diagnose failures](skills/diagnose-failures/SKILL.md) |
+| “Check that our grader accepts correct solutions and rejects broken ones.” | [Audit a benchmark](skills/audit-benchmark/SKILL.md) |
+
+These skills include reusable commands, examples, and interpretation guides.
+Ask for a task heatmap, a paired comparison chart, or a failure breakdown after
+the analysis. Plans make no model calls; local grader audits are separate from
+live model measurements. The [research command reference](skills/benchmark-agent-tasks/references/cli.md#research-workflows)
+also includes an offline walkthrough.
+
 ## Go further
 
 - [Full Codex walkthrough](https://github.com/openai-on-aws/benchmarks-openai/blob/main/docs/bedrock-bench-guide.md)

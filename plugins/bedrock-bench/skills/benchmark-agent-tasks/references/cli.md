@@ -186,3 +186,73 @@ the original run files. A supported Codex inline host offers contextual chat
 actions; ordinary browsers provide copyable analysis prompts. Report filters
 only change the view, and an outcome filter affects the attempt inspector rather
 than recalculating success or cost from successful attempts alone.
+
+## Research workflows
+
+The research commands are packaged with the plugin and use Python's standard
+library. They write readable Markdown and machine-readable JSON into a new
+output directory. Keep the original brief and run files unchanged.
+
+```bash
+python3.12 "$BENCH_PLUGIN/scripts/bench.py" design study.json \
+  --out experiments/study
+python3.12 "$BENCH_PLUGIN/scripts/bench.py" compare-experiments \
+  bench-results/RUN_ID/run.json --baseline BASELINE_ID --candidate CANDIDATE_ID \
+  --out bench-results/paired-comparison
+python3.12 "$BENCH_PLUGIN/scripts/bench.py" diagnose \
+  bench-results/RUN_ID/run.json --out bench-results/failure-diagnosis
+python3.12 "$BENCH_PLUGIN/scripts/bench.py" audit --suite starter \
+  --out bench-results/audit-plan
+```
+
+- **`design`** validates a research brief and produces ordinary experiment
+  configurations for `plan` and `run`. Read the
+  [design skill](../../design-experiment/SKILL.md) for the brief schema and
+  shipped examples. Dollar estimates express assumptions; the runner has no
+  enforced dollar cap.
+- **`compare-experiments`** accepts one or more matching completed runs and two
+  unambiguous target IDs. It preserves task pairing and estimates uncertainty by
+  resampling tasks, keeping their repetitions together. `--seed` defaults to 42
+  and `--resamples` to 2000. Read the
+  [comparison skill](../../compare-experiments/SKILL.md) for the statistics and
+  chart-ready outputs. To compare the same target ID between runs, add
+  `--baseline-run RUN_A --candidate-run RUN_B`; repeat either flag to select
+  several runs on that side. The two selections must contain disjoint attempts
+  with balanced task/repetition coverage. Different task protocols still fail
+  validation.
+- **`diagnose`** groups observable failures and retains source evidence.
+  `--limit 100` bounds detailed attempts; the inventory retains aggregate counts.
+  Multiple evidence types or protocols remain labeled groups, not comparable
+  model rankings. Read the
+  [diagnosis skill](../../diagnose-failures/SKILL.md) for categories and evidence
+  limitations.
+- **`audit`** prepares local positive and negative controls for `starter` or
+  `aws-cdk-smoke`. Add `--execute` to run the controls. Read the
+  [audit skill](../../audit-benchmark/SKILL.md) for runtime preparation and
+  coverage. An unavailable runtime is reported separately from rejected mutants.
+  These are grader checks, not model measurements or AWS deployments.
+
+To try the analysis offline, run `demo --out bench-results`, use the generated
+`run.json`, and select `fixture-efficient` as the baseline and
+`fixture-imperfect` as the candidate. The intentional demo failure also gives
+`diagnose` something to explain. Run `audit --suite starter --execute --out
+bench-results/starter-audit` to check the starter graders without Docker or
+credentials.
+
+To exercise experiment design and execution together, use the shipped synthetic
+brief. It plans two conditions, three tasks, and two repetitions: 12 attempts.
+The final command below executes only synthetic fixtures.
+
+```bash
+python3.12 "$BENCH_PLUGIN/scripts/bench.py" design \
+  "$BENCH_PLUGIN/skills/design-experiment/assets/offline-demo.brief.json" \
+  --out experiments/offline-study
+python3.12 "$BENCH_PLUGIN/scripts/bench.py" plan \
+  experiments/offline-study/experiment.json
+python3.12 "$BENCH_PLUGIN/scripts/bench.py" run \
+  experiments/offline-study/experiment.json --execute --out bench-results
+```
+
+Use [visualize-results](../../visualize-results/SKILL.md) to turn these saved
+outputs into paired task plots, failure heatmaps, or control matrices. An
+analysis or suggested next step does not execute a benchmark.

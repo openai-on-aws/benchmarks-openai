@@ -47,6 +47,12 @@ The plugin includes:
   tool-call lists and public task prompts from Harbor/Codex sessions.
 - **Charts and follow-ups:** ask for plots or diagrams from saved evidence;
   each substantive response offers contextual next-step prompts.
+- **Research skills:** [design experiments](../plugins/bedrock-bench/skills/design-experiment/SKILL.md)
+  with explicit conditions and budgets, [compare matched tasks](../plugins/bedrock-bench/skills/compare-experiments/SKILL.md)
+  with uncertainty, [diagnose failures](../plugins/bedrock-bench/skills/diagnose-failures/SKILL.md)
+  from saved evidence, and [audit graders](../plugins/bedrock-bench/skills/audit-benchmark/SKILL.md)
+  using correct and deliberately flawed solutions. Each skill ships reusable
+  commands and supporting research guidance.
 - **AWS-Bench lifecycle commands** to plan or execute environment setup,
   verification, reset, and cleanup. A model run does not create an environment.
 

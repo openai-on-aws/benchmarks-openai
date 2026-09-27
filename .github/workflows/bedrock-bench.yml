@@ -29,18 +29,34 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.19.0"
       - name: Install isolated harnesses
         run: |
           python -m pip install uv
           python bench.py prepare --suite aws-cdk-smoke --execute
           python bench.py prepare --suite aws-bench --execute
+      - name: Install pinned dependencies for local grader audits
+        run: |
+          mkdir -p .bench-tools/cdk-audit
+          cp plugins/bedrock-bench/benchmarks/aws-cdk-smoke/cdk-sqs-lambda-dynamodb/environment/project/package.json .bench-tools/cdk-audit/
+          cp plugins/bedrock-bench/benchmarks/aws-cdk-smoke/cdk-sqs-lambda-dynamodb/environment/project/package-lock.json .bench-tools/cdk-audit/
+          npm ci --prefix .bench-tools/cdk-audit --ignore-scripts --no-audit --no-fund
       - name: Test adapters, accounting, and actual upstream schemas
         run: python -m unittest discover -s tests -p 'test_bedrock_bench*.py' -v
       - name: Validate CDK task without model calls or AWS deployment
         run: python bench.py smoke --suite aws-cdk-smoke --execute
+      - name: Audit correct solutions and deliberate defects without model calls
+        run: |
+          python bench.py audit --suite starter --execute --out bench-results/starter-audit
+          python bench.py audit --suite aws-cdk-smoke --execute --tools-dir .bench-tools/cdk-audit --out bench-results/cdk-audit
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: bedrock-bench-reference-results
-          path: bench-results/
+          path: |
+            bench-results/
+            !bench-results/**/node_modules
+            !bench-results/**/node_modules/**
           if-no-files-found: ignore

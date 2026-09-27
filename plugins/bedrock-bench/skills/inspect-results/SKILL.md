@@ -75,6 +75,13 @@ there is no automatic filesystem watcher. Use
 [visualize-results](../visualize-results/SKILL.md) for a new chart or diagram
 based on the selected run or attempt.
 
+For statistical comparisons of two targets on matched tasks, use
+[compare-experiments](../compare-experiments/SKILL.md). For a failure inventory
+across many runs, use [diagnose-failures](../diagnose-failures/SKILL.md); its
+heterogeneous inventory is not a compatible model comparison. Investigating
+whether the grader itself is reliable belongs to
+[audit-benchmark](../audit-benchmark/SKILL.md).
+
 This workflow analyzes saved evidence. Requests to launch, retry, or expand a
 benchmark belong to [benchmark-agent-tasks](../benchmark-agent-tasks/SKILL.md);
 viewing a failure alone does not authorize another attempt.

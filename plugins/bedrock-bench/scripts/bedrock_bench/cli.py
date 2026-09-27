@@ -120,6 +120,28 @@ def main(argv=None):
     inspect = sub.add_parser("inspect", help="Read one saved attempt and bounded evidence previews")
     inspect.add_argument("run")
     inspect.add_argument("--attempt", required=True)
+    design = sub.add_parser("design", help="Turn a research brief into validated experiment plans without running them")
+    design.add_argument("brief")
+    design.add_argument("--out", required=True)
+    research_compare = sub.add_parser("compare-experiments", help="Compare two targets on matched tasks with uncertainty")
+    research_compare.add_argument("runs", nargs="+")
+    research_compare.add_argument("--baseline", required=True, help="Unambiguous baseline target ID")
+    research_compare.add_argument("--candidate", required=True, help="Unambiguous candidate target ID")
+    research_compare.add_argument("--baseline-run", action="append", help="Restrict baseline target ID to this run; repeatable")
+    research_compare.add_argument("--candidate-run", action="append", help="Restrict candidate target ID to this run; repeatable")
+    research_compare.add_argument("--resamples", type=int, default=2000)
+    research_compare.add_argument("--seed", type=int, default=42)
+    research_compare.add_argument("--out", required=True)
+    diagnose = sub.add_parser("diagnose", help="Group failures from saved evidence without rerunning attempts")
+    diagnose.add_argument("runs", nargs="+")
+    diagnose.add_argument("--limit", type=int, default=100, help="Maximum detailed attempts; retain full aggregate counts")
+    diagnose.add_argument("--out", required=True)
+    audit = sub.add_parser("audit", help="Plan local grader controls; --execute runs reference and mutation checks")
+    audit.add_argument("--suite", choices=["starter", "aws-cdk-smoke"], default="starter")
+    audit.add_argument("--seed", type=int, default=42)
+    audit.add_argument("--tools-dir", default=".bench-tools")
+    audit.add_argument("--execute", action="store_true")
+    audit.add_argument("--out", required=True)
     args = parser.parse_args(argv)
     try:
         if args.command == "doctor":
@@ -141,6 +163,30 @@ def main(argv=None):
         elif args.command == "inspect":
             from .explorer import inspect_attempt
             print(json.dumps(inspect_attempt(args.run, args.attempt), indent=2, allow_nan=False))
+        elif args.command == "design":
+            from .design import write_design
+            print(write_design(args.brief, args.out))
+        elif args.command == "compare-experiments":
+            from .research_compare import write_comparison
+            baseline = ({"target_id": args.baseline, "run_ids": args.baseline_run}
+                        if args.baseline_run else args.baseline)
+            candidate = ({"target_id": args.candidate, "run_ids": args.candidate_run}
+                         if args.candidate_run else args.candidate)
+            print(write_comparison(args.runs, args.out, baseline=baseline, candidate=candidate,
+                                   resamples=args.resamples, seed=args.seed))
+        elif args.command == "diagnose":
+            from .diagnosis import write_diagnosis
+            print(write_diagnosis(args.runs, args.out, limit=args.limit))
+        elif args.command == "audit":
+            from .audit import write_audit
+            artifact = write_audit(args.suite, args.out, seed=args.seed, execute=args.execute,
+                                   tools_dir=args.tools_dir)
+            print(artifact)
+            status = json.loads(Path(artifact).with_name("AUDIT.json").read_text())["status"]
+            if status == "failed":
+                return 1
+            if status == "unavailable":
+                return 2
         elif args.command == "prepare":
             from .tooling import prepare as prepare_tools
             print(json.dumps(prepare_tools(args.suite, args.tools_dir, execute=args.execute), indent=2))
