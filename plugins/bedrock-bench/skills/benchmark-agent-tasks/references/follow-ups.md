@@ -10,6 +10,10 @@ use them. For clickable follow-ups, use “You can try these next—click a
 suggestion to continue in chat:”. For plain-text prompts, use “You can try
 these next—copy a prompt below into chat:”.
 
+Wrap each visible suggestion in double quotation marks, including the label
+inside a Codex follow-up. Keep those surrounding quotation marks out of the
+actual `prompt` value.
+
 These are suggestions for the user to choose, not actions to execute
 automatically. Prefer useful discoveries over repeating the same menu:
 
@@ -39,7 +43,7 @@ Markdown list item:
 ```text
 You can try these next—click a suggestion to continue in chat:
 
-- :codex-followup[Explain the slowest attempt]{prompt="Use $bedrock-bench:benchmark-agent-tasks to inspect saved run RUN_ID at SOURCE_PATH. Identify the slowest recorded attempt and explain its tools and grader evidence. Analyze saved results only."}
+- :codex-followup["Explain the slowest attempt"]{prompt="Use $bedrock-bench:benchmark-agent-tasks to inspect saved run RUN_ID at SOURCE_PATH. Identify the slowest recorded attempt and explain its tools and grader evidence. Analyze saved results only."}
 ```
 
 Replace placeholders with the actual context before showing it. Escape double

@@ -69,6 +69,7 @@
     #bedrock-bench-run-library .bl-details dl { font-size: 12px; margin: 10px 0; }
     #bedrock-bench-run-library .bl-details dt { color: var(--bl-muted); margin-top: 8px; }
     #bedrock-bench-run-library .bl-details dd { margin: 1px 0 0; overflow-wrap: anywhere; }
+    #bedrock-bench-run-library .bl-file-link { color: var(--bl-accent); border: 0; padding: 4px 0; text-align: left; text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; max-width: 100%; }
     #bedrock-bench-run-library .bl-textarea { display: block; width: 100%; min-height: 100px; margin-top: 8px; }
     #bedrock-bench-run-library .bl-compare-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 22px; margin-top: 17px; }
     #bedrock-bench-run-library .bl-compare-grid > section { min-width: 0; }
@@ -283,7 +284,20 @@
         }
         const details=node("details","bl-details");details.append(node("summary","cursor-interaction","Tasks, settings and source evidence"));
         const dl=node("dl");
-        for(const [label,value] of [["Suite",run.suite],["Tasks",run.tasks.join(", ")],["Models",run.models.join(", ")],["Runners",run.runners.join(", ")],["Result source",run.source],["Original result",run.originalSource],["Protocol",run.protocol],["Cost scope",run.costScope]]) dl.append(node("dt","",label),node("dd","",value));
+        for(const [label,value] of [["Suite",run.suite],["Tasks",run.tasks.join(", ")],["Models",run.models.join(", ")],["Runners",run.runners.join(", ")],["Result source",run.source],["Original result",run.originalSource],["Protocol",run.protocol],["Cost scope",run.costScope]]) {
+          const cell=node("dd");
+          if((label==="Result source" || label==="Original result") && value) {
+            const title="Open "+label.toLowerCase()+" in Codex";
+            const link=button(value.split(/[\\/]/).at(-1)+" · Open in Codex",()=>ask(
+              "Use $bedrock-bench:inspect-results to open this saved result file in Codex's right-hand panel: "+
+              JSON.stringify({runId:run.id,source:run.source,filePath:value})+
+              ". Use the available open_in_codex file action with placement \"right\". Open the file for viewing; do not run a benchmark or modify files.",
+              title));
+            link.classList.add("bl-file-link");link.setAttribute("aria-label",title);
+            cell.append(link,node("div","bl-note",value));
+          } else cell.textContent=value ?? "";
+          dl.append(node("dt","",label),cell);
+        }
         details.append(dl);container.append(details);
       }
       function renderComparison() {

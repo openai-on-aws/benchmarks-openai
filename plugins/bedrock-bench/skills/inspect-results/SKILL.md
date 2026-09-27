@@ -11,6 +11,15 @@ After each substantive response or visualization, offer two or three contextual
 next-step prompts using the shared
 [follow-up guidance](../benchmark-agent-tasks/references/follow-ups.md).
 
+- For an "Open in Codex" file request, use the exact `filePath` from the
+  selected saved result. When available, call `open_in_codex` with
+  `target: {"type": "file", "path": ABSOLUTE_FILE_PATH}` and `placement: "right"`.
+  This opens a workspace file tab; it does not require running an inspection
+  or benchmark. Report a queued result as queued, not already visible.
+  Without a file-panel tool, provide a clickable absolute Markdown file link.
+  In chat, prefer links such as `[Result source](<ABSOLUTE_FILE_PATH>)` over
+  bare paths. The library's file actions send this open-file request through
+  the optional chat bridge; other hosts show a copyable prompt.
 - Use `runs RESULTS_DIRECTORY` to discover saved runs and their evidence type,
   status, and source paths. It checks that directory and its immediate children,
   so archived copies do not appear as new experiments. Select the run requested
