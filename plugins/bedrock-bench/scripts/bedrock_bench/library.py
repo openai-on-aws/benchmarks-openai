@@ -130,20 +130,26 @@ def library_data(directory, *, limit=50, replay_limit=5):
             if warning:
                 warnings.append({"run": run["run_id"], "message": warning})
             runs.append(entry)
-            if len(activities) < replay_limit:
-                try:
-                    replay = activity_data(source)
-                    replay["name"] = entry["name"]
-                    if replay["models"]:
-                        activities[run["run_id"]] = replay
-                        entry["hasReplay"] = True
-                    else:
-                        entry["replayUnavailable"] = "No supported saved tool trace. Use per-attempt evidence."
-                except (OSError, ValueError, TypeError, KeyError) as exc:
-                    entry["replayUnavailable"] = f"Replay could not be indexed: {exc}"
         except (OSError, ValueError, TypeError, KeyError, AttributeError, ZeroDivisionError) as exc:
             # One corrupt run must not hide the rest of the library.
             unreadable.append({"path": str(original), "error": str(exc)})
+    # A library can compare conditions saved in separate runs. Use the same
+    # complete label context in its summaries and embedded replays.
+    label_targets = [target["target"] for entry in runs for target in entry["targets"]]
+    for entry in runs:
+        for target in entry["targets"]:
+            target["label"] = target_label(target["target"], label_targets)
+        if len(activities) < replay_limit:
+            try:
+                replay = activity_data(entry["source"], label_targets=label_targets)
+                replay["name"] = entry["name"]
+                if replay["models"]:
+                    activities[entry["id"]] = replay
+                    entry["hasReplay"] = True
+                else:
+                    entry["replayUnavailable"] = "No supported saved tool trace. Use per-attempt evidence."
+            except (OSError, ValueError, TypeError, KeyError, AttributeError) as exc:
+                entry["replayUnavailable"] = f"Replay could not be indexed: {exc}"
     return {
         "version": 1, "directory": str(directory), "snapshotAt": datetime.now(timezone.utc).isoformat(),
         "runs": runs, "activities": activities, "unreadable": unreadable, "warnings": warnings,

@@ -293,6 +293,53 @@ def _validate_protocols(runs):
     return summary
 
 
+def _missing_runner_version_prefix(row):
+    """Recognize the upstream adapter's placeholder, not arbitrary version labels."""
+    upstream = row.get("upstream")
+    if not isinstance(upstream, dict) or upstream.get("harness") not in ("harbor", "aws-bench"):
+        return None
+    info = upstream.get("agent_info")
+    if not isinstance(info, dict) or info.get("version"):
+        return None
+    # import_trial emits unavailable when agent_info lacks a version, including
+    # when no result was saved. execute_suite prefixes the harness and runner.
+    harness = upstream["harness"]
+    prefix, separator, agent = row["runner_version"].partition("; ")
+    if (not separator or not prefix.startswith(harness + "/") or prefix == harness + "/"
+            or agent != row["target"]["runner"] + "/unavailable"):
+        return None
+    return prefix + "; " + row["target"]["runner"] + "/"
+
+
+def _resolve_missing_versions(observations):
+    """Keep missing evidence in its complete panel without inventing observations."""
+    panels = defaultdict(list)
+    for observation in observations:
+        row = observation["row"]
+        prefix = _missing_runner_version_prefix(row)
+        observation["recorded_identity_key"] = observation["identity_key"]
+        observation["runner_version_missing"] = prefix is not None
+        panel = (observation["run_id"], observation["target_id"], _target_key(row["target"], None))
+        panels[panel].append((observation, prefix))
+    for rows in panels.values():
+        versions = {observation["row"]["runner_version"] for observation, prefix in rows if prefix is None}
+        if len(versions) != 1:
+            continue  # All missing stays unknown; real changes keep the strict identity gates.
+        version = next(iter(versions))
+        for observation, prefix in rows:
+            if prefix is not None and version.startswith(prefix):
+                observation["identity"]["runner_version"] = version
+                observation["identity_key"] = _target_key(observation["row"]["target"], version)
+    # Label aliases cannot turn resolved missing evidence into extra repetitions.
+    seen_slots = set()
+    for observation in observations:
+        slot = tuple(observation[key] for key in ("run_id", "identity_key", "task_id", "repetition"))
+        if slot in seen_slots:
+            raise ValueError("Duplicate attempt task/repetition slot after resolving missing version evidence: "
+                             f"{observation['run_id']}/{observation['attempt_id']}")
+        seen_slots.add(slot)
+
+
 def _select(selector, observations, role):
     if isinstance(selector, str):
         _text(selector, role)
@@ -329,8 +376,13 @@ def _select(selector, observations, role):
         details = {row["identity_key"]: row["identity"] for row in matches}
         raise ValueError(f"Ambiguous {role} selector: versions/settings resolve to multiple identities: "
                          f"{json.dumps(details, sort_keys=True)}. Select a full identity_key or explicit run_ids.")
+    known_versions = [row["row"]["runner_version"] for row in matches if not row["runner_version_missing"]]
     return {
         "selector": selector, "identity_key": matches[0]["identity_key"],
+        "runner_version_evidence": {
+            "known_versions": sorted(set(known_versions)), "known_attempts": len(known_versions),
+            "missing_attempts": len(matches) - len(known_versions),
+        },
         "identity": matches[0]["identity"],
         "target_ids": sorted({row["target_id"] for row in matches}),
         "run_ids": sorted({row["run_id"] for row in matches}),
@@ -468,6 +520,7 @@ def _build(runs, sources, baseline, candidate, resamples, seed):
                 "target_id": row["target"]["id"], "task_id": row["task_id"],
                 "attempt_id": row["attempt_id"], "repetition": row["repetition"], "row": row,
             })
+    _resolve_missing_versions(observations)
     observations.sort(key=lambda row: (row["task_id"], row["repetition"], row["run_id"], row["attempt_id"]))
     selections, selected = {}, {}
     for role, selector in (("baseline", baseline), ("candidate", candidate)):
@@ -550,7 +603,9 @@ def _build(runs, sources, baseline, candidate, resamples, seed):
             saved = row["row"]
             attempts.append({
                 **{key: row[key] for key in ("run_id", "source", "source_sha256", "identity_key",
+                                             "recorded_identity_key", "runner_version_missing",
                                              "target_id", "task_id", "attempt_id", "repetition")},
+                "runner_version": saved["runner_version"],
                 "role": role, "fixture_key": fixtures[row["task_id"], row["repetition"]]["fixture_key"],
                 "status": saved["status"], "success": saved["success"],
                 "wall_seconds": saved["wall_seconds"], "agent_wall_seconds": saved.get("agent_wall_seconds"),
@@ -595,6 +650,13 @@ def _build(runs, sources, baseline, candidate, resamples, seed):
                             "message": "Some upstream attempts lack task checksums, including possible missing "
                                        "trial results. They are retained; fixture pairing relies on the shared "
                                        "recorded protocol for these observations."})
+    if any(row["runner_version_missing"] for rows in selected.values() for row in rows):
+        limitations.append({"code": "missing_runner_version",
+                            "message": "Some upstream agent versions were not recorded. These attempts remain "
+                                       "included, grouped with a sole observed version only within the same run, "
+                                       "target ID, settings, and recorded harness version. This does not establish "
+                                       "their actual version. All-missing panels retain their recorded placeholder; "
+                                       "attempt exports and selection evidence counts preserve the uncertainty."})
     if any(row["cost_coverage"] < 1 for row in aggregates.values()):
         limitations.append({"code": "unknown_spend",
                             "message": "Some attempt costs are unknown. Full totals and affected cost deltas "
@@ -765,7 +827,8 @@ def _exports(data):
             row.update({f"{role}_{key}": task[role][key] for key in summary_fields})
         row.update({f"delta_{key}": value for key, value in task["deltas"].items()})
         task_rows.append(row)
-    attempt_fields = ("role", "identity_key", "target_id", "run_id", "source", "source_sha256",
+    attempt_fields = ("role", "identity_key", "recorded_identity_key", "runner_version", "runner_version_missing",
+                      "target_id", "run_id", "source", "source_sha256",
                       "task_id", "repetition", "fixture_key", "task_checksum", "attempt_id",
                       "status", "success", "wall_seconds", "agent_wall_seconds", "cost_usd",
                       "known_cost_subtotal_usd", "cost_basis", "accounting_complete")

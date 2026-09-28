@@ -74,6 +74,25 @@ tier, routing, requested agent version, skill paths and digests where recorded,
 and any additional saved target settings. Paths are not normalized into a
 different identity.
 
+Harbor/AWS-Bench attempts can record `<harness>/<version>; <runner>/unavailable`
+when `upstream.agent_info` contains no version, including after a timeout
+without a saved trial result. The comparison recognizes this specific missing
+evidence. Within the same run, target ID, and exact target settings, those
+attempts join the sole observed version's identity only when the recorded
+harness version also matches. Selecting that known key or the target ID then
+retains the full panel, including failed attempts and their accounting. Evidence
+is never borrowed from other runs or target IDs. Arbitrary version labels and
+placeholders contradicted by recorded version evidence remain distinct.
+
+This grouping does not establish the missing attempts' actual version. Each
+selection's `runner_version_evidence` lists `known_versions`, `known_attempts`,
+and `missing_attempts`. JSON and `ATTEMPTS.csv` preserve each attempt's original
+`runner_version` and `recorded_identity_key`, plus `runner_version_missing`;
+`identity_key` is the comparison grouping. A `missing_runner_version` limitation
+also appears in the summary. If every version is missing, the panel keeps its
+recorded placeholder identity and reports zero known attempts. A genuine
+version change still triggers ambiguity or the incomplete-panel gate.
+
 Ambiguity errors list the matching keys and exact identities. A selector cannot
 hide a partial target run where versions/settings changed between attempts.
 The two selections must have disjoint `(run_id, attempt_id)` observations.
@@ -139,14 +158,14 @@ The schema is a saved analysis, not a new result-run schema.
 | `evidence_type`, `synthetic`, `validation_only` | Explicit synthetic/reference/live classification |
 | `protocol_hash`, `protocol`, `scope` | Shared hash, recorded body if available, inference cost scope |
 | `sources[]` | Exact input provenance and optional checked accounting review provenance |
-| `selections.baseline`, `.candidate` | Input selector, resolved identity/key, labels, run IDs, attempt count |
+| `selections.baseline`, `.candidate` | Input selector, resolved identity/key, labels, run IDs, attempt count and runner-version evidence |
 | `identity_differences[]` | Field, baseline value, candidate value for differing recorded identity fields |
 | `pairing` | Task count, repetitions, fixture strata, counts per side, run-pairing policy, exclusions |
 | `method` | Effect direction, task weights, bootstrap unit, seed, configured/performed draw counts, quantile and undefined-draw policy |
 | `aggregates.baseline`, `.candidate` | Existing accounting aggregates plus mean wall/agent seconds and agent-time coverage |
 | `metrics` | Task-balanced point estimates and paired-delta intervals described below |
 | `tasks[]` | Task ID, equal weight, fixture records, both side aggregates, task-specific deltas |
-| `attempts[]` | Every selected observation with role, run/source/key, fixture, outcome, both durations and accounting |
+| `attempts[]` | Every selected observation with role, run/source/key, original version/key and missing-evidence flag, fixture, outcome, both durations and accounting |
 | `success_by_budget` | Separate wall/agent curve status, missing counts and descriptive points |
 | `limitations[]` | Stable reason codes plus explanatory messages |
 | `artifacts` | Relative output filenames |

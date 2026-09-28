@@ -198,7 +198,7 @@
             const snapshot = {
               modelContent: {
                 tool: "Bedrock Bench run activity", mode: "selected model replay", runId: data.runId,
-                source: data.source, model: model.model, task: model.task, attempt: model.attempt,
+                source: data.source, model: model.model, targetId: model.targetId, task: model.task, attempt: model.attempt,
                 callId: call?.recordedCallId, toolName: call?.tool,
                 replaySeconds: round(state.models[model.id].time), timeOrigin: "selected model agent start",
               },
@@ -306,7 +306,7 @@
           async function askFor(action) {
             pause(model); state.focus = model.id; save();
             const selected = {
-              run: data.runId, source: data.source, model: model.model, attempt: model.attempt,
+              run: data.runId, source: data.source, model: model.model, targetId: model.targetId, attempt: model.attempt,
               task: model.task, callId: call.recordedCallId, tool: call.tool, trace: call.source,
               agentReplaySeconds: round(state.models[model.id].time)
             };

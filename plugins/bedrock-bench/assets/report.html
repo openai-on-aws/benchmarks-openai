@@ -131,6 +131,20 @@
       const root = document.getElementById("bedrock-bench-report");
       const data = JSON.parse(root.querySelector("#bb-data").textContent);
       const get = id => root.querySelector("#" + id);
+      // Mirror activity.target_label; labels never replace target or attempt keys.
+      function targetLabel(target, targets = []) {
+        let label;
+        if (target.runner === "oracle") label = "Reference solution";
+        else if (target.runner === "nop") label = "Unchanged baseline";
+        else {
+          const model = target.model || "", match = /^openai\.gpt-\d+-([a-z]+)$/.exec(model);
+          label = match ? match[1][0].toUpperCase() + match[1].slice(1) : target.id || model || "Unknown model";
+        }
+        return target.id && label !== target.id && targets.some(other => other.id !== target.id && targetLabel(other) === label)
+          ? label + " · " + target.id : label;
+      }
+      const labelTargets = data.attempts.map(row => row.target);
+      const targetNames = new Map(data.targets.map(row => [row.key, targetLabel(row.target, labelTargets)]));
       const state = { task: "", runner: "", target: "", attempt: "", outcome: "" };
       const basisNames = { synthetic: "Synthetic", provider_reported: "Provider reported", rate_card_estimate: "Rate card estimate", runner_estimate: "Runner estimate", reference_no_model: "No model calls" };
       const pretty = value => value == null ? "Not reported" : typeof value === "object" ? JSON.stringify(value, null, 2) : String(value);
@@ -198,7 +212,7 @@
         for (const row of targets) {
           const line = element("div", "bb-row bb-result"); line.dataset.selected = String(row.key === state.target);
           const button = element("button", "bb-target cursor-interaction"); button.type = "button"; button.setAttribute("aria-pressed", String(row.key === state.target));
-          button.append(element("span", "bb-target-name", row.target.id), element("span", "bb-target-info", [row.target.runner, row.target.provider, row.target.model].join(" / ")));
+          button.append(element("span", "bb-target-name", targetNames.get(row.key)), element("span", "bb-target-info", [row.target.runner, row.target.provider, row.target.model].join(" / ")));
           button.addEventListener("click", () => { state.target = row.key; state.attempt = ""; render(); save(); });
           const costText = !row.successes ? "No successes" : dollars(row.cost_per_success_usd);
           const basis = (row.cost_basis || []).map(item => basisNames[item] || item).join(", ");
@@ -212,7 +226,7 @@
       }
       function showDetail() {
         const target = data.targets.find(row => row.key === state.target);
-        get("bb-detail-title").textContent = target ? target.target.id + " · attempt evidence" : "Attempt evidence";
+        get("bb-detail-title").textContent = target ? targetNames.get(target.key) + " · attempt evidence" : "Attempt evidence";
         const rows = data.attempts.filter(row => row.target_key === state.target && (!state.task || row.task_id === state.task)
           && (!state.outcome || (state.outcome === "passed" ? row.success === true : row.success !== true)));
         if (!rows.some(row => row.key === state.attempt)) state.attempt = (rows.find(row => !row.success) || rows[0])?.key || "";
@@ -242,7 +256,7 @@
           ["Known-cost subtotal", dollars(row.known_cost_subtotal_usd)], ["Agent-only time", seconds(row.agent_wall_seconds)], ["Usage granularity", row.usage_granularity]
         ])));
         detail.append(disclosure("Model and runner settings", fields([
-          ["Runner", row.target.runner], ["Runner version", row.runner_version], ["Provider", row.target.provider],
+          ["Target / condition", row.target.id], ["Runner", row.target.runner], ["Runner version", row.runner_version], ["Provider", row.target.provider],
           ["Model", row.target.model], ["Region", row.target.region], ["Reasoning", row.target.reasoning_effort],
           ["Service tier", row.target.service_tier], ["Skill hashes", row.target.skill_sha256], ["Grader rewards", row.grading?.rewards]
         ])));

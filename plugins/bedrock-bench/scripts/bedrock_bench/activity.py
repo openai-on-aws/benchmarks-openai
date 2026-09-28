@@ -33,14 +33,25 @@ def timestamp(value):
     return result.timestamp()
 
 
-def target_label(target):
+def target_label(target, targets=()):
+    """Keep friendly names unless distinct target IDs would share one.
+
+    Count conditions, not repeated attempts. The report template mirrors this
+    rule because its saved data also supports standalone browser rendering.
+    """
     if target.get("runner") == "oracle":
-        return "Reference solution"
-    if target.get("runner") == "nop":
-        return "Unchanged baseline"
-    model = target.get("model", "")
-    match = re.fullmatch(r"openai\.gpt-\d+-([a-z]+)", model)
-    return match[1].capitalize() if match else target.get("id") or model or "Unknown model"
+        label = "Reference solution"
+    elif target.get("runner") == "nop":
+        label = "Unchanged baseline"
+    else:
+        model = target.get("model", "")
+        match = re.fullmatch(r"openai\.gpt-\d+-([a-z]+)", model)
+        label = match[1].capitalize() if match else target.get("id") or model or "Unknown model"
+    identifier = target.get("id")
+    if identifier and label != identifier and any(
+            other.get("id") != identifier and target_label(other) == label for other in targets):
+        return f"{label} · {identifier}"
+    return label
 
 
 def _text(value, limit):
@@ -155,7 +166,7 @@ def _session(path, root, origin, agent_end):
     }
 
 
-def _attempt_activity(root, row, origin, budget):
+def _attempt_activity(root, row, origin, budget, label_targets):
     upstream = row.get("upstream") or {}
     if row.get("target", {}).get("runner") != "codex" or upstream.get("harness") != "harbor":
         raise ValueError("Replay currently supports saved Harbor/Codex sessions")
@@ -197,7 +208,8 @@ def _attempt_activity(root, row, origin, budget):
     prompt, prompt_clipped = _text(prompt, PROMPT_CHARS)
     return {
         "id": "m-" + fingerprint(row["attempt_id"])[:16],
-        "name": target_label(row["target"]), "model": row["target"]["model"],
+        "name": target_label(row["target"], label_targets), "model": row["target"]["model"],
+        "targetId": row["target"]["id"],
         "region": row["target"].get("region"), "attempt": row["attempt_id"],
         "task": row["task_id"], "repetition": row.get("repetition"),
         "agent": {"start": start - origin, "end": end - origin},
@@ -208,10 +220,12 @@ def _attempt_activity(root, row, origin, budget):
     }
 
 
-def activity_data(source, *, attempt=None):
+def activity_data(source, *, attempt=None, label_targets=()):
     source = Path(source).expanduser().resolve()
     run = load_run(source)
     root = source.parent
+    # Keep condition names even when an attempt is filtered, clipped, or has no replay.
+    label_targets = [row.get("target", {}) for row in run["attempts"]] + list(label_targets)
     rows = [row for row in run["attempts"] if attempt is None or row.get("attempt_id") == attempt]
     if attempt is not None and len(rows) != 1:
         raise ValueError(f"Expected one attempt named {attempt!r}; found {len(rows)}")
@@ -220,7 +234,7 @@ def activity_data(source, *, attempt=None):
     models, unavailable = [], []
     for row in rows[:MAX_ATTEMPTS]:
         try:
-            models.append(_attempt_activity(root, row, origin, budget))
+            models.append(_attempt_activity(root, row, origin, budget, label_targets))
         except (OSError, ValueError, KeyError, TypeError, AttributeError) as exc:
             unavailable.append({"attempt": row.get("attempt_id"), "reason": str(exc)})
     if len(rows) > MAX_ATTEMPTS:

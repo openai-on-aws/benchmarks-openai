@@ -138,6 +138,106 @@ class SavedViewTests(unittest.TestCase):
         source.write_text(json.dumps(run))
         return source, run, session, records
 
+    def copy_trace_attempt(self, source, row, attempt_id, **changes):
+        copied = copy.deepcopy(row)
+        before, after = f"attempts/{row['attempt_id']}", f"attempts/{attempt_id}"
+        shutil.copytree(source.parent / before, source.parent / after)
+        copied.update(attempt_id=attempt_id, **changes)
+        for field in ("trace", "workspace"):
+            copied[field] = row[field].replace(before, after, 1)
+        return copied
+
+    def condition_trace(self):
+        source, run, session, _ = self.trace()
+        baseline = run["attempts"][0]
+        baseline["target"].update(id="baseline--sol", skills=[])
+        candidate = self.copy_trace_attempt(
+            source, baseline, "attempt-2",
+            target={**baseline["target"], "id": "aws-skills--sol", "skills": ["aws-cdk"]},
+        )
+        run["attempts"].append(candidate)
+        source.write_text(json.dumps(run))
+        return source, run, session
+
+    def test_same_model_conditions_keep_distinct_library_and_replay_labels_and_ids(self):
+        source, run, _ = self.condition_trace()
+        expected = {"baseline--sol": "Sol · baseline--sol", "aws-skills--sol": "Sol · aws-skills--sol"}
+        replay = activity_data(source)
+        self.assertEqual({model["targetId"]: model["name"] for model in replay["models"]}, expected)
+        self.assertEqual(len({model["id"] for model in replay["models"]}), 2)
+        self.assertEqual(len({(model["task"], model["repetition"]) for model in replay["models"]}), 1)
+        self.assertEqual({model["attempt"] for model in replay["models"]}, {"attempt-1", "attempt-2"})
+        first, second = replay["models"]
+        self.assertEqual(first["calls"][0]["recordedCallId"], second["calls"][0]["recordedCallId"])
+        self.assertNotEqual(first["calls"][0]["id"], second["calls"][0]["id"])
+        for model in replay["models"]:
+            selected = activity_data(source, attempt=model["attempt"])["models"][0]
+            self.assertEqual(selected, model)
+
+        library = library_data(source.parent)
+        self.assertEqual({row["target"]["id"]: row["label"] for row in library["runs"][0]["targets"]}, expected)
+        self.assertEqual(library["activities"][run["run_id"]]["models"], replay["models"])
+        path = write_library(source.parent, self.directory / "conditions-library", inline=True)
+        embedded = json.loads(ViewParser(path.read_text()).data["bl-data"])
+        self.assertEqual({row["label"] for row in embedded["runs"][0]["targets"]}, set(expected.values()))
+
+    def test_repeated_attempts_add_task_and_repetition_after_the_condition(self):
+        source, run, _ = self.condition_trace()
+        for index, row in enumerate(list(run["attempts"]), 3):
+            run["attempts"].append(self.copy_trace_attempt(source, row, f"attempt-{index}", repetition=2))
+        source.write_text(json.dumps(run))
+        replay = activity_data(source)
+        self.assertEqual({model["name"] for model in replay["models"]}, {
+            f"Sol · {condition} · {run['attempts'][0]['task_id']} · #{repetition}"
+            for condition in ("baseline--sol", "aws-skills--sol") for repetition in (1, 2)
+        })
+        self.assertEqual(len({model["id"] for model in replay["models"]}), 4)
+        for model in replay["models"]:
+            selected = activity_data(source, attempt=model["attempt"])["models"][0]
+            self.assertEqual(selected["id"], model["id"])
+            self.assertEqual(selected["calls"], model["calls"])
+            self.assertEqual(selected["name"], f"Sol · {model['targetId']}")
+
+    def test_missing_or_limited_traces_do_not_hide_other_conditions(self):
+        source, _, session = self.condition_trace()
+        full = activity_data(source)
+        with patch("bedrock_bench.activity.MAX_ATTEMPTS", 1):
+            limited = activity_data(source)
+        self.assertEqual(limited["models"], full["models"][:1])
+        session.unlink()
+        missing = activity_data(source)
+        self.assertEqual(missing["models"], full["models"][1:])
+        self.assertEqual(missing["unavailable"][0]["attempt"], "attempt-1")
+
+    def test_distinct_models_keep_clean_labels_and_existing_replay_identity(self):
+        source, run, _ = self.condition_trace()
+        shared = activity_data(source)
+        run["attempts"][1]["target"].update(id="test-terra", model="openai.gpt-6-terra")
+        source.write_text(json.dumps(run))
+        distinct = activity_data(source)
+        self.assertEqual([model["name"] for model in distinct["models"]], ["Sol", "Terra"])
+        self.assertEqual([model["id"] for model in distinct["models"]], [model["id"] for model in shared["models"]])
+        self.assertEqual([model["calls"] for model in distinct["models"]], [model["calls"] for model in shared["models"]])
+        library = library_data(source.parent)
+        self.assertEqual([row["label"] for row in library["runs"][0]["targets"]], ["Sol", "Terra"])
+        self.assertEqual(library["activities"][run["run_id"]]["models"], distinct["models"])
+
+    def test_library_disambiguates_conditions_saved_in_separate_runs(self):
+        for name, target_id, skills in (("baseline-run", "baseline--sol", []),
+                                        ("skills-run", "aws-skills--sol", ["aws-cdk"])):
+            source, run, _, _ = self.trace(name)
+            run["attempts"][0]["target"].update(id=target_id, skills=skills)
+            source.write_text(json.dumps(run))
+            self.assertEqual(activity_data(source)["models"][0]["name"], "Sol")
+        library = library_data(self.results)
+        for run in library["runs"]:
+            if run["id"] not in {"baseline-run", "skills-run"}:
+                continue
+            target = run["targets"][0]
+            expected = "Sol · " + target["target"]["id"]
+            self.assertEqual(target["label"], expected)
+            self.assertEqual(library["activities"][run["id"]]["models"][0]["name"], expected)
+
     def test_library_preserves_accounting_and_compatible_groups(self):
         _, second = self.copy_run("matching")
         self.copy_run("reference", synthetic=False, validation_only=True)

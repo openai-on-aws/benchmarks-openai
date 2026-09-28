@@ -69,6 +69,35 @@ def fixture(name="paired_mixed_outcomes", *, run_id="analytical-fixture", repeat
     return run
 
 
+def upstream_fixture(*, run_id="upstream-fixture", harness="harbor"):
+    """Invented observations in execute_suite's saved schema; no harness execution."""
+    run = fixture(run_id=run_id)
+    run.update(synthetic=False, name="Invented upstream observations")
+    suite = "terminal-bench" if harness == "harbor" else "aws-bench"
+    run["experiment"].update(suite=suite, harness=harness)
+    run["protocol"]["suite"] = suite
+    run["protocol_hash"] = fingerprint(run["protocol"])
+    for target in run["experiment"]["targets"]:
+        target.update(runner="codex", provider="openai")
+    for row in run["attempts"]:
+        row["target"].update(runner="codex", provider="openai")
+        row.update(runner_version=f"{harness}/0.23.0; codex/0.125.0", cost_basis=["provider_reported"])
+        row["upstream"] = {
+            "harness": harness, "result": "upstream/trial/result.json",
+            "agent_info": {"name": "codex", "version": "0.125.0"},
+            "task_checksum": "fixture-" + row["task_id"],
+        }
+    return run
+
+
+def missing_upstream_version(row):
+    row["runner_version"] = row["runner_version"].rsplit("/", 1)[0] + "/unavailable"
+    row["upstream"].update(result=None, agent_info={}, task_checksum=None)
+    row.update(status="timeout", success=False, agent_wall_seconds=None,
+               cost_usd=None, known_cost_subtotal_usd=1.25, accounting_complete=False,
+               cost_basis=["provider_reported", "unknown"])
+
+
 def retask(run, tasks):
     run["experiment"]["tasks"] = list(tasks)
     run["protocol"]["sources"] = [s for s in run["protocol"]["sources"] if s["name"] in tasks]
@@ -465,6 +494,202 @@ class ResearchComparisonTests(unittest.TestCase):
         run["attempts"][0]["upstream"] = {"task_id": {"git_commit_id": "other-commit"}}
         self.assert_rejected(run)
 
+    def test_missing_upstream_version_keeps_timeout_for_target_and_exact_selectors(self):
+        for harness in ("harbor", "aws-bench"):
+            run = upstream_fixture(harness=harness)
+            timeout = next(row for row in run["attempts"] if row["status"] == "timeout")
+            version = timeout["runner_version"]
+            key = _target_key(timeout["target"], version)
+            missing_upstream_version(timeout)
+            recorded_key = _target_key(timeout["target"], timeout["runner_version"])
+            source = self.save(run)
+            original = source.read_bytes()
+            for selector in ("candidate", key, {"target_id": "candidate", "identity_key": key,
+                                               "run_ids": [run["run_id"]]}):
+                with self.subTest(harness=harness, selector=selector):
+                    data, path = self.analyze([source], candidate=selector)
+                    selection = data["selections"]["candidate"]
+                    self.assertEqual(selection["identity_key"], key)
+                    self.assertEqual(selection["identity"]["runner_version"], version)
+                    self.assertEqual(selection["runner_version_evidence"], {
+                        "known_versions": [version], "known_attempts": 5, "missing_attempts": 1,
+                    })
+                    self.assertEqual(len(data["attempts"]), 12)
+                    self.assertEqual(data["pairing"]["attempts_per_side"], 6)
+                    self.assertEqual(data["pairing"]["excluded"], [])
+                    candidate = data["aggregates"]["candidate"]
+                    self.assertEqual(candidate["successes"], 4)
+                    self.assertEqual(candidate["failures"], {"timeout": 1, "incomplete": 1})
+                    self.assertIsNone(candidate["total_cost_usd"])
+                    self.assertAlmostEqual(candidate["known_cost_subtotal_usd"], 10.25)
+                    self.assertAlmostEqual(candidate["cost_coverage"], 5 / 6)
+                    self.assertIsNone(data["metrics"]["cost_per_attempt_usd"]["delta"])
+                    self.assertIsNone(data["metrics"]["cost_per_success_usd"]["delta"])
+                    self.assertAlmostEqual(data["metrics"]["success_rate"]["delta"], 1 / 6)
+                    saved = next(row for row in data["attempts"] if row["attempt_id"] == timeout["attempt_id"])
+                    self.assertEqual(saved["runner_version"], timeout["runner_version"])
+                    self.assertEqual(saved["recorded_identity_key"], recorded_key)
+                    self.assertEqual(saved["identity_key"], key)
+                    self.assertTrue(saved["runner_version_missing"])
+                    final = data["success_by_budget"]["wall_seconds"]["points"][-1]
+                    self.assertEqual((final["role"], final["attempts"], final["failed_ended_attempts"]),
+                                     ("candidate", 6, 2))
+                    with (path.parent / "ATTEMPTS.csv").open(newline="") as stream:
+                        exported = next(row for row in csv.DictReader(stream) if row["status"] == "timeout")
+                    self.assertEqual(exported["runner_version"], timeout["runner_version"])
+                    self.assertEqual(exported["recorded_identity_key"], recorded_key)
+                    self.assertEqual(exported["cost_usd"], "")
+                    self.assertEqual(float(exported["known_cost_subtotal_usd"]), 1.25)
+                    self.assertIn("missing_runner_version", {item["code"] for item in data["limitations"]})
+                    self.assertEqual(source.read_bytes(), original)
+
+    def test_missing_upstream_version_keeps_known_failure_spend(self):
+        run = upstream_fixture()
+        row = next(row for row in run["attempts"] if row["status"] == "timeout")
+        missing_upstream_version(row)
+        row.update(cost_usd=5, known_cost_subtotal_usd=5, accounting_complete=True,
+                   cost_basis=["provider_reported"])
+        data, _ = self.analyze([self.save(run)])
+        candidate = data["aggregates"]["candidate"]
+        self.assertEqual(candidate["attempts"], 6)
+        self.assertEqual(candidate["total_cost_usd"], 14)
+        self.assertEqual(candidate["known_cost_subtotal_usd"], 14)
+        self.assertEqual(candidate["cost_coverage"], 1)
+        self.assertEqual(candidate["cost_per_success_usd"], 3.5)
+        self.assertAlmostEqual(data["metrics"]["cost_per_success_usd"]["delta"], 1 / 6)
+
+    def test_resolving_missing_versions_preserves_duplicate_identity_slot_gate(self):
+        run = upstream_fixture()
+        for target in run["experiment"]["targets"]:
+            target["model"] = "same-model"
+        for row in run["attempts"]:
+            row["target"]["model"] = "same-model"
+            if (row["target"]["id"] == "baseline") == (row["repetition"] == 1):
+                missing_upstream_version(row)
+        with self.assertRaisesRegex(ValueError, "Duplicate attempt task/repetition slot"):
+            self.analyze([self.save(run)])
+
+    def test_all_missing_upstream_versions_keep_unknown_identity_and_failed_attempts(self):
+        run = upstream_fixture()
+        for row in run["attempts"]:
+            missing_upstream_version(row)
+        source = self.save(run)
+        candidate = next(row for row in run["attempts"] if row["target"]["id"] == "candidate")
+        for selector in ("candidate", _target_key(candidate["target"], candidate["runner_version"])):
+            with self.subTest(selector=selector):
+                data, _ = self.analyze([source], candidate=selector)
+                self.assertEqual(len(data["attempts"]), 12)
+                self.assertEqual(data["pairing"]["excluded"], [])
+                for role in ("baseline", "candidate"):
+                    selection = data["selections"][role]
+                    self.assertEqual(selection["identity"]["runner_version"], "harbor/0.23.0; codex/unavailable")
+                    self.assertEqual(selection["runner_version_evidence"], {
+                        "known_versions": [], "known_attempts": 0, "missing_attempts": 6,
+                    })
+                    aggregate = data["aggregates"][role]
+                    self.assertEqual(aggregate["failures"], {"timeout": 6})
+                    self.assertIsNone(aggregate["total_cost_usd"])
+                    self.assertEqual(aggregate["known_cost_subtotal_usd"], 7.5)
+                    self.assertEqual(aggregate["cost_coverage"], 0)
+                self.assertTrue(all(row["runner_version_missing"] for row in data["attempts"]))
+                self.assertIn("missing_runner_version", {item["code"] for item in data["limitations"]})
+
+    def test_missing_upstream_version_does_not_hide_real_version_changes(self):
+        for status in ("completed", "runner_error"):
+            run = upstream_fixture()
+            timeout = next(row for row in run["attempts"] if row["status"] == "timeout")
+            original_key = _target_key(timeout["target"], timeout["runner_version"])
+            missing_upstream_version(timeout)
+            changed = next(row for row in run["attempts"]
+                           if row["target"]["id"] == "candidate" and row["success"])
+            changed.update(runner_version="harbor/0.23.0; codex/0.126.0",
+                           status=status, success=status == "completed")
+            changed["upstream"]["agent_info"]["version"] = "0.126.0"
+            changed_key = _target_key(changed["target"], changed["runner_version"])
+            source = self.save(run)
+            with self.subTest(status=status):
+                with self.assertRaisesRegex(ValueError, "Ambiguous candidate selector"):
+                    self.analyze([source])
+                for key in (original_key, changed_key):
+                    with self.assertRaisesRegex(ValueError, "incomplete task/repetition panel"):
+                        self.analyze([source], candidate=key)
+
+    def test_arbitrary_versions_and_recorded_version_evidence_are_not_missing(self):
+        for version, info in (
+            ("harbor/0.23.0; codex/unknown", {}),
+            ("harbor/0.23.0; codex/dev-unavailable", {}),
+            ("unavailable", {}),
+            ("codex/unavailable", {}),
+            ("harbor/0.23.0; codex/unavailable", {"version": "unavailable"}),
+            ("harbor/0.23.0; codex/unavailable", {"version": "0.126.0"}),
+            ("harbor/0.23.0; codex/unavailable", None),
+        ):
+            run = upstream_fixture()
+            row = next(row for row in run["attempts"] if row["status"] == "timeout")
+            key = _target_key(row["target"], row["runner_version"])
+            missing_upstream_version(row)
+            row["runner_version"] = version
+            row["upstream"]["agent_info"] = info
+            source = self.save(run)
+            with self.subTest(version=version, info=info):
+                with self.assertRaisesRegex(ValueError, "Ambiguous candidate selector"):
+                    self.analyze([source])
+                with self.assertRaisesRegex(ValueError, "incomplete task/repetition panel"):
+                    self.analyze([source], candidate=key)
+
+    def test_missing_version_in_saved_trial_is_not_limited_to_timeout_status(self):
+        for status in ("runner_error", "incomplete", "task_failed", "completed"):
+            run = upstream_fixture()
+            row = next(row for row in run["attempts"] if row["status"] == "timeout")
+            missing_upstream_version(row)
+            row.update(status=status, success=status == "completed")
+            row["upstream"].update(result="upstream/trial/result.json",
+                                   agent_info={"name": "codex", "version": None})
+            with self.subTest(status=status):
+                data, _ = self.analyze([self.save(run)])
+                self.assertEqual(data["selections"]["candidate"]["attempts"], 6)
+                self.assertEqual(data["selections"]["candidate"]["runner_version_evidence"]["missing_attempts"], 1)
+
+    def test_missing_versions_do_not_borrow_evidence_from_other_runs_or_target_ids(self):
+        known, missing = upstream_fixture(run_id="known"), upstream_fixture(run_id="missing")
+        for row in missing["attempts"]:
+            missing_upstream_version(row)
+        sources = [self.save(known), self.save(missing)]
+        with self.assertRaisesRegex(ValueError, "Ambiguous baseline selector"):
+            self.analyze(sources)
+        data, _ = self.analyze(sources,
+                               baseline={"target_id": "baseline", "run_ids": ["missing"]},
+                               candidate={"target_id": "candidate", "run_ids": ["missing"]})
+        self.assertEqual(data["selections"]["candidate"]["runner_version_evidence"]["known_versions"], [])
+        run = upstream_fixture()
+        for target in run["experiment"]["targets"]:
+            target["model"] = "same-model"
+        for row in run["attempts"]:
+            row["target"]["model"] = "same-model"
+            if row["target"]["id"] == "candidate":
+                missing_upstream_version(row)
+        data, _ = self.analyze([self.save(run)])
+        self.assertEqual(data["selections"]["candidate"]["runner_version_evidence"]["known_versions"], [])
+        self.assertNotEqual(data["selections"]["baseline"]["identity_key"],
+                            data["selections"]["candidate"]["identity_key"])
+
+    def test_missing_versions_do_not_erase_harness_or_observed_settings_changes(self):
+        for change in ("harness", "settings"):
+            run = upstream_fixture()
+            row = next(row for row in run["attempts"] if row["status"] == "timeout")
+            key = _target_key(row["target"], row["runner_version"])
+            missing_upstream_version(row)
+            if change == "harness":
+                row["runner_version"] = "harbor/0.24.0; codex/unavailable"
+            else:
+                row["target"]["skill_sha256"] = {"fixture-skill": "changed"}
+            source = self.save(run)
+            with self.subTest(change=change):
+                with self.assertRaisesRegex(ValueError, "Ambiguous candidate selector"):
+                    self.analyze([source])
+                with self.assertRaisesRegex(ValueError, "incomplete task/repetition panel"):
+                    self.analyze([source], candidate=key)
+
     def test_target_id_ambiguity_exact_keys_and_explicit_run_selection(self):
         original = fixture()
         changed = fixture(run_id="new-version")
@@ -667,7 +892,9 @@ class ResearchComparisonTests(unittest.TestCase):
         self.assertFalse((self.directory / "comparison-1").exists())
 
     def test_standalone_plugin_api_works_without_site_packages_repo_or_execution(self):
-        source = self.save(fixture())
+        run = upstream_fixture()
+        missing_upstream_version(next(row for row in run["attempts"] if row["status"] == "timeout"))
+        source = self.save(run)
         installed = self.directory / "standalone-plugin"
         shutil.copytree(PLUGIN / "scripts", installed / "scripts", ignore=shutil.ignore_patterns("__pycache__"))
         shutil.copytree(SKILL, installed / "skills/compare-experiments",
@@ -684,7 +911,8 @@ from bedrock_bench.research_compare import write_comparison
 path = write_comparison([sys.argv[2]], sys.argv[3], baseline="baseline", candidate="candidate")
 assert path.is_file()
 data = json.loads(path.with_suffix(".json").read_text())
-print(json.dumps({"delta": data["metrics"]["success_rate"]["delta"], "tasks": data["pairing"]["distinct_tasks"]}))
+print(json.dumps({"delta": data["metrics"]["success_rate"]["delta"], "tasks": data["pairing"]["distinct_tasks"],
+                  "missing_versions": data["selections"]["candidate"]["runner_version_evidence"]["missing_attempts"]}))
 """
         process = subprocess.run([sys.executable, "-I", "-S", "-B", "-c", code,
                                   str(installed / "scripts"), str(source), str(output)],
@@ -693,6 +921,7 @@ print(json.dumps({"delta": data["metrics"]["success_rate"]["delta"], "tasks": da
         result = json.loads(process.stdout)
         self.assertAlmostEqual(result["delta"], 1 / 6)
         self.assertEqual(result["tasks"], 3)
+        self.assertEqual(result["missing_versions"], 1)
 
     def test_current_engine_saved_demo_schema_is_accepted_without_inference(self):
         from bedrock_bench.config import Experiment, Target

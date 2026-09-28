@@ -60,6 +60,85 @@ class ExplorerTests(unittest.TestCase):
     def save(self, run=None):
         self.source.write_text(json.dumps(self.run if run is None else run))
 
+    def report_labels(self):
+        html = render_explorer([self.run], compare([self.run]), self.root, [self.source])
+        data = json.loads(ReportParser(html).data)
+        script = html.split("<script>", 1)[1].split("</script>", 1)[0]
+        # Execute the shipped report script with a minimal offline DOM. Exercise
+        # its actual buttons, labels and filters without a browser dependency.
+        harness = """
+const {readFileSync} = require("node:fs"), vm = require("node:vm");
+const input = JSON.parse(readFileSync(0, "utf8"));
+class Element {
+  constructor() { this.children = []; this.dataset = {}; this.style = {}; this.events = {}; }
+  append(...children) { this.children.push(...children); }
+  replaceChildren(...children) { this.children = children; }
+  setAttribute(name, value) { this[name] = value; }
+  addEventListener(name, handler) { this.events[name] = handler; }
+}
+const elements = new Map();
+const get = selector => {
+  if (!elements.has(selector)) elements.set(selector, new Element());
+  return elements.get(selector);
+};
+get("#bb-data").textContent = JSON.stringify(input.data);
+const root = {querySelector: get};
+const document = {getElementById: () => root, createElement: () => new Element()};
+vm.runInNewContext(input.script, {document, window: {addEventListener() {}}}, {timeout: 3000});
+const buttons = () => get("#bb-results").children.map(row => row.children[0]);
+const labels = () => buttons().map(button => button.children[0].textContent);
+const attempts = () => get("#bb-attempt").children.map(option => option.value);
+const rendered = buttons().map(button => {
+  const label = button.children[0].textContent;
+  button.events.click();
+  const result = {label, title: get("#bb-detail-title").textContent, attempts: attempts()};
+  get("#bb-task").value = input.data.tasks[0].task_id;
+  get("#bb-task").events.change();
+  result.filteredLabels = labels(); result.filteredAttempts = attempts();
+  get("#bb-task").value = ""; get("#bb-task").events.change();
+  return result;
+});
+process.stdout.write(JSON.stringify(rendered));
+"""
+        process = subprocess.run(
+            [shutil.which("node"), "-e", harness], input=json.dumps({"data": data, "script": script}),
+            text=True, capture_output=True, timeout=10,
+        )
+        self.assertEqual(process.returncode, 0, process.stderr)
+        return data, json.loads(process.stdout)
+
+    @unittest.skipUnless(shutil.which("node"), "Optional local Node runtime is unavailable")
+    def test_condition_labels_in_report_keep_attempts_distinct_after_filtering(self):
+        for row in self.run["attempts"]:
+            candidate = row["target"]["id"] == "fixture-imperfect"
+            row["target"].update(
+                id="aws-skills--sol" if candidate else "baseline--sol",
+                runner="codex", model="openai.gpt-6-sol", skills=["aws-cdk"] if candidate else [],
+            )
+        data, rendered = self.report_labels()
+        expected = {"baseline--sol": "Sol · baseline--sol", "aws-skills--sol": "Sol · aws-skills--sol"}
+        self.assertEqual({row["label"] for row in rendered}, set(expected.values()))
+        self.assertEqual(len({row["key"] for row in data["attempts"]}), 6)
+        for target, visible in zip(data["targets"], rendered):
+            label = expected[target["target"]["id"]]
+            self.assertEqual(visible["title"], label + " · attempt evidence")
+            attempts = [row for row in data["attempts"] if row["target_key"] == target["key"]]
+            self.assertEqual(set(visible["attempts"]), {row["key"] for row in attempts})
+            self.assertEqual(set(visible["filteredLabels"]), set(expected.values()))
+            self.assertEqual(set(visible["filteredAttempts"]), {
+                row["key"] for row in attempts if row["task_id"] == data["tasks"][0]["task_id"]
+            })
+
+    @unittest.skipUnless(shutil.which("node"), "Optional local Node runtime is unavailable")
+    def test_distinct_models_keep_clean_report_labels_with_repeated_tasks(self):
+        for row in self.run["attempts"]:
+            candidate = row["target"]["id"] == "fixture-imperfect"
+            row["target"].update(runner="codex", model="openai.gpt-6-terra" if candidate else "openai.gpt-6-sol")
+        _, rendered = self.report_labels()
+        self.assertEqual({row["label"] for row in rendered}, {"Sol", "Terra"})
+        self.assertTrue(all(row["title"] == row["label"] + " · attempt evidence" for row in rendered))
+        self.assertTrue(all(set(row["filteredLabels"]) == {"Sol", "Terra"} for row in rendered))
+
     def test_completed_run_writes_a_self_contained_explorer_with_the_original_accounting(self):
         html = (self.root / "REPORT.html").read_text()
         parsed = ReportParser(html)
