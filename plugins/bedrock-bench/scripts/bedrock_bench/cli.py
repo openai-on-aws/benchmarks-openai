@@ -102,6 +102,46 @@ def main(argv=None):
     report = sub.add_parser("report", help="Compare run.json files with identical task protocols")
     report.add_argument("runs", nargs="+")
     report.add_argument("--out", required=True)
+    report.add_argument("--format", choices=["markdown", "html", "inline"], default="markdown",
+                        help="Report to print/open; HTML, Markdown, and JSON are always saved")
+    saved_runs = sub.add_parser("runs", help="List saved runs without executing benchmarks")
+    saved_runs.add_argument("directory", nargs="?", default="bench-results")
+    library = sub.add_parser("library", help="Build an offline, searchable library of saved runs")
+    library.add_argument("directory", nargs="?", default="bench-results")
+    library.add_argument("--out", required=True)
+    library.add_argument("--format", choices=["html", "inline"], default="html")
+    library.add_argument("--limit", type=int, default=50, help="Most recent runs to include (1–1000)")
+    library.add_argument("--replay-limit", type=int, default=5, help="Replays to embed (0–50)")
+    replay = sub.add_parser("replay", help="Show recorded Harbor/Codex prompts and tool activity")
+    replay.add_argument("run")
+    replay.add_argument("--out", required=True)
+    replay.add_argument("--attempt", help="Restrict replay to one saved attempt")
+    replay.add_argument("--format", choices=["html", "inline"], default="html")
+    inspect = sub.add_parser("inspect", help="Read one saved attempt and bounded evidence previews")
+    inspect.add_argument("run")
+    inspect.add_argument("--attempt", required=True)
+    design = sub.add_parser("design", help="Turn a research brief into validated experiment plans without running them")
+    design.add_argument("brief")
+    design.add_argument("--out", required=True)
+    research_compare = sub.add_parser("compare-experiments", help="Compare two targets on matched tasks with uncertainty")
+    research_compare.add_argument("runs", nargs="+")
+    research_compare.add_argument("--baseline", required=True, help="Unambiguous baseline target ID")
+    research_compare.add_argument("--candidate", required=True, help="Unambiguous candidate target ID")
+    research_compare.add_argument("--baseline-run", action="append", help="Restrict baseline target ID to this run; repeatable")
+    research_compare.add_argument("--candidate-run", action="append", help="Restrict candidate target ID to this run; repeatable")
+    research_compare.add_argument("--resamples", type=int, default=2000)
+    research_compare.add_argument("--seed", type=int, default=42)
+    research_compare.add_argument("--out", required=True)
+    diagnose = sub.add_parser("diagnose", help="Group failures from saved evidence without rerunning attempts")
+    diagnose.add_argument("runs", nargs="+")
+    diagnose.add_argument("--limit", type=int, default=100, help="Maximum detailed attempts; retain full aggregate counts")
+    diagnose.add_argument("--out", required=True)
+    audit = sub.add_parser("audit", help="Plan local grader controls; --execute runs reference and mutation checks")
+    audit.add_argument("--suite", choices=["starter", "aws-cdk-smoke"], default="starter")
+    audit.add_argument("--seed", type=int, default=42)
+    audit.add_argument("--tools-dir", default=".bench-tools")
+    audit.add_argument("--execute", action="store_true")
+    audit.add_argument("--out", required=True)
     args = parser.parse_args(argv)
     try:
         if args.command == "doctor":
@@ -110,6 +150,43 @@ def main(argv=None):
             print(json.dumps(catalog(), indent=2))
         elif args.command == "tasks":
             print("\n".join(task_catalog(args.suite)))
+        elif args.command == "runs":
+            from .explorer import list_runs
+            print(json.dumps(list_runs(args.directory), indent=2, allow_nan=False))
+        elif args.command == "library":
+            from .library import write_library
+            print(write_library(args.directory, args.out, inline=args.format == "inline",
+                                limit=args.limit, replay_limit=args.replay_limit))
+        elif args.command == "replay":
+            from .activity import write_replay
+            print(write_replay(args.run, args.out, inline=args.format == "inline", attempt=args.attempt))
+        elif args.command == "inspect":
+            from .explorer import inspect_attempt
+            print(json.dumps(inspect_attempt(args.run, args.attempt), indent=2, allow_nan=False))
+        elif args.command == "design":
+            from .design import write_design
+            print(write_design(args.brief, args.out))
+        elif args.command == "compare-experiments":
+            from .research_compare import write_comparison
+            baseline = ({"target_id": args.baseline, "run_ids": args.baseline_run}
+                        if args.baseline_run else args.baseline)
+            candidate = ({"target_id": args.candidate, "run_ids": args.candidate_run}
+                         if args.candidate_run else args.candidate)
+            print(write_comparison(args.runs, args.out, baseline=baseline, candidate=candidate,
+                                   resamples=args.resamples, seed=args.seed))
+        elif args.command == "diagnose":
+            from .diagnosis import write_diagnosis
+            print(write_diagnosis(args.runs, args.out, limit=args.limit))
+        elif args.command == "audit":
+            from .audit import write_audit
+            artifact = write_audit(args.suite, args.out, seed=args.seed, execute=args.execute,
+                                   tools_dir=args.tools_dir)
+            print(artifact)
+            status = json.loads(Path(artifact).with_name("AUDIT.json").read_text())["status"]
+            if status == "failed":
+                return 1
+            if status == "unavailable":
+                return 2
         elif args.command == "prepare":
             from .tooling import prepare as prepare_tools
             print(json.dumps(prepare_tools(args.suite, args.tools_dir, execute=args.execute), indent=2))
@@ -157,9 +234,11 @@ def main(argv=None):
                 output.write(json.dumps(experiment.to_dict(), indent=2) + "\n")
             print(Path(args.out).resolve())
         elif args.command == "report":
-            runs = [json.loads(Path(path).read_text()) for path in args.runs]
-            write_report(runs, args.out)
-            print(Path(args.out).resolve() / "REPORT.md")
+            from .explorer import load_run
+            runs = [load_run(path) for path in args.runs]
+            write_report(runs, args.out, sources=args.runs, inline=args.format == "inline")
+            filename = {"markdown": "REPORT.md", "html": "REPORT.html", "inline": "REPORT.inline.html"}[args.format]
+            print(Path(args.out).resolve() / filename)
         else:
             if args.command == "demo":
                 experiment = demo_experiment()

@@ -156,10 +156,20 @@ def markdown(summary):
     return "\n".join(lines)
 
 
-def write_report(runs, directory):
+def write_report(runs, directory, *, sources=None, inline=False):
+    from .explorer import render_explorer
     summary = compare(runs)
     directory = Path(directory)
+    html = render_explorer(runs, summary, directory, sources)
     directory.mkdir(parents=True, exist_ok=True)
     (directory / "comparison.json").write_text(json.dumps(summary, indent=2, allow_nan=False) + "\n")
     (directory / "REPORT.md").write_text(markdown(summary))
+    (directory / "REPORT.html").write_text(html)
+    if inline:
+        # Keep the complete outputs available even when the inline view is too large.
+        try:
+            fragment = render_explorer(runs, summary, directory, sources, inline=True)
+        except ValueError as error:
+            raise ValueError(f"{error}. Full outputs are saved in {directory.resolve()}") from error
+        (directory / "REPORT.inline.html").write_text(fragment)
     return summary

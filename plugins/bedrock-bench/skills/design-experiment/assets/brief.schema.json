@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Bedrock Bench design brief",
+  "description": "Structural brief schema. The installed runner validates the embedded experiment and target patches; the design engine checks matched conditions, paths, identities, and budget subsets.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "question", "contrast", "base_experiment", "conditions"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "question": {"$ref": "#/$defs/text"},
+    "contrast": {"enum": ["single-factor", "system-comparison"]},
+    "base_experiment": {
+      "type": "object",
+      "description": "A normal inline runner experiment: schema 1 starter or schema 2 repository suite. All runner validation and adapter restrictions apply.",
+      "required": ["name", "targets", "tasks"],
+      "properties": {
+        "schema_version": {"enum": [1, 2]},
+        "name": {"$ref": "#/$defs/text"},
+        "targets": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "runner", "provider", "model"],
+            "properties": {
+              "id": {"type": "string", "pattern": "^[A-Za-z0-9_-]{1,64}$"},
+              "runner": {"enum": ["native", "codex", "opencode", "demo", "oracle", "nop"]},
+              "provider": {"$ref": "#/$defs/text"},
+              "model": {"$ref": "#/$defs/text"}
+            }
+          }
+        },
+        "tasks": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/text"}
+        },
+        "repetitions": {"type": "integer", "minimum": 1},
+        "seed": {"type": "integer"},
+        "limits": {"type": "object"},
+        "rate_cards": {"type": "array", "items": {"type": "object"}}
+      }
+    },
+    "conditions": {
+      "type": "array",
+      "minItems": 2,
+      "description": "First condition must have no changes. Every later condition explicitly changes each base target; IDs are unique without regard to case.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "target_changes"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,31}$"},
+          "label": {"$ref": "#/$defs/text"},
+          "target_changes": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "runner": {"type": "string"},
+                "provider": {"$ref": "#/$defs/text"},
+                "model": {"$ref": "#/$defs/text"},
+                "region": {"type": ["string", "null"]},
+                "reasoning_effort": {"type": ["string", "null"]},
+                "service_tier": {"$ref": "#/$defs/text"},
+                "aws_profile": {"type": ["string", "null"]},
+                "routing": {"type": "array", "items": {"$ref": "#/$defs/text"}},
+                "agent_version": {"type": ["string", "null"]},
+                "skills": {"type": "array", "items": {"$ref": "#/$defs/text"}}
+              }
+            }
+          }
+        }
+      }
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_usd": {"type": ["number", "null"], "minimum": 0},
+        "reserve_fraction": {"type": "number", "minimum": 0, "maximum": 1},
+        "usage_per_attempt": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["condition", "target", "source"],
+            "properties": {
+              "condition": {"$ref": "#/$defs/text"},
+              "target": {"$ref": "#/$defs/text"},
+              "source": {"$ref": "#/$defs/text"},
+              "input_tokens": {"$ref": "#/$defs/tokens"},
+              "cached_input_tokens": {"$ref": "#/$defs/tokens"},
+              "cache_write_input_tokens": {"$ref": "#/$defs/tokens"},
+              "output_tokens": {"$ref": "#/$defs/tokens"},
+              "reasoning_output_tokens": {"$ref": "#/$defs/tokens"}
+            }
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/text"}
+    }
+  },
+  "$defs": {
+    "text": {"type": "string", "minLength": 1, "pattern": "\\S"},
+    "tokens": {"type": ["integer", "null"], "minimum": 0}
+  }
+}

@@ -62,22 +62,28 @@ const statements = resourcesOf("AWS::IAM::Policy")
 statements.push(...(role.Properties.Policies || []).flatMap((p) => p.PolicyDocument.Statement));
 let writeGranted = false;
 const queueActions = new Set();
-const requiredQueueActions = ["sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:GetQueueAttributes"];
+const requiredQueueActions = ["sqs:receivemessage", "sqs:deletemessage", "sqs:getqueueattributes"];
 const allowedQueueActions = new Set([
-  ...requiredQueueActions, "sqs:ChangeMessageVisibility", "sqs:GetQueueUrl",
+  ...requiredQueueActions, "sqs:changemessagevisibility", "sqs:getqueueurl",
+]);
+const allowedActions = new Set([
+  "dynamodb:putitem", ...allowedQueueActions,
+  // Equivalent inline grants for AWSLambdaBasicExecutionRole remain valid.
+  "logs:createloggroup", "logs:createlogstream", "logs:putlogevents",
 ]);
 for (const statement of statements) {
   if (statement.Effect !== "Allow") continue;
   assert.equal(statement.NotAction, undefined, "Allow/NotAction would bypass scoped grants");
-  for (const action of list(statement.Action)) {
-    assert.notEqual(action, "*", "Wildcard actions are forbidden");
+  for (const recordedAction of list(statement.Action)) {
+    assert.equal(typeof recordedAction, "string", "IAM actions must be strings");
+    // IAM service prefixes and action names are case insensitive.
+    const action = recordedAction.toLowerCase();
+    assert.ok(allowedActions.has(action), `Unexpected worker permission: ${recordedAction}`);
     if (action.startsWith("dynamodb:")) {
-      assert.equal(action, "dynamodb:PutItem");
       assert.deepEqual(list(statement.Resource), [arn(tableId)]);
       writeGranted = true;
     }
     if (action.startsWith("sqs:")) {
-      assert.ok(allowedQueueActions.has(action), `Unexpected SQS permission: ${action}`);
       assert.deepEqual(list(statement.Resource), [arn(queueId)]);
       queueActions.add(action);
     }
@@ -126,6 +132,15 @@ async function checkHandler() {
     { TableName: "verifier-table", Item: { id: "write-fails", value: 2 } },
     { TableName: "verifier-table", Item: { id: "three", value: 0 } },
   ]);
+  calls.length = 0;
+  const fullBatch = Array.from({ length: 10 }, (_, index) => ({
+    id: `batch-${index}`, value: index - 4, metadata: { source: "batch-check", index },
+  }));
+  assert.deepEqual(await handler({ Records: fullBatch.map((item) => ({
+    messageId: item.id, body: JSON.stringify(item),
+  })) }), { batchItemFailures: [] });
+  assert.deepEqual(calls, fullBatch.map((Item) => ({ TableName: "verifier-table", Item })),
+    "Process the full supported batch and preserve each complete message object");
   assert.deepEqual(await handler({ Records: [] }), { batchItemFailures: [] });
   console.log("PASS: infrastructure wiring, scoped IAM, table preservation, batch processing, and failure reporting");
 }

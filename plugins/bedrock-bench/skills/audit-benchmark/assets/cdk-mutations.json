@@ -1,0 +1,189 @@
+[
+  {
+    "name": "table-identity",
+    "invariant": "Preserve the Records construct identity and resulting logical ID",
+    "patches": [{"file": "lib/stack.ts", "before": "new dynamodb.Table(this, \"Records\",", "after": "new dynamodb.Table(this, \"ReplacementRecords\","}]
+  },
+  {
+    "name": "table-name",
+    "invariant": "Preserve the physical table name",
+    "patches": [{"file": "lib/stack.ts", "before": "tableName: \"bedrock-bench-records\"", "after": "tableName: \"bedrock-bench-replacement\""}]
+  },
+  {
+    "name": "table-key",
+    "invariant": "Preserve the id string partition key",
+    "patches": [{"file": "lib/stack.ts", "before": "partitionKey: { name: \"id\"", "after": "partitionKey: { name: \"replacement_id\""}]
+  },
+  {
+    "name": "table-billing",
+    "invariant": "Preserve PAY_PER_REQUEST billing",
+    "patches": [{"file": "lib/stack.ts", "before": "billingMode: dynamodb.BillingMode.PAY_PER_REQUEST", "after": "billingMode: dynamodb.BillingMode.PROVISIONED"}]
+  },
+  {
+    "name": "table-encryption",
+    "invariant": "Preserve AWS-managed table encryption",
+    "patches": [{"file": "lib/stack.ts", "before": "encryption: dynamodb.TableEncryption.AWS_MANAGED", "after": "encryption: dynamodb.TableEncryption.DEFAULT"}]
+  },
+  {
+    "name": "table-deletion-policy",
+    "invariant": "Retain the table on stack deletion",
+    "patches": [
+      {"file": "lib/stack.ts", "before": "import { Duration,", "after": "import { CfnDeletionPolicy, Duration,"},
+      {"file": "lib/stack.ts", "before": "    const dlq =", "after": "    (table.node.defaultChild as dynamodb.CfnTable).cfnOptions.deletionPolicy = CfnDeletionPolicy.DELETE;\n    const dlq ="}
+    ]
+  },
+  {
+    "name": "table-replacement-policy",
+    "invariant": "Retain the old table on replacement",
+    "patches": [
+      {"file": "lib/stack.ts", "before": "import { Duration,", "after": "import { CfnDeletionPolicy, Duration,"},
+      {"file": "lib/stack.ts", "before": "    const dlq =", "after": "    (table.node.defaultChild as dynamodb.CfnTable).cfnOptions.updateReplacePolicy = CfnDeletionPolicy.DELETE;\n    const dlq ="}
+    ]
+  },
+  {
+    "name": "iam-wildcard-action",
+    "invariant": "Allow only dynamodb:PutItem on the table",
+    "patches": [{"file": "lib/stack.ts", "before": "table.grant(worker, \"dynamodb:PutItem\");", "after": "table.grant(worker, \"dynamodb:*\");"}]
+  },
+  {
+    "name": "iam-wildcard-resource",
+    "invariant": "Scope DynamoDB permission to the existing table ARN",
+    "patches": [
+      {"file": "lib/stack.ts", "before": "import * as lambda", "after": "import * as iam from \"aws-cdk-lib/aws-iam\";\nimport * as lambda"},
+      {"file": "lib/stack.ts", "before": "table.grant(worker, \"dynamodb:PutItem\");", "after": "worker.addToRolePolicy(new iam.PolicyStatement({ actions: [\"dynamodb:PutItem\"], resources: [\"*\"] }));"}
+    ]
+  },
+  {
+    "name": "iam-missing-write",
+    "invariant": "The worker needs table write permission",
+    "patches": [{"file": "lib/stack.ts", "before": "    table.grant(worker, \"dynamodb:PutItem\");", "after": ""}]
+  },
+  {
+    "name": "iam-extra-sqs-action",
+    "invariant": "The worker gets consumer permissions, not SendMessage",
+    "patches": [{"file": "lib/stack.ts", "before": "table.grant(worker, \"dynamodb:PutItem\");", "after": "table.grant(worker, \"dynamodb:PutItem\");\n    queue.grant(worker, \"sqs:SendMessage\");"}]
+  },
+  {
+    "name": "iam-admin-managed-policy",
+    "invariant": "The worker must not acquire administrator permissions",
+    "patches": [
+      {"file": "lib/stack.ts", "before": "import * as lambda", "after": "import * as iam from \"aws-cdk-lib/aws-iam\";\nimport * as lambda"},
+      {"file": "lib/stack.ts", "before": "table.grant(worker, \"dynamodb:PutItem\");", "after": "table.grant(worker, \"dynamodb:PutItem\");\n    worker.role!.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName(\"AdministratorAccess\"));"}
+    ]
+  },
+  {
+    "name": "iam-not-action",
+    "invariant": "Allow/NotAction must not bypass scoped grants",
+    "patches": [
+      {"file": "lib/stack.ts", "before": "import * as lambda", "after": "import * as iam from \"aws-cdk-lib/aws-iam\";\nimport * as lambda"},
+      {"file": "lib/stack.ts", "before": "table.grant(worker, \"dynamodb:PutItem\");", "after": "table.grant(worker, \"dynamodb:PutItem\");\n    worker.addToRolePolicy(new iam.PolicyStatement({ notActions: [\"s3:GetObject\"], resources: [\"*\"] }));"}
+    ]
+  },
+  {
+    "name": "iam-mixed-case-wildcard",
+    "invariant": "IAM action names are case insensitive; mixed-case wildcard permissions remain forbidden",
+    "patches": [
+      {"file": "lib/stack.ts", "before": "import * as lambda", "after": "import * as iam from \"aws-cdk-lib/aws-iam\";\nimport * as lambda"},
+      {"file": "lib/stack.ts", "before": "table.grant(worker, \"dynamodb:PutItem\");", "after": "table.grant(worker, \"dynamodb:PutItem\");\n    worker.addToRolePolicy(new iam.PolicyStatement({ actions: [\"DynamoDB:*\"], resources: [\"*\"] }));"}
+    ]
+  },
+  {
+    "name": "iam-unrelated-service",
+    "invariant": "The worker must not acquire unrelated iam:PassRole permission",
+    "patches": [
+      {"file": "lib/stack.ts", "before": "import * as lambda", "after": "import * as iam from \"aws-cdk-lib/aws-iam\";\nimport * as lambda"},
+      {"file": "lib/stack.ts", "before": "table.grant(worker, \"dynamodb:PutItem\");", "after": "table.grant(worker, \"dynamodb:PutItem\");\n    worker.addToRolePolicy(new iam.PolicyStatement({ actions: [\"iam:PassRole\"], resources: [\"*\"] }));"}
+    ]
+  },
+  {
+    "name": "missing-mapping",
+    "invariant": "Connect the work queue to the worker",
+    "patches": [{"file": "lib/stack.ts", "before": "    worker.addEventSource(new SqsEventSource(queue, {\n      batchSize: 10,\n      reportBatchItemFailures: true,\n    }));", "after": ""}]
+  },
+  {
+    "name": "wrong-event-queue",
+    "invariant": "The worker consumes the work queue, not the DLQ",
+    "patches": [{"file": "lib/stack.ts", "before": "new SqsEventSource(queue,", "after": "new SqsEventSource(dlq,"}]
+  },
+  {
+    "name": "wrong-table-environment",
+    "invariant": "TABLE_NAME refers to the preserved records table",
+    "patches": [{"file": "lib/stack.ts", "before": "TABLE_NAME: table.tableName", "after": "TABLE_NAME: queue.queueName"}]
+  },
+  {
+    "name": "partial-reporting-disabled",
+    "invariant": "Enable ReportBatchItemFailures on the event source",
+    "patches": [{"file": "lib/stack.ts", "before": "reportBatchItemFailures: true", "after": "reportBatchItemFailures: false"}]
+  },
+  {
+    "name": "batch-size-eleven",
+    "invariant": "Batch size must remain in the task's 1 through 10 range",
+    "patches": [{"file": "lib/stack.ts", "before": "batchSize: 10,", "after": "batchSize: 11,\n      maxBatchingWindow: Duration.seconds(1),"}]
+  },
+  {
+    "name": "short-visibility",
+    "invariant": "Queue visibility must be at least 180 seconds",
+    "patches": [{"file": "lib/stack.ts", "before": "visibilityTimeout: Duration.seconds(180)", "after": "visibilityTimeout: Duration.seconds(30)"}]
+  },
+  {
+    "name": "changed-lambda-timeout",
+    "invariant": "Preserve the 30-second Lambda timeout",
+    "patches": [{"file": "lib/stack.ts", "before": "timeout: Duration.seconds(30)", "after": "timeout: Duration.seconds(29)"}]
+  },
+  {
+    "name": "changed-redrive-count",
+    "invariant": "Preserve maxReceiveCount of 3",
+    "patches": [{"file": "lib/stack.ts", "before": "maxReceiveCount: 3", "after": "maxReceiveCount: 5"}]
+  },
+  {
+    "name": "handler-first-record",
+    "invariant": "Process every record in the batch",
+    "patches": [{"file": "lambda/handler.js", "before": "of event.Records)", "after": "of event.Records.slice(0, 1))"}]
+  },
+  {
+    "name": "handler-truncate-long-batch",
+    "invariant": "Process records beyond a five-record prefix of a valid batch",
+    "patches": [{"file": "lambda/handler.js", "before": "of event.Records)", "after": "of event.Records.slice(0, 5))"}]
+  },
+  {
+    "name": "handler-drop-extra-fields",
+    "invariant": "Write the parsed object, including additional payload fields",
+    "patches": [{"file": "lambda/handler.js", "before": "Item: item,", "after": "Item: { id: item.id, value: item.value },"}]
+  },
+  {
+    "name": "handler-swallow-failure",
+    "invariant": "Return failed record identifiers",
+    "patches": [{"file": "lambda/handler.js", "before": "batchItemFailures.push({ itemIdentifier: record.messageId });", "after": "// Incorrectly acknowledge the failed record."}]
+  },
+  {
+    "name": "handler-stop-on-failure",
+    "invariant": "Continue processing after invalid input or failed writes",
+    "patches": [{"file": "lambda/handler.js", "before": "batchItemFailures.push({ itemIdentifier: record.messageId });", "after": "batchItemFailures.push({ itemIdentifier: record.messageId });\n      break;"}]
+  },
+  {
+    "name": "handler-wrong-failure-id",
+    "invariant": "Use each failed SQS messageId as itemIdentifier",
+    "patches": [{"file": "lambda/handler.js", "before": "itemIdentifier: record.messageId", "after": "itemIdentifier: record.messageId + \"-wrong\""}]
+  },
+  {
+    "name": "handler-hardcoded-table",
+    "invariant": "Use TABLE_NAME from the environment for every write",
+    "patches": [{"file": "lambda/handler.js", "before": "TableName: process.env.TABLE_NAME", "after": "TableName: \"bedrock-bench-records\""}]
+  },
+  {
+    "name": "handler-retry-write",
+    "invariant": "Do not retry failed writes inside the handler",
+    "patches": [{"file": "lambda/handler.js", "before": "await client.send(new PutCommand({\n        TableName: process.env.TABLE_NAME,\n        Item: item,\n      }));", "after": "const command = new PutCommand({ TableName: process.env.TABLE_NAME, Item: item });\n      try { await client.send(command); } catch { await client.send(command); }"}]
+  },
+  {
+    "name": "handler-accept-string-value",
+    "invariant": "Invalid numeric fields must not be written",
+    "patches": [{"file": "lambda/handler.js", "before": "\n          || typeof item.value !== \"number\" || !Number.isFinite(item.value)", "after": ""}]
+  },
+  {
+    "name": "malformed-handler",
+    "invariant": "The CommonJS handler must be valid JavaScript",
+    "kind": "malformed",
+    "patches": [{"file": "lambda/handler.js", "before": "exports.handler = async (event) => {", "after": "exports.handler = async (event => {"}]
+  }
+]

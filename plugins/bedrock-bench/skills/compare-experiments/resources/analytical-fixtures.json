@@ -1,0 +1,37 @@
+{
+  "kind": "synthetic_analytical_fixture",
+  "description": "Invented observations for offline math checks. These are not saved live measurements or evidence about any model.",
+  "columns": ["success", "status", "wall_seconds", "agent_wall_seconds", "cost_usd", "known_cost_subtotal_usd"],
+  "cases": {
+    "paired_mixed_outcomes": {
+      "repetitions": 2,
+      "tasks": {
+        "alpha": {
+          "baseline": [[true, "completed", 10, 5, 1, 1], [false, "task_failed", 30, 15, 3, 3]],
+          "candidate": [[true, "completed", 12, 6, 2, 2], [true, "completed", 18, 9, 2, 2]]
+        },
+        "beta": {
+          "baseline": [[true, "completed", 20, 10, 2, 2], [true, "completed", 20, 10, 2, 2]],
+          "candidate": [[true, "completed", 8, 4, 1, 1], [false, "timeout", 40, 20, 5, 5]]
+        },
+        "gamma": {
+          "baseline": [[false, "task_failed", 15, 7, 1, 1], [false, "runner_error", 25, 13, 1, 1]],
+          "candidate": [[true, "completed", 15, 7, 3, 3], [false, "incomplete", 25, 13, 1, 1]]
+        }
+      }
+    },
+    "opposing_tasks": {
+      "repetitions": 1,
+      "tasks": {
+        "candidate_win": {
+          "baseline": [[false, "task_failed", 10, 5, 1, 1]],
+          "candidate": [[true, "completed", 8, 4, 2, 2]]
+        },
+        "baseline_win": {
+          "baseline": [[true, "completed", 10, 5, 1, 1]],
+          "candidate": [[false, "timeout", 40, 20, 2, 2]]
+        }
+      }
+    }
+  }
+}

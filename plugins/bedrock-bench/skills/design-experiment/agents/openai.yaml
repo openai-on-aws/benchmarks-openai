@@ -1,0 +1,4 @@
+interface:
+  display_name: "Design an Experiment"
+  short_description: "Plan matched benchmarks with explicit costs and limits"
+  default_prompt: "Use $design-experiment to turn my benchmark question into a reproducible plan with runnable configs and explicit budget assumptions."

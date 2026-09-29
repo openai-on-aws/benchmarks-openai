@@ -16,6 +16,18 @@ The user interacts through chat. Select the suite, prepare its runtime, execute
 authorized checks, and explain the results yourself; terminal commands are an
 implementation detail unless the user asks for them.
 
+Only when this skill is invoked in the current turn, offer two or three
+contextual next-step prompts after its substantive result or visualization using
+the [follow-up guidance](references/follow-ups.md). Do not carry this behavior
+into ordinary chat or plugin/repository maintenance. These are user-selectable
+suggestions, not automatic execution.
+
+- Use [design-experiment](../design-experiment/SKILL.md) for a research brief,
+  controlled conditions, repetitions, and a budgeted plan. Use
+  [compare-experiments](../compare-experiments/SKILL.md) for matched task deltas
+  and uncertainty, [diagnose-failures](../diagnose-failures/SKILL.md) for failure
+  patterns across saved runs, and [audit-benchmark](../audit-benchmark/SKILL.md)
+  to challenge the grader with correct and deliberately flawed solutions.
 - Use `suites` and `tasks --suite NAME` to discover the packaged task catalogs.
   `starter` uses the existing fixed agent loop. `aws-cdk-smoke`, `terminal-bench`,
   and `swe-bench` use Harbor. `aws-bench` uses the upstream AWS-Bench runner.
@@ -59,8 +71,12 @@ implementation detail unless the user asks for them.
   Codex subscription usage and OpenCode's catalog estimates are not invoices.
 - Report cost per successful task using all attempt costs, including failures.
   Report success count, cost coverage, and the cost basis alongside any dollar
-  figure. Include runner/provider/model/settings and links to `run.json` and
-  `REPORT.md`.
+  figure. Include runner/provider/model/settings and links to `run.json`,
+  `REPORT.html`, and `REPORT.md`. Use
+  [inspect-results](../inspect-results/SKILL.md) to open interactive reports,
+  browse the run library, replay saved tool activity, compare runs, or investigate
+  a selected attempt. For a new chart or diagram, use
+  [visualize-results](../visualize-results/SKILL.md).
 - A positive upstream cost remains a runner estimate; an exact rate card fills
   missing estimates when usage is sufficient. Verifier/judge and infrastructure
   costs are excluded. Keep missing trial results and failed attempts visible;

@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "question": "Does the planning pipeline preserve matched conditions, repetitions, and synthetic fixture settings?",
+  "contrast": "single-factor",
+  "base_experiment": {
+    "schema_version": 1,
+    "name": "Offline design demonstration",
+    "targets": [
+      {
+        "id": "fixture",
+        "runner": "demo",
+        "provider": "synthetic",
+        "model": "fixture-efficient"
+      }
+    ],
+    "tasks": [
+      "invoice-reconciliation",
+      "deployment-order",
+      "inference-triage"
+    ],
+    "repetitions": 2,
+    "seed": 42,
+    "limits": {
+      "timeout_seconds": 120,
+      "max_turns": 10,
+      "max_output_tokens": 2048
+    },
+    "rate_cards": []
+  },
+  "conditions": [
+    {
+      "id": "baseline",
+      "label": "Efficient synthetic fixture",
+      "target_changes": {}
+    },
+    {
+      "id": "imperfect",
+      "label": "Imperfect synthetic fixture",
+      "target_changes": {
+        "fixture": {
+          "model": "fixture-imperfect"
+        }
+      }
+    }
+  ],
+  "budget": {
+    "max_usd": null,
+    "reserve_fraction": 0,
+    "usage_per_attempt": []
+  },
+  "notes": [
+    "This example is fully runnable offline with the demo runner. Planning itself executes no attempts.",
+    "The primary experiment has 3 distinct tasks, 2 repetitions, and 2 conditions: 12 attempts. Each alternative condition file has 6 attempts.",
+    "Any usage, price, latency, or outcome produced by later demo execution is synthetic. This brief contains no measured results or live pricing."
+  ]
+}
