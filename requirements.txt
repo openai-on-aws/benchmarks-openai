@@ -1,5 +1,5 @@
 aws-bedrock-token-generator
-boto3
+boto3>=1.43.85
 datasets
 httpx
 matplotlib

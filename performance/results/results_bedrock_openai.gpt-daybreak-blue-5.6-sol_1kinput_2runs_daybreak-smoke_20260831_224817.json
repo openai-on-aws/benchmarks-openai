@@ -1,0 +1,92 @@
+{
+  "schema_version": 3,
+  "backend": "bedrock",
+  "model": "openai.gpt-daybreak-blue-5.6-sol",
+  "base_url": "https://bedrock-mantle.us-east-2.api.aws/openai/v1",
+  "aws_region": "us-east-2",
+  "python_version": "3.12.11",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "harness_git_commit": "d71dd38c223a6455bfd431549fac84ad31a886dc",
+  "input_label": "1k",
+  "nominal_input_tokens": 1002,
+  "n_runs": 2,
+  "warmups_per_config": 0,
+  "concurrency": 1,
+  "reasoning_effort": null,
+  "started_at": "2026-08-31T22:48:17.605543+00:00",
+  "ended_at": "2026-08-31T22:48:29.855689+00:00",
+  "duration_seconds": 12.3,
+  "summary": [
+    {
+      "max_output_tokens": 128,
+      "n_runs": 2,
+      "n_errors": 0,
+      "ttfe_ms": {
+        "mean": 1690.5,
+        "stddev": 1992.7,
+        "p50": 1690.5,
+        "p95": 2958.7,
+        "p99": 3071.4,
+        "min": 281.5,
+        "max": 3099.6
+      },
+      "ttft_ms": null,
+      "reasoning_wait_ms": null,
+      "itl_ms": null,
+      "otps": null,
+      "e2e_ms": {
+        "mean": 5151.5,
+        "stddev": 4325.8,
+        "p50": 5151.5,
+        "p95": 7904.4,
+        "p99": 8149.1,
+        "min": 2092.7,
+        "max": 8210.3
+      },
+      "reasoning_tokens_mean": 126.5,
+      "cached_tokens_mean": 0
+    }
+  ],
+  "raw": {
+    "128": [
+      {
+        "max_output_tokens": 128,
+        "input_tokens": 852,
+        "output_tokens": 128,
+        "visible_output_tokens": 3,
+        "reasoning_tokens": 125,
+        "cached_tokens": 0,
+        "text_delta_count": 0,
+        "ttfe_ms": 3099.6,
+        "ttft_ms": null,
+        "reasoning_wait_ms": null,
+        "itl_mean_ms": null,
+        "itl_p95_ms": null,
+        "otps": null,
+        "e2e_ms": 8210.3,
+        "status": "incomplete",
+        "error": null,
+        "attempts": 1
+      },
+      {
+        "max_output_tokens": 128,
+        "input_tokens": 852,
+        "output_tokens": 128,
+        "visible_output_tokens": 0,
+        "reasoning_tokens": 128,
+        "cached_tokens": 0,
+        "text_delta_count": 0,
+        "ttfe_ms": 281.5,
+        "ttft_ms": null,
+        "reasoning_wait_ms": null,
+        "itl_mean_ms": null,
+        "itl_p95_ms": null,
+        "otps": null,
+        "e2e_ms": 2092.7,
+        "status": "incomplete",
+        "error": null,
+        "attempts": 1
+      }
+    ]
+  }
+}

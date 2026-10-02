@@ -1,0 +1,124 @@
+{
+  "schema_version": 3,
+  "backend": "bedrock",
+  "model": "openai.gpt-daybreak-blue-5.6-sol",
+  "base_url": "https://bedrock-mantle.us-east-2.api.aws/openai/v1",
+  "aws_region": "us-east-2",
+  "python_version": "3.12.11",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "harness_git_commit": "d71dd38c223a6455bfd431549fac84ad31a886dc",
+  "input_label": "1k",
+  "nominal_input_tokens": 1002,
+  "n_runs": 2,
+  "warmups_per_config": 0,
+  "concurrency": 1,
+  "reasoning_effort": null,
+  "started_at": "2026-08-31T22:49:40.599219+00:00",
+  "ended_at": "2026-08-31T22:50:17.637839+00:00",
+  "duration_seconds": 37.0,
+  "summary": [
+    {
+      "max_output_tokens": 1024,
+      "n_runs": 2,
+      "n_errors": 0,
+      "ttfe_ms": {
+        "mean": 651.9,
+        "stddev": 631.9,
+        "p50": 651.9,
+        "p95": 1054.0,
+        "p99": 1089.8,
+        "min": 205.0,
+        "max": 1098.7
+      },
+      "ttft_ms": {
+        "mean": 9334.7,
+        "stddev": 808.2,
+        "p50": 9334.7,
+        "p95": 9849.0,
+        "p99": 9894.7,
+        "min": 8763.2,
+        "max": 9906.1
+      },
+      "reasoning_wait_ms": {
+        "mean": 8682.8,
+        "stddev": 176.3,
+        "p50": 8682.8,
+        "p95": 8794.9,
+        "p99": 8804.9,
+        "min": 8558.1,
+        "max": 8807.4
+      },
+      "itl_ms": {
+        "mean": 12.5,
+        "stddev": 0.8,
+        "p50": 12.5,
+        "p95": 13.1,
+        "p99": 13.1,
+        "min": 12.0,
+        "max": 13.1
+      },
+      "otps": {
+        "mean": 79.0,
+        "stddev": 5.3,
+        "p50": 79.0,
+        "p95": 82.4,
+        "p99": 82.7,
+        "min": 75.3,
+        "max": 82.8
+      },
+      "e2e_ms": {
+        "mean": 17545.2,
+        "stddev": 3596.3,
+        "p50": 17545.2,
+        "p95": 19833.9,
+        "p99": 20037.3,
+        "min": 15002.2,
+        "max": 20088.2
+      },
+      "reasoning_tokens_mean": 386.5,
+      "cached_tokens_mean": 0
+    }
+  ],
+  "raw": {
+    "1024": [
+      {
+        "max_output_tokens": 1024,
+        "input_tokens": 852,
+        "output_tokens": 1024,
+        "visible_output_tokens": 422,
+        "reasoning_tokens": 602,
+        "cached_tokens": 0,
+        "text_delta_count": 417,
+        "ttfe_ms": 1098.7,
+        "ttft_ms": 9906.1,
+        "reasoning_wait_ms": 8807.4,
+        "itl_mean_ms": 11.96,
+        "itl_p95_ms": 185.49,
+        "otps": 82.8,
+        "e2e_ms": 15002.2,
+        "status": "incomplete",
+        "error": null,
+        "attempts": 1
+      },
+      {
+        "max_output_tokens": 1024,
+        "input_tokens": 852,
+        "output_tokens": 1024,
+        "visible_output_tokens": 853,
+        "reasoning_tokens": 171,
+        "cached_tokens": 0,
+        "text_delta_count": 848,
+        "ttfe_ms": 205.0,
+        "ttft_ms": 8763.2,
+        "reasoning_wait_ms": 8558.1,
+        "itl_mean_ms": 13.13,
+        "itl_p95_ms": 104.99,
+        "otps": 75.3,
+        "e2e_ms": 20088.2,
+        "status": "incomplete",
+        "error": null,
+        "attempts": 1
+      }
+    ]
+  }
+}

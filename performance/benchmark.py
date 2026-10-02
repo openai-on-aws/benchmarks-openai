@@ -5,9 +5,11 @@ Both backends are exercised through the same code path — the Responses API wit
 streaming — so results are directly comparable.
 
 Metrics per call:
+  - TTFE (ms)            time to first server-sent event
   - TTFT (ms)            time to first output-text delta
+  - reasoning wait (ms)  TTFT minus TTFE (an observable proxy, not hidden reasoning time)
   - ITL (ms)             inter-chunk latency between successive text deltas (mean + p95 per call)
-  - OTPS                 output tokens / second of generation time
+  - OTPS                 visible output tokens / second of generation time
   - E2E (ms)             end-to-end wall time
   - token usage          input / output / reasoning / cached tokens
 
@@ -20,7 +22,9 @@ Usage:
 import argparse
 import json
 import os
+import platform
 import statistics
+import subprocess
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -137,10 +141,23 @@ def summarize(values):
     }
 
 
+def harness_commit():
+    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    result = subprocess.run(
+        ["git", "-C", repo_root, "rev-parse", "HEAD"],
+        capture_output=True,
+        check=False,
+        text=True,
+    )
+    return result.stdout.strip() if result.returncode == 0 else None
+
+
 def run_single(client, model, prompt, max_output_tokens, effort):
+    first_event_time = None
     first_token_time = None
     last_delta_time = None
     itl_gaps = []
+    text_delta_count = 0
     output_tokens = 0
     input_tokens = 0
     reasoning_tokens = 0
@@ -162,10 +179,13 @@ def run_single(client, model, prompt, max_output_tokens, effort):
 
     for event in stream:
         now = time.perf_counter()
+        if first_event_time is None:
+            first_event_time = now
         event_type = getattr(event, "type", None)
 
         if event_type == "response.output_text.delta":
             if getattr(event, "delta", None):
+                text_delta_count += 1
                 if first_token_time is None:
                     first_token_time = now
                 else:
@@ -187,12 +207,19 @@ def run_single(client, model, prompt, max_output_tokens, effort):
     end = time.perf_counter()
 
     e2e = end - start
+    ttfe = (first_event_time - start) if first_event_time else None
     ttft = (first_token_time - start) if first_token_time else None
+    reasoning_wait = (
+        first_token_time - first_event_time
+        if first_token_time is not None and first_event_time is not None
+        else None
+    )
     gen_time = (end - first_token_time) if first_token_time else e2e
+    visible_output_tokens = max(output_tokens - reasoning_tokens, 0)
     # OTPS is only meaningful when output actually streamed over time; if the
     # whole response arrived in a single flush (gen_time ~0), report None.
-    if itl_gaps and gen_time > 0 and output_tokens > 0:
-        otps = output_tokens / gen_time
+    if itl_gaps and gen_time > 0 and visible_output_tokens > 0:
+        otps = visible_output_tokens / gen_time
     else:
         otps = None
     itl_sorted = sorted(itl_gaps)
@@ -201,9 +228,15 @@ def run_single(client, model, prompt, max_output_tokens, effort):
         "max_output_tokens": max_output_tokens,
         "input_tokens": input_tokens,
         "output_tokens": output_tokens,
+        "visible_output_tokens": visible_output_tokens,
         "reasoning_tokens": reasoning_tokens,
         "cached_tokens": cached_tokens,
-        "ttft_ms": round(ttft * 1000, 1) if ttft else None,
+        "text_delta_count": text_delta_count,
+        "ttfe_ms": round(ttfe * 1000, 1) if ttfe is not None else None,
+        "ttft_ms": round(ttft * 1000, 1) if ttft is not None else None,
+        "reasoning_wait_ms": (
+            round(reasoning_wait * 1000, 1) if reasoning_wait is not None else None
+        ),
         "itl_mean_ms": round(statistics.mean(itl_sorted), 2) if itl_sorted else None,
         "itl_p95_ms": round(percentile(itl_sorted, 95), 2) if itl_sorted else None,
         "otps": round(otps, 1) if otps is not None else None,
@@ -216,7 +249,9 @@ def run_single(client, model, prompt, max_output_tokens, effort):
 def run_with_retries(backend, base_url, model, prompt, max_out, effort, client_box, max_retries=5):
     for attempt in range(max_retries):
         try:
-            return run_single(client_box[0], model, prompt, max_out, effort)
+            result = run_single(client_box[0], model, prompt, max_out, effort)
+            result["attempts"] = attempt + 1
+            return result
         except Exception as e:
             err = str(e)
             if attempt < max_retries - 1 and any(m in err.lower() for m in RETRYABLE_MARKERS):
@@ -226,17 +261,44 @@ def run_with_retries(backend, base_url, model, prompt, max_out, effort, client_b
                 # Recreate the client: drops dead connections and re-mints the Bedrock token.
                 client_box[0] = make_client(backend, base_url)
                 continue
-            return {"max_output_tokens": max_out, "input_tokens": 0, "output_tokens": 0,
-                    "reasoning_tokens": 0, "cached_tokens": 0, "ttft_ms": None,
-                    "itl_mean_ms": None, "itl_p95_ms": None, "otps": None, "e2e_ms": None,
-                    "status": "error", "error": err[:300]}
-    return {"max_output_tokens": max_out, "input_tokens": 0, "output_tokens": 0,
-            "reasoning_tokens": 0, "cached_tokens": 0, "ttft_ms": None,
-            "itl_mean_ms": None, "itl_p95_ms": None, "otps": None, "e2e_ms": None,
-            "status": "error", "error": "max retries exceeded"}
+            return error_result(max_out, err[:300], attempt + 1)
+    return error_result(max_out, "max retries exceeded", max_retries)
 
 
-def run_benchmark(backend, base_url, model, input_label, output_configs, n_runs, effort, concurrency, tag):
+def error_result(max_out, error, attempts):
+    return {
+        "max_output_tokens": max_out,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "visible_output_tokens": 0,
+        "reasoning_tokens": 0,
+        "cached_tokens": 0,
+        "text_delta_count": 0,
+        "ttfe_ms": None,
+        "ttft_ms": None,
+        "reasoning_wait_ms": None,
+        "itl_mean_ms": None,
+        "itl_p95_ms": None,
+        "otps": None,
+        "e2e_ms": None,
+        "status": "error",
+        "attempts": attempts,
+        "error": error,
+    }
+
+
+def run_benchmark(
+    backend,
+    base_url,
+    model,
+    input_label,
+    output_configs,
+    n_runs,
+    effort,
+    concurrency,
+    tag,
+    warmups,
+):
     prompt = load_prompt(input_label)
     nominal_input_tokens = PROMPTS[input_label]["tokens"]
     total_calls = len(output_configs) * n_runs
@@ -247,6 +309,7 @@ def run_benchmark(backend, base_url, model, input_label, output_configs, n_runs,
     print(f"Endpoint:  {base_url}")
     print(f"Runs:      {n_runs} per config x {output_configs} = {total_calls} calls"
           + (f" | concurrency={concurrency}" if concurrency > 1 else "")
+          + (f" | warmups={warmups}/config" if warmups else "")
           + (f" | effort={effort}" if effort else ""))
     print(f"Started:   {started_at.strftime('%Y-%m-%d %H:%M:%S UTC')}")
 
@@ -256,6 +319,17 @@ def run_benchmark(backend, base_url, model, input_label, output_configs, n_runs,
     for max_out in output_configs:
         # Fresh client per config: keeps the Bedrock bearer token well inside its validity window.
         client_box = [make_client(backend, base_url)]
+
+        if warmups:
+            print(f"  Warming max_out={max_out} with {warmups} unmeasured call(s) ...")
+            for _ in range(warmups):
+                warmup = run_with_retries(
+                    backend, base_url, model, prompt, max_out, effort, client_box
+                )
+                if warmup["error"]:
+                    raise RuntimeError(
+                        f"warmup failed for max_out={max_out}: {warmup['error']}"
+                    )
 
         if concurrency > 1:
             with ThreadPoolExecutor(max_workers=concurrency) as pool:
@@ -267,7 +341,8 @@ def run_benchmark(backend, base_url, model, input_label, output_configs, n_runs,
                     raw[max_out].append(r)
                     call_num += 1
                     print(f"  [{call_num:>3}/{total_calls}] max_out={max_out:>5} run={i+1:>2}/{n_runs}  "
-                          f"ttft={r['ttft_ms']}ms  otps={r['otps']}  e2e={r['e2e_ms']}ms"
+                          f"ttfe={r['ttfe_ms']}ms  ttft={r['ttft_ms']}ms  "
+                          f"otps={r['otps']}  e2e={r['e2e_ms']}ms"
                           + (f"  ERROR: {r['error'][:80]}" if r["error"] else ""))
         else:
             for run_idx in range(n_runs):
@@ -279,7 +354,10 @@ def run_benchmark(backend, base_url, model, input_label, output_configs, n_runs,
                 if r["error"]:
                     print(f"ERROR: {r['error'][:100]}")
                 else:
-                    print(f"ttft={r['ttft_ms']}ms  otps={r['otps']}  e2e={r['e2e_ms']}ms")
+                    print(
+                        f"ttfe={r['ttfe_ms']}ms  ttft={r['ttft_ms']}ms  "
+                        f"otps={r['otps']}  e2e={r['e2e_ms']}ms"
+                    )
 
     ended_at = datetime.now(timezone.utc)
 
@@ -296,7 +374,9 @@ def run_benchmark(backend, base_url, model, input_label, output_configs, n_runs,
         errors = len(runs) - len(ok)
 
         stats_by_metric = {
+            "TTFE(ms)":    summarize([r["ttfe_ms"] for r in ok]),
             "TTFT(ms)":    summarize([r["ttft_ms"] for r in ok]),
+            "Wait(ms)":    summarize([r["reasoning_wait_ms"] for r in ok]),
             "ITL(ms)":     summarize([r["itl_mean_ms"] for r in ok]),
             "Tok/s":       summarize([r["otps"] for r in ok if r["otps"]]),
             "E2E(ms)":     summarize([r["e2e_ms"] for r in ok]),
@@ -314,7 +394,9 @@ def run_benchmark(backend, base_url, model, input_label, output_configs, n_runs,
             "max_output_tokens": max_out,
             "n_runs": n_runs,
             "n_errors": errors,
+            "ttfe_ms": stats_by_metric["TTFE(ms)"],
             "ttft_ms": stats_by_metric["TTFT(ms)"],
+            "reasoning_wait_ms": stats_by_metric["Wait(ms)"],
             "itl_ms": stats_by_metric["ITL(ms)"],
             "otps": stats_by_metric["Tok/s"],
             "e2e_ms": stats_by_metric["E2E(ms)"],
@@ -338,13 +420,18 @@ def run_benchmark(backend, base_url, model, input_label, output_configs, n_runs,
     filename = os.path.join(RESULTS_DIR, "_".join(parts) + f"_{ts}.json")
 
     payload = {
-        "schema_version": 2,
+        "schema_version": 3,
         "backend": backend,
         "model": model,
         "base_url": base_url,
+        "aws_region": os.environ.get("AWS_REGION") if backend.startswith("bedrock") else None,
+        "python_version": platform.python_version(),
+        "platform": platform.platform(),
+        "harness_git_commit": harness_commit(),
         "input_label": input_label,
         "nominal_input_tokens": nominal_input_tokens,
         "n_runs": n_runs,
+        "warmups_per_config": warmups,
         "concurrency": concurrency,
         "reasoning_effort": effort,
         "started_at": started_at.isoformat(),
@@ -371,6 +458,8 @@ def main():
     p.add_argument("--outputs", help="comma-separated max_output_tokens overriding the per-size defaults, e.g. 100,1000")
     p.add_argument("--effort", help="reasoning effort to request (e.g. low, medium, high)")
     p.add_argument("--concurrency", type=int, default=1, help="parallel in-flight requests (default 1 = sequential)")
+    p.add_argument("--warmups", type=int, default=0,
+                   help="unmeasured warmup calls per output config (default 0)")
     p.add_argument("--base-url", help="override the backend endpoint")
     p.add_argument("--tag", help="extra tag appended to the results filename")
     p.add_argument("--list-models", action="store_true", help="list model ids available on the backend and exit")
@@ -392,12 +481,18 @@ def main():
     bad = [s for s in sizes if s not in PROMPTS]
     if bad:
         p.error(f"unknown input size(s) {bad}; choose from {list(PROMPTS.keys())}")
+    if args.runs < 1:
+        p.error("--runs must be at least 1")
+    if args.warmups < 0:
+        p.error("--warmups cannot be negative")
+    if args.concurrency < 1:
+        p.error("--concurrency must be at least 1")
     os.makedirs(RESULTS_DIR, exist_ok=True)
 
     for label in sizes:
         configs = [int(x) for x in args.outputs.split(",")] if args.outputs else OUTPUT_CONFIGS[label]
         run_benchmark(args.backend, base_url, model, label, configs,
-                      args.runs, args.effort, args.concurrency, args.tag)
+                      args.runs, args.effort, args.concurrency, args.tag, args.warmups)
 
 
 if __name__ == "__main__":

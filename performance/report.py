@@ -1,6 +1,6 @@
 """
 Build the combined latency report (REPORT.md + REPORT.html + charts) from
-schema-v2 result JSONs in performance/results/.
+schema-v2/v3 result JSONs in performance/results/.
 
 Every number in the report is computed from the result files at build time —
 nothing is hardcoded. Usage:
@@ -53,7 +53,7 @@ def load_results():
     for path in sorted(glob.glob(os.path.join(RESULTS_DIR, "results_*.json"))):
         with open(path) as f:
             d = json.load(f)
-        if d.get("schema_version") != 2 or d.get("concurrency", 1) != 1 or d.get("reasoning_effort"):
+        if d.get("schema_version") not in (2, 3) or d.get("concurrency", 1) != 1 or d.get("reasoning_effort"):
             continue
         if d["backend"] not in BACKEND_LABEL:
             skipped_backends[d["backend"]] = skipped_backends.get(d["backend"], 0) + 1

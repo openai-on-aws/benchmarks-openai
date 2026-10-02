@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>blog-draft-multi-turn-economics.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> or <div class="page"></div> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="beyond-the-price-per-token-choosing-the-right-openai-model-on-amazon-bedrock-for-your-workload">Beyond the price per token: choosing the right OpenAI model on Amazon Bedrock for your workload</h1>
+<p>Organizations building generative AI applications usually compare models the same way: dollars per million tokens. It's the number on every pricing page, so it becomes the number in every spreadsheet. But production workloads don't buy tokens — they buy outcomes: a resolved support ticket, a completed research brief, a correct financial summary. Between the pricing page and the outcome sit multipliers the sticker price ignores: how often the model is right, how many tokens it needs to get there, and — for agentic workloads — how many turns it takes, because every turn re-sends the growing conversation.</p>
+<p>In this post, we share results from an open-source benchmarking harness that measures those multipliers across OpenAI models on <a href="https://aws.amazon.com/bedrock/">Amazon Bedrock</a> (gpt-5.6-luna, gpt-5.6-terra, and gpt-5.6-sol) and two widely used cost-efficient models on OpenAI's API (gpt-5.4-mini and gpt-5.4-nano). We chose the latter two as the cost-optimized baselines many teams start from — not as like-for-like generational peers — because &quot;we run mini or nano today; is a newer model on Amazon Bedrock worth it?&quot; is the question we hear most. We focus on three questions:</p>
+<ol>
+<li><strong>What does a correct answer cost?</strong> — not what does a token cost.</li>
+<li><strong>What do agent trajectories cost?</strong> — where turn count, not token price, dominates the bill.</li>
+<li><strong>Can it produce work a professional would accept?</strong> — measured on real occupational deliverables, not quiz questions.</li>
+</ol>
+<p>Everything here is reproducible: the harness, <a href="https://github.com/openai-on-aws/benchmarks-openai"><code>openai-on-aws/benchmarks-openai</code></a>, runs one identical code path (the OpenAI Responses API) against both platforms, and we encourage you to run it on your own tasks before making any decision.</p>
+<h2 id="solution-overview">Solution overview</h2>
+<p>The harness evaluates all five models through the same Responses API client, switching only the backend and model ID, so every difference in the results comes from the model and platform rather than the test path. It measures three things: single-call accuracy and cost on benchmarks that still separate frontier models (AIME competition mathematics, GPQA Diamond graduate-level science, and MMLU-Pro — we deliberately skip saturated suites where every modern model scores in the mid-90s and differences are noise); multi-turn agent trajectories on live web-research tasks; and rubric-graded professional deliverables. Grading combines deterministic checks with an LLM judge (gpt-5.5, never one of the evaluated models) using frozen prompts whose hashes are recorded in every result file. Each run writes a timestamped result JSON, and every number and chart in this post is generated from those files at build time.</p>
+<h2 id="measuring-the-cost-of-a-correct-answer">Measuring the cost of a correct answer</h2>
+<p>For each benchmark we divide a model's <em>total</em> spend — across right and wrong attempts alike — by its number of correct answers. That's the price of the thing you actually want. The following graph shows accuracy and cost per correct answer on AIME for all five models; the pattern repeats on GPQA Diamond and MMLU-Pro (full tables in the repo).</p>
+<p><img src="img/chart1_accuracy_vs_cost.png" alt="Accuracy and cost-per-correct-answer on AIME"></p>
+<p>Two things stand out:</p>
+<ul>
+<li><strong>Capability tiers are real.</strong> Sol solves 75% of AIME problems to mini's 37%, and leads GPQA Diamond (68% vs 43%) and MMLU-Pro (82% vs 59%). No amount of retrying closes that gap cheaply — at 37% accuracy you're paying for nearly three attempts per success.</li>
+<li><strong>The sticker price can invert.</strong> Luna's list price is roughly 1.5× mini's, yet its cost per correct AIME answer is <strong>25% lower</strong> ($0.0105 vs $0.0139) — luna, running with reasoning disabled, reaches the same answers with fewer billed tokens than mini spends at its defaults. The invoice, not the pricing page, reflects what you actually pay.</li>
+</ul>
+<p>For customers this means the model selection question is never &quot;which is cheapest per token&quot; but &quot;which is cheapest per <em>outcome</em>, at an accuracy my business accepts.&quot;</p>
+<h2 id="measuring-agent-trajectory-cost">Measuring agent trajectory cost</h2>
+<p>Single-call pricing misses the defining feature of agentic workloads: every turn re-sends the entire conversation — system prompt, prior tool results and any additional conversation context. Input tokens grow superlinearly with turn count, and each turn adds a full round trip of latency. A model that finishes in 5 turns instead of 8 doesn't save 37% — it saves substantially more.</p>
+<p>To measure this on a real workload, we ran a stratified sample of <a href="https://arxiv.org/abs/2601.20975">DeepSearchQA</a> — multi-step web-research questions — through a live agent loop with real <code>web_search</code> and <code>fetch_page</code> tools. The following graph shows how turn count drives input-token volume (left) and what each passing answer ends up costing (right).</p>
+<p><img src="img/chart2_deepsearchqa_turns.png" alt="DeepSearchQA turns, input tokens, and cost per passing answer"></p>
+<p>The left panel is the mechanism; the right panel is the consequence. Mini took the most turns per question, mostly re-search loops, and every extra turn re-sent a context stuffed with search results — 2.6× terra's input-token volume by the end. That's how terra, at roughly 3.7× mini's per-token price, ends up <em>cheaper per passing answer</em> ($0.21 vs $0.25) while scoring 26 F1 points higher. Luna beats mini on every axis: accuracy, turns, and cost. Nano remains the floor-price option per pass, but it passes only 35% of questions — fine when failures are discarded, disqualifying when each one triggers human review.</p>
+<p>The customer takeaway: <strong>turn efficiency is a pricing variable</strong>, and it's invisible on the pricing page. If your agents chain tool calls — research, multi-hop lookups, iterative retrieval — benchmark trajectory cost, not call cost.</p>
+<h2 id="evaluating-professional-deliverables-with-gdpval">Evaluating professional deliverables with GDPval</h2>
+<p>Benchmarks grade answers. Much of what customers ship is <em>documents</em> — compliance briefs, financial plans, care protocols — where &quot;correct&quot; is a rubric, not a string match. So we ran a 24-task slice of <a href="https://arxiv.org/abs/2510.04374">GDPval</a>: real occupational deliverables written by professionals with 14+ years of experience, each graded against its human-authored rubric. A deliverable passes at ≥70% of weighted rubric points. The following graph shows pass rates and cost per passing deliverable.</p>
+<p><img src="img/chart3_gdpval.png" alt="GDPval pass rates and cost per passing deliverable"></p>
+<p>All three gpt-5.6 models out-write mini and nano — with reasoning disabled — and the gap concentrates in regulated professions (law, nursing, financial advice) where rubrics demand specific caveats, structure, and completeness. Luna beats mini head-to-head on 15 of 24 deliverables while losing only 4.</p>
+<p>It's important to note that this workload is a single call, so there are no turn effects and <strong>no cost inversion</strong> — mini and nano stay cheaper per passing deliverable, and what gpt-5.6 buys is pass <em>rate</em>. Whether that trade wins depends on what a failed deliverable costs you. If a below-bar draft means a professional spends an hour reworking it, the rework — not the API bill — decides, and a model that passes 63% instead of 46% pays for itself quickly.</p>
+<h2 id="putting-it-together-a-decision-framework">Putting it together: a decision framework</h2>
+<p>If you run gpt-5.4-mini or nano today, the migration question comes down to workload shape:</p>
+<table>
+<thead>
+<tr>
+<th>Your workload looks like…</th>
+<th>Start with</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>High-volume, simple tasks; failures are cheap</td>
+<td><strong>gpt-5.4-nano or gpt-5.6-luna</strong> — benchmark both</td>
+<td>Nano is the floor price per success on easy work; luna adds reliability and speed for pennies</td>
+</tr>
+<tr>
+<td>Interactive apps; accuracy matters; latency SLOs</td>
+<td><strong>gpt-5.6-luna on Amazon Bedrock</strong></td>
+<td>Matches or beats mini on every suite we ran, often cheaper per success, fastest per question in our harness</td>
+</tr>
+<tr>
+<td>Agents that chain tool calls (research, multi-hop)</td>
+<td><strong>gpt-5.6-terra on Amazon Bedrock</strong></td>
+<td>Fewest turns and highest F1 on live web research; turn efficiency made it cheaper per pass than mini</td>
+</tr>
+<tr>
+<td>Quality-gated document production</td>
+<td><strong>gpt-5.6-luna on Amazon Bedrock</strong>, priced against rework</td>
+<td>Highest pass rate among the cost-efficient models on GDPval (15/24 vs mini's 11/24) at $0.046 per passing deliverable</td>
+</tr>
+<tr>
+<td>Accuracy is a hard gate on genuinely difficult work</td>
+<td><strong>gpt-5.6-sol on Amazon Bedrock</strong></td>
+<td>A different capability tier (AIME 75%, GDPval 17/24) at a different price tier; relevant only when the cost-efficient models can't clear the bar</td>
+</tr>
+</tbody>
+</table>
+<p>We also measured same-model latency on both platforms with the same streaming harness. In our July 2026 runs (us-west-2, single-region, point-in-time — shared services vary with load, so treat these as a snapshot and re-measure): Bedrock's median time-to-first-token averaged 21% lower for luna and 5% lower for terra across the 12 matched configurations, luna's throughput averaged 43% higher on Bedrock at ≥500-token outputs (terra +4%), and — most relevant for anyone with a p99 SLO — luna and terra's worst-case TTFT tail ratios were 2.1–2.5× on Bedrock versus 4.6–6.6× on the OpenAI API. Sol behaves differently (it is a deep-reasoning model with inherently long and variable time-to-first-token, and its Bedrock runs used us-east-1); per-configuration detail for all three models is in the repo's <a href="https://github.com/openai-on-aws/benchmarks-openai">latency report</a>, and <code>performance/run_all.sh</code> reproduces the comparison on your own account.</p>
+<h2 id="run-it-on-your-workload">Run it on your workload</h2>
+<p>These results reflect our sample sizes and configuration choices: 20–198 questions per suite (DeepSearchQA 20, AIME 60, MMLU-Pro 140, GPQA Diamond 198), 24 deliverables, and reasoning disabled on the Bedrock models — a deliberate cost floor; enabling it raises both quality and spend. Your tasks are not our tasks. The methodology is the durable part:</p>
+<pre class="hljs"><code><div>git <span class="hljs-built_in">clone</span> https://github.com/openai-on-aws/benchmarks-openai
+pip install -r requirements.txt
+<span class="hljs-built_in">export</span> OPENAI_API_KEY=sk-...   <span class="hljs-comment"># your own key; never stored</span>
+<span class="hljs-built_in">export</span> AWS_REGION=us-west-2    <span class="hljs-comment"># plus your standard AWS credentials</span>
+
+python quality/quick_evals.py       <span class="hljs-comment"># accuracy + cost per correct answer</span>
+python quality/deepsearchqa/run_deepsearchqa.py   <span class="hljs-comment"># live-web agent trajectories</span>
+python quality/gdpval_eval.py       <span class="hljs-comment"># professional deliverables, rubric-judged</span>
+performance/run_all.sh              <span class="hljs-comment"># latency, both platforms</span>
+</div></code></pre>
+<p>Swap in 50–100 of your own tasks with known-good outputs and the same scripts produce cost-per-success numbers in your domain, on your account.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>The per-token price is one input to a decision, not the decision. Across our runs, the model that wins the pricing page routinely loses the invoice once accuracy, token efficiency, and trajectory length are priced in — and the model that wins one workload loses another. Measure outcomes, price failures, and choose per workload.</p>
+<p>To get started with OpenAI models on Amazon Bedrock, see the <a href="https://docs.aws.amazon.com/bedrock/">Amazon Bedrock documentation</a>. To reproduce these benchmarks on your own tasks, clone <a href="https://github.com/openai-on-aws/benchmarks-openai"><code>openai-on-aws/benchmarks-openai</code></a> and follow the steps in the previous section.</p>
+<hr>
+<p><em>Methodology notes: all runs July 2026; every number and chart traces to a timestamped result JSON in the repo (charts generated by <code>docs/img/build_blog_charts.py</code>). Bedrock models ran with <code>reasoning: {effort: none}</code>; models on OpenAI's API ran at their defaults. Grading: deterministic checks where possible plus an LLM judge (gpt-5.5, never one of the evaluated models) with frozen prompts hashed into result files. GDPval scores use a rubric-anchored LLM judge and are not comparable to the paper's human pairwise win rates; an 8,192-token output cap truncated more gpt-5.6 deliverables than gpt-5.4 ones (luna 3, terra 4, sol 6, mini 0, nano 1 of 24), so the gpt-5.6 GDPval scores are floors. DeepSearchQA n=20 and GDPval n=24 per model — treat small gaps as directional. Prices are July 2026 list per 1M input/output tokens: luna $1.10/$6.60, terra $2.75/$16.50, sol $5.50/$33.00, mini $0.75/$4.50, nano $0.20/$1.25.</em></p>
+
+</body>
+</html>

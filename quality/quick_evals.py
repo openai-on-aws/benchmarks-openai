@@ -38,7 +38,7 @@ MAX_TOKENS = {"mmlu_pro": 1024, "math500": 2048, "gsm8k": 1024, "aime": 8192, "h
 
 LETTERS = "ABCDEFGHIJ"
 
-# List prices, USD per 1M tokens (input, output). Sources, retrieved 2026-07-21:
+# List prices, USD per 1M tokens (input, output). Sources, refreshed through 2026-08-31:
 #   Bedrock: https://aws.amazon.com/bedrock/pricing/ (in-region US East)
 #   OpenAI:  https://developers.openai.com/api/docs/pricing (Standard tier)
 # Cached-input discounts are NOT applied (benchmark prompts are unique per question).
@@ -48,10 +48,15 @@ PRICES = {
     ("mantle", "openai.gpt-5.6-luna"):  (0.22, 1.32),
     ("mantle", "openai.gpt-5.6-terra"): (2.20, 13.20),
     ("mantle", "openai.gpt-5.6-sol"):   (5.50, 33.00),
+    ("mantle", "openai.gpt-daybreak-blue-5.6-sol"): (5.50, 33.00),
+    ("mantle", "openai.gpt-5.6-cyber"): (13.75, 82.50),
     ("mantle", "openai.gpt-5.4"):       (2.75, 16.50),
     ("saas", "gpt-5.6-luna"):  (0.20, 1.20),
     ("saas", "gpt-5.6-terra"): (2.00, 12.00),
     ("saas", "gpt-5.6-sol"):   (5.00, 30.00),
+    ("saas", "gpt-daybreak-blue-latest"): (4.00, 20.00),
+    ("saas", "gpt-daybreak-red-latest"): (12.50, 75.00),
+    ("saas", "gpt-5.6-cyber"): (12.50, 75.00),
     ("saas", "gpt-5.4-mini"):  (0.75, 4.50),
     ("saas", "gpt-5.4-nano"):  (0.20, 1.25),
 }

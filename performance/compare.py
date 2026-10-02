@@ -1,9 +1,9 @@
 """
-Build a side-by-side Bedrock vs OpenAI-1P comparison from result JSONs.
+Build a side-by-side comparison from result JSONs.
 
-Reads schema_version-2 files produced by benchmark.py (older files from the
+Reads schema_version-2/3 files produced by benchmark.py (older files from the
 legacy scripts are skipped with a note). For each (input size, max_output_tokens)
-config present on both backends, prints TTFT / ITL / tok-s / E2E side by side
+config present on both sides, prints timing and throughput metrics side by side
 and the relative delta. Writes COMPARISON.md next to the results.
 
 Usage:
@@ -21,7 +21,9 @@ RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
 
 SIZE_ORDER = {"1k": 0, "5k": 1, "10k": 2, "20k": 3}
 METRICS = [
+    ("ttfe_ms", "TTFE p50 (ms)", "lower"),
     ("ttft_ms", "TTFT p50 (ms)", "lower"),
+    ("reasoning_wait_ms", "TTFT−TTFE p50 (ms)", "lower"),
     ("itl_ms", "ITL p50 (ms)", "lower"),
     ("otps", "Tok/s p50", "higher"),
     ("e2e_ms", "E2E p50 (ms)", "lower"),
@@ -35,7 +37,7 @@ def load_results(results_dir):
     for path in sorted(glob.glob(os.path.join(results_dir, "results_*.json"))):
         with open(path) as f:
             data = json.load(f)
-        if data.get("schema_version") != 2:
+        if data.get("schema_version") not in (2, 3):
             skipped += 1
             continue
         for row in data["summary"]:
@@ -46,11 +48,7 @@ def load_results(results_dir):
             if key not in runs or candidate["started_at"] > runs[key]["started_at"]:
                 runs[key] = candidate
     if skipped:
-        print(f"(skipped {skipped} legacy result files without schema_version=2)")
-    other = sorted({k[0] for k in runs} - {"bedrock", "openai"})
-    if other:
-        print(f"(note: results from backends {other} are present but this tool "
-              f"compares only bedrock vs openai)")
+        print(f"(skipped {skipped} legacy result files without schema_version=2/3)")
     return runs
 
 
@@ -63,62 +61,68 @@ def pick(runs, backend, model):
 
 
 def fmt_delta(a, b, direction):
-    """Positive = Bedrock better."""
+    """Positive = side A better."""
     if a is None or b is None or b == 0:
         return "n/a"
     if direction == "lower":
-        pct = (b - a) / b * 100  # how much lower Bedrock is vs 1P
+        pct = (b - a) / b * 100
     else:
-        pct = (a - b) / b * 100  # how much higher Bedrock is vs 1P
+        pct = (a - b) / b * 100
     sign = "+" if pct >= 0 else ""
     return f"{sign}{pct:.0f}%"
 
 
 def main():
-    p = argparse.ArgumentParser(description="Compare Bedrock vs OpenAI 1P benchmark results")
-    p.add_argument("--model-a", help="Bedrock model id to select (default: any)")
-    p.add_argument("--model-b", help="OpenAI 1P model id to select (default: any)")
+    p = argparse.ArgumentParser(description="Compare two benchmark result groups")
+    p.add_argument("--backend-a", default="bedrock")
+    p.add_argument("--backend-b", default="openai")
+    p.add_argument("--model-a", help="side A model id to select (default: any)")
+    p.add_argument("--model-b", help="side B model id to select (default: any)")
+    p.add_argument("--label-a", help="display label for side A")
+    p.add_argument("--label-b", help="display label for side B")
     p.add_argument("--results-dir", default=RESULTS_DIR)
     p.add_argument("--out", default=os.path.join(RESULTS_DIR, "COMPARISON.md"))
     args = p.parse_args()
 
     runs = load_results(args.results_dir)
-    bedrock = pick(runs, "bedrock", args.model_a)
-    openai_1p = pick(runs, "openai", args.model_b)
+    side_a = pick(runs, args.backend_a, args.model_a)
+    side_b = pick(runs, args.backend_b, args.model_b)
+    label_a = args.label_a or args.backend_a
+    label_b = args.label_b or args.backend_b
 
-    common = sorted(set(bedrock) & set(openai_1p),
+    common = sorted(set(side_a) & set(side_b),
                     key=lambda k: (SIZE_ORDER.get(k[0], 9), k[1], k[2], str(k[3])))
-    only_br = set(bedrock) - set(openai_1p)
-    only_1p = set(openai_1p) - set(bedrock)
+    only_a = set(side_a) - set(side_b)
+    only_b = set(side_b) - set(side_a)
 
     if not common:
         print("No overlapping (input size, max_out, concurrency, effort) configs between backends yet.")
-        if bedrock:
-            print(f"  Bedrock configs:  {sorted(set(bedrock))}")
-        if openai_1p:
-            print(f"  OpenAI configs:   {sorted(set(openai_1p))}")
+        if side_a:
+            print(f"  {label_a} configs: {sorted(set(side_a))}")
+        if side_b:
+            print(f"  {label_b} configs: {sorted(set(side_b))}")
         return
 
     lines = []
-    lines.append("# Bedrock vs OpenAI 1P — latency comparison")
+    lines.append(f"# {label_a} vs {label_b} — latency comparison")
     lines.append("")
-    a_models = sorted({v["model"] for v in bedrock.values()})
-    b_models = sorted({v["model"] for v in openai_1p.values()})
-    lines.append(f"- **Bedrock model(s):** {', '.join(a_models)}")
-    lines.append(f"- **OpenAI 1P model(s):** {', '.join(b_models)}")
-    lines.append("- Values are p50 across runs; delta is Bedrock relative to 1P "
-                 "(positive = Bedrock better). Full distributions (p95/p99/mean) are "
+    a_models = sorted({v["model"] for v in side_a.values()})
+    b_models = sorted({v["model"] for v in side_b.values()})
+    lines.append(f"- **{label_a} model(s):** {', '.join(a_models)}")
+    lines.append(f"- **{label_b} model(s):** {', '.join(b_models)}")
+    lines.append(f"- Values are p50 across runs; delta is {label_a} relative to {label_b} "
+                 f"(positive = {label_a} better). Full distributions (p95/p99/mean) are "
                  "in the underlying result JSONs.")
     lines.append("")
-    lines.append("| Input | Max out | Conc | Effort | Metric | Bedrock | OpenAI 1P | Delta |")
+    lines.append(f"| Input | Max out | Conc | Effort | Metric | {label_a} | {label_b} | Delta |")
     lines.append("|---|---|---|---|---|---|---|---|")
 
     for key in common:
         size, max_out, conc, effort = key
-        br, op = bedrock[key], openai_1p[key]
+        a_row, b_row = side_a[key], side_b[key]
         for field, label, direction in METRICS:
-            a = (br.get(field) or {}).get("p50") if br.get(field) else None
-            b = (op.get(field) or {}).get("p50") if op.get(field) else None
+            a = (a_row.get(field) or {}).get("p50") if a_row.get(field) else None
+            b = (b_row.get(field) or {}).get("p50") if b_row.get(field) else None
             if a is None and b is None:
                 continue
             lines.append(f"| {size} | {max_out} | {conc} | {effort or '-'} | {label} "
@@ -130,16 +134,16 @@ def main():
     lines.append("")
     seen_pairs = []
     for key in common:
-        pair = (bedrock[key]["file"], openai_1p[key]["file"])
+        pair = (side_a[key]["file"], side_b[key]["file"])
         if pair not in seen_pairs:
             seen_pairs.append(pair)
             lines.append(f"- `{pair[0]}` vs `{pair[1]}`")
-    if only_br:
+    if only_a:
         lines.append("")
-        lines.append(f"Configs with Bedrock results only (no 1P counterpart yet): {sorted(only_br)}")
-    if only_1p:
+        lines.append(f"Configs with {label_a} results only: {sorted(only_a)}")
+    if only_b:
         lines.append("")
-        lines.append(f"Configs with 1P results only (no Bedrock counterpart yet): {sorted(only_1p)}")
+        lines.append(f"Configs with {label_b} results only: {sorted(only_b)}")
 
     report = "\n".join(lines) + "\n"
     print(report)

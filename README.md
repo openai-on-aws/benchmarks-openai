@@ -23,6 +23,7 @@ flowchart LR
 | ⏱️ **performance/** | How fast? TTFT, inter-token latency, tokens/sec, E2E — p50/p95/p99 | `run_all.sh` · `benchmark.py` |
 | 🎯 **quality/** | How accurate, per benchmark *and* per dollar? AIME, GPQA, MMLU-Pro, MATH-500, GSM8K, HumanEval — with cost-per-success | `quick_evals.py` |
 | 🤖 **quality/ (agentic)** | How do multi-turn agents behave? Turn counts, trajectory cost, live web research | `agentic_evals.py` · `deepsearchqa/` |
+| 🛡️ **quality/cyber/** | How capable and cost-effective are specialized cyber models versus matched general controls? | `run_defensive_matrix.sh` · `run_cybench.sh` |
 | 📝 **quality/ (deliverables)** | Can it produce professional work products? Rubric-judged GDPval slice | `gdpval_eval.py` |
 | 🧩 **parity/** | Which Responses-API features work on Bedrock? 34 live checks | `run_parity.py` |
 | 📄 **report** | One shareable document from all results | `performance/report.py` |
@@ -54,6 +55,51 @@ Then build the full report (percentile tables + charts + findings, as markdown/H
 python performance/report.py     # → performance/results/REPORT.{md,html,docx}
 ```
 
+### Daybreak Blue and Red/Cyber in Ohio
+
+The access-gated cyber models are available in-region through the
+`bedrock-mantle` Responses API in `us-east-2`:
+
+```bash
+export AWS_REGION=us-east-2
+PROFILE=smoke ./performance/run_daybreak.sh
+```
+
+This compares `openai.gpt-daybreak-blue-5.6-sol` with
+`openai.gpt-5.6-cyber`, adds first-server-event timing for reasoning models,
+and produces `DAYBREAK_COMPARISON.md`. These models require Trusted Access for
+Cyber and separate AWS approval; they do not use bedrock-runtime inference
+profiles. The full benchmark selection, safety controls, licensing review,
+statistics, and upstream contribution plan are in
+[`docs/daybreak-cyber-benchmark-plan.md`](docs/daybreak-cyber-benchmark-plan.md).
+The five-arm, paper-backed PR and blog strategy is in
+[`docs/cyber-benchmark-publication-strategy.md`](docs/cyber-benchmark-publication-strategy.md).
+
+Run the portable defensive matrix against Daybreak Blue, Cyber, general Sol,
+and Claude Opus 4.8:
+
+```bash
+PURPLELLAMA_DIR=../PurpleLlama N=10 \
+  ./quality/cyber/run_defensive_matrix.sh
+```
+
+Claude Fable 5 is deliberately gated because its current Bedrock access path
+requires a `provider_data_share` retention opt-in. The strategy pairs Fable
+with Opus 4.8 so classifier fallback is not mistaken for Mythos capability.
+
+For accuracy and cost-per-correct-answer, run identical seeded quick-eval
+samples for both models and generate a paired comparison:
+
+```bash
+python quality/compare_quick_evals.py \
+  --backend mantle \
+  --model-a openai.gpt-daybreak-blue-5.6-sol \
+  --model-b openai.gpt-5.6-cyber \
+  --label-a "Daybreak Blue" \
+  --label-b "Daybreak Red" \
+  --out quality/results/DAYBREAK_QUALITY_SMOKE.md
+```
+
 ### What the output looks like
 
 Solid line = median call; shaded band = p5→p95 spread across 25 calls; dashed = p99 tail:
@@ -77,9 +123,11 @@ flowchart TD
     end
 ```
 
-Every backend runs through the **same Responses-API streaming code path** — same prompts, same token budgets, same retry logic — so any difference you see is the platform, not the harness. Every run records per-call raw measurements (including reasoning-token and cached-token counts, which matter a lot for reasoning models) alongside mean/stddev/p50/p95/p99/min/max summaries.
+Every backend runs through the **same Responses-API streaming code path** — same prompts, same token budgets, same retry logic — so any difference you see is the platform, not the harness. Every run records per-call raw measurements (including reasoning-token and cached-token counts, which matter a lot for reasoning models) alongside mean/stddev/p50/p95/p99/min/max summaries. Schema v3 also separates first server event (TTFE) from first visible text (TTFT) and calculates visible throughput without hidden reasoning tokens.
 
 ## ⏱️ Performance suite
+
+The [GPT-6 Astra Standard versus Ultrafast test plan](docs/gpt-6-astra-ultrafast-benchmark-plan.md) defines the proposed comparison, latency metrics, sample counts, and cost estimates. It also identifies the service-tier and reporting changes needed before collecting results.
 
 <details>
 <summary><b>Single-backend runs, flags, and comparing results</b></summary>
@@ -99,6 +147,7 @@ python performance/benchmark.py --backend openai --model gpt-5.6-luna 1k --runs=
 | `--outputs 100,1000` | Override the per-size `max_output_tokens` sweep |
 | `--effort none\|low\|medium\|high` | Set reasoning effort (gpt-5.6 accepts it on every backend) |
 | `--concurrency N` | Fire N parallel requests to probe throughput under load |
+| `--warmups N` | Run N unmeasured warmup calls per output configuration |
 | `--list-models` | Print the backend's model ids (for `bedrock-runtime`: all ACTIVE inference profiles in the region, regardless of access grants) |
 | `--tag smoke` | Label the results filename |
 
@@ -185,6 +234,12 @@ python performance/benchmark.py --backend bedrock --list-models   # source of tr
 
 OpenAI model ids on Bedrock (newest first): `openai.gpt-5.6-luna`, `-terra`, `-sol`, `openai.gpt-5.5`, `openai.gpt-5.4`, `openai.gpt-oss-120b`/`-20b`. ⚠️ **Availability varies by region** — e.g. as of July 2026, the bedrock-mantle endpoint in us-west-2 serves luna/terra but *not* sol (use us-east-1 for sol); `--list-models` is always the source of truth. The gpt-5.6 family rejects `temperature`/`top_p` but accepts `reasoning: {effort: ...}` including `none` — on both Bedrock endpoints.
 
+The access-gated cyber IDs are
+`openai.gpt-daybreak-blue-5.6-sol` and `openai.gpt-5.6-cyber`. They are
+in-region `bedrock-mantle` models in `us-east-2`, require Trusted Access for
+Cyber plus AWS approval, and have no runtime/global/cross-region inference
+profiles.
+
 **bedrock-runtime backend** (`--backend bedrock-runtime` for performance, `--backend runtime` for quality): the same models addressed by **inference-profile id** — `us.openai.gpt-5.6-luna`/`-terra`/`-sol` (US cross-region) or `global.openai.gpt-5.6-*`. Bare `openai.*` ids return a 400 here. Cross-region profiles also mean all three gpt-5.6 models are reachable from us-west-2 on this backend, unlike mantle. `--backend bedrock-runtime --list-models` prints the ACTIVE profiles for your region (the runtime endpoint itself has no models API). gpt-5.5 has no inference profile, so the GDPval judge stays on `mantle`/`saas`.
 
 ## 🔐 Auth reference
@@ -218,10 +273,12 @@ performance/
   compare.py            # config-matched Bedrock vs 1P deltas → COMPARISON.md
   report.py             # full report: percentile tables + charts + findings → md/html/docx
   run_all.sh            # one-command full matrix on both backends
+  run_daybreak.sh       # Ohio Daybreak Blue vs Red latency profiles
   data/                 # canonical prompts: ~1k / 5k / 10k / 20k input tokens
   results/              # timestamped result JSONs, chart PNGs, REPORT.*
 quality/
   quick_evals.py        # ⭐ 6 benchmarks + cost-per-success, seeded samples, both backends
+  compare_quick_evals.py # paired accuracy/cost comparison from quick-eval JSON
   agentic_evals.py      # multi-turn tool-calling: success, turns, trajectory cost
   deepsearchqa/         # live-web research agent loop + two-layer judging
   gdpval_eval.py        # professional deliverables, rubric-judged (GDPval slice)
@@ -229,11 +286,19 @@ quality/
   aime_2025.py          # AIME competition math (public 1983–2024 dataset)
   hle.py                # Humanity's Last Exam, text-only subset
   rescore_hle.py        # LLM-judge rescoring (Claude Haiku on Bedrock)
+  cyber/
+    cybersoc_eval.py    # CyberSOCEval malware reasoning via Responses API
+    compare_cybersoc.py # protocol-checked accuracy/cost comparison
+    summarize_inspect.py # agent cost/success and failure taxonomy
+    run_defensive_matrix.sh # Blue/Cyber/Sol/Opus; optional Fable
+    run_cybench.sh      # isolated Cybench through Inspect Evals
   RESULTS.md            # methodology + completed-run notes
 parity/
   run_parity.py         # 34 Responses-API feature checks
 docs/
   migration-workload-plan.md
+  daybreak-cyber-benchmark-plan.md
+  cyber-benchmark-publication-strategy.md
 ```
 
 ## 🤝 Provenance, contributing, license
