@@ -1,5 +1,6 @@
 """Portable dashboard evidence semantics; no model or AWS dependencies."""
 import importlib.util
+import base64
 import hashlib
 import json
 from pathlib import Path
@@ -150,6 +151,14 @@ class DashboardTests(unittest.TestCase):
         self.assertEqual(response["fresh_model_calls"], 0)
         self.assertEqual(response["fresh_aws_calls"], 0)
         html = output.read_text()
+        # Fonts must travel with a copied, offline HTML, including their notices.
+        self.assertNotIn(dashboard.FONT_PLACEHOLDER, html)
+        for name in ("open-sans-regular.woff2", "open-sans-bold.woff2"):
+            encoded = base64.b64encode((PLUGIN / "scripts/fonts" / name).read_bytes()).decode()
+            self.assertIn("data:font/woff2;base64," + encoded, html)
+        self.assertIn("Apache License", html)
+        self.assertIn("SIL OPEN FONT LICENSE Version 1.1", html)
+        self.assertIn("Open Sans Fonts", html)
         self.assertNotIn('</script><script>alert("unsafe")</script>', html)
         self.assertIn("\\u003c/script\\u003e", html)
         self.assertNotIn(dashboard.PLACEHOLDER, html)

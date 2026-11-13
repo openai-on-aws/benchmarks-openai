@@ -5,21 +5,27 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Prompt Optimizer · Results workspace</title>
     <style>
+      /* __PROMPT_OPTIMIZER_FONTS__ */
+
       :root {
         color-scheme: light;
-        --bg: #f5f6f3;
+        --bg: #ffffff;
         --surface: #fff;
-        --soft: #f7f9f7;
-        --ink: #172b30;
-        --muted: #65777b;
-        --line: #e0e7e3;
-        --accent: #087e72;
-        --accent-soft: #e9f5ef;
-        --orange: #c66c38;
-        --blue: #587eaa;
-        --warn: #986021;
-        --warn-bg: #fff6e9;
-        --shadow: 0 8px 32px #19302c05;
+        --soft: #f7f7f8;
+        --ink: #111111;
+        --muted: #5f6368;
+        --line: #e5e5e5;
+        --accent: #111111;
+        --accent-soft: #f5f5f5;
+        --orange: #ff9900;
+        --blue: #0972d3;
+        --warn: #855900;
+        --warn-bg: #fff8eb;
+        --success: #037f0c;
+        --success-bg: #f2f8f0;
+        --series-1: #232f3e;
+        --series-2: #b56b00;
+        --shadow: none;
       }
       * {
         box-sizing: border-box;
@@ -29,7 +35,8 @@
         background: var(--bg);
         color: var(--ink);
         font:
-          14px/1.5 -apple-system,
+          14px/1.5 "Open Sans",
+          -apple-system,
           BlinkMacSystemFont,
           "Segoe UI",
           sans-serif;
@@ -50,14 +57,14 @@
       a:focus-visible,
       input:focus-visible,
       select:focus-visible {
-        outline: 3px solid #59b9ab;
+        outline: 3px solid var(--blue);
         outline-offset: 3px;
       }
       button {
         border: 0;
       }
       a {
-        color: var(--accent);
+        color: var(--blue);
       }
       .shell {
         min-height: 100vh;
@@ -65,8 +72,8 @@
         grid-template-columns: 224px minmax(0, 1fr);
       }
       .sidebar {
-        background: #132c30;
-        color: #dce8e5;
+        background: #232f3e;
+        color: #ffffff;
         padding: 31px 20px;
         display: flex;
         flex-direction: column;
@@ -81,15 +88,15 @@
         gap: 12px;
         font-size: 14px;
         line-height: 1.3;
-        font-weight: 750;
-        letter-spacing: 0.05em;
+        font-weight: 700;
+        letter-spacing: -0.025em;
       }
       .mark {
-        background: #d7f5d9;
-        color: #173f3a;
+        background: #ff9900;
+        color: #232f3e;
         width: 38px;
         height: 38px;
-        border-radius: 12px;
+        border-radius: 8px;
         display: grid;
         place-items: center;
         font-size: 25px;
@@ -103,7 +110,7 @@
         font-weight: 750;
       }
       .side-label {
-        color: #86a3a5;
+        color: #b6bec9;
         margin: 0 13px 12px;
       }
       .navigation {
@@ -117,7 +124,7 @@
         padding: 13px;
         border-radius: 9px;
         background: none;
-        color: #a6bdbc;
+        color: #d1d5db;
         text-align: left;
       }
       .nav svg {
@@ -128,22 +135,23 @@
         stroke-width: 1.7;
       }
       .nav.active {
-        background: #28464a;
-        color: #eefff5;
+        background: #37475a;
+        color: #ffffff;
+        box-shadow: inset 3px 0 0 var(--orange);
       }
       .nav:hover {
-        background: #203e42;
+        background: #314155;
       }
       .sidebar-bottom {
         margin-top: auto;
         padding: 17px 12px;
-        border-top: 1px solid #355055;
+        border-top: 1px solid #465467;
         font-size: 12px;
-        color: #a3bab9;
+        color: #b6bec9;
       }
       .sidebar-bottom strong {
         display: block;
-        color: #dce8e5;
+        color: #ffffff;
         margin-bottom: 6px;
       }
       .dot {
@@ -151,7 +159,7 @@
         width: 6px;
         height: 6px;
         border-radius: 50%;
-        background: #a4dba4;
+        background: #ff9900;
         margin-right: 7px;
       }
       .main {
@@ -173,7 +181,7 @@
       }
       .crumb span {
         margin: 0 9px;
-        color: #a2b3ad;
+        color: #999999;
       }
       .actions {
         display: flex;
@@ -184,7 +192,7 @@
         background: var(--surface);
         border: 1px solid var(--line);
         padding: 9px 13px;
-        border-radius: 8px;
+        border-radius: 999px;
         font-size: 12px;
         font-weight: 600;
         white-space: nowrap;
@@ -208,12 +216,22 @@
         color: var(--accent);
         margin-bottom: 8px;
       }
+      .hero .eyebrow::before {
+        content: "";
+        display: inline-block;
+        width: 18px;
+        height: 3px;
+        margin-right: 9px;
+        vertical-align: middle;
+        background: var(--orange);
+      }
       .hero h1 {
-        font-size: 32px;
+        font-size: 36px;
         line-height: 1.17;
-        letter-spacing: -1.1px;
+        letter-spacing: -1.4px;
         margin: 0 0 10px;
-        font-weight: 650;
+        font-family: "OpenAI Sans", "Open Sans", Arial, sans-serif;
+        font-weight: 400;
       }
       .hero p {
         margin: 0;
@@ -235,8 +253,8 @@
         color: var(--muted);
       }
       .badge.good {
-        background: var(--accent-soft);
-        color: var(--accent);
+        background: var(--success-bg);
+        color: var(--success);
         border-color: transparent;
       }
       .badge.warn {
@@ -256,7 +274,8 @@
         display: flex;
         gap: 3px;
         padding: 4px;
-        background: #e8eeea;
+        background: var(--soft);
+        border: 1px solid var(--line);
         border-radius: 9px;
       }
       .segment {
@@ -268,7 +287,7 @@
       }
       .segment.active {
         background: var(--surface);
-        box-shadow: 0 1px 4px #132c3012;
+        box-shadow: 0 1px 4px #00000012;
         color: var(--ink);
         font-weight: 650;
       }
@@ -285,7 +304,7 @@
       .card {
         background: var(--surface);
         border: 1px solid var(--line);
-        border-radius: 13px;
+        border-radius: 10px;
         box-shadow: var(--shadow);
       }
       .kpi {
@@ -300,9 +319,9 @@
         gap: 8px;
       }
       .kpi-value {
-        font-size: 34px;
+        font-size: 36px;
         letter-spacing: -1.2px;
-        font-weight: 600;
+        font-weight: 400;
         line-height: 1.3;
         margin: 9px 0 5px;
         font-variant-numeric: tabular-nums;
@@ -389,6 +408,7 @@
       .insight .callout {
         background: var(--accent-soft);
         border-radius: 9px;
+        border-left: 3px solid var(--orange);
         padding: 14px;
         font-size: 12px;
         color: var(--accent);
@@ -694,27 +714,32 @@
       }
       body.dark {
         color-scheme: dark;
-        --bg: #132125;
-        --surface: #1a2d31;
-        --soft: #203539;
-        --ink: #e6f0eb;
-        --muted: #a4b9b6;
-        --line: #334b4c;
-        --accent: #93ddc9;
-        --accent-soft: #254a44;
-        --warn: #efc58c;
-        --warn-bg: #3a332a;
+        --bg: #111111;
+        --surface: #1c1c1c;
+        --soft: #242424;
+        --ink: #f5f5f5;
+        --muted: #b4b4b4;
+        --line: #383838;
+        --accent: #f5f5f5;
+        --accent-soft: #262626;
+        --blue: #89bdee;
+        --warn: #f5c476;
+        --warn-bg: #302717;
+        --success: #a8d5a3;
+        --success-bg: #1e3022;
+        --series-1: #e5e7eb;
+        --series-2: #ff9900;
         --shadow: none;
       }
       body.dark .segments {
-        background: #203539;
+        background: var(--soft);
       }
       body.dark .sidebar {
-        background: #0e1b1f;
+        background: #161e2d;
       }
       body.dark .btn.primary {
-        background: #b6e9d6;
-        color: #132c30;
+        background: #ffffff;
+        color: #111111;
         border-color: transparent;
       }
       @media (min-width: 1500px) {
@@ -1112,12 +1137,12 @@
         return JSON.stringify(v, null, 2);
       };
       const palette = [
-        "#138779",
-        "#c47b48",
-        "#6486b1",
-        "#9974a4",
-        "#7d9149",
-        "#b96071",
+        "var(--series-1)",
+        "var(--series-2)",
+        "#0972d3",
+        "#7d3ac1",
+        "#037f0c",
+        "#d91515",
       ];
       const modelLabel = (v) =>
         String(v || "Unresolved model")

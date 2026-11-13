@@ -1,0 +1,17 @@
+Open Sans
+Copyright 2020 The Open Sans Project Authors (https://github.com/googlefonts/opensans)
+Licensed under the SIL Open Font License, Version 1.1 (see LICENSE).
+
+Font binaries extracted unchanged from @cloudscape-design/global-styles 1.0.72.
+Upstream Cloudscape package notice:
+Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+SPDX-License-Identifier: Apache-2.0 (see CLOUDSCAPE-LICENSE)
+
+Original fonts.css notice:
+Open Sans Fonts | Apache License, Version 2.0 |
+https://fonts.google.com/specimen/Open+Sans#license
+
+The font binaries' embedded copyright and licence identify the Open Sans
+Project Authors and the SIL OFL, despite the different upstream CSS header.
+The original font data and embedded font metadata are preserved. The renderer
+embeds these font files, this notice and both licences in each HTML document.

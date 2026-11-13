@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import base64
 import hashlib
 import json
 from pathlib import Path
@@ -10,6 +11,7 @@ import tempfile
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 TEMPLATE = Path(__file__).with_name("dashboard.html")
 PLACEHOLDER = "__PROMPT_OPTIMIZER_DATA__"
+FONT_PLACEHOLDER = "/* __PROMPT_OPTIMIZER_FONTS__ */"
 LABELS = {
     "source_original": "Source · original prompt",
     "target_original": "Target · original prompt",
@@ -20,6 +22,23 @@ LABELS = {
 
 def read_json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def embedded_fonts() -> str:
+    """Keep the licensed AWS UI fonts and notices inside each offline HTML."""
+    directory = TEMPLATE.parent / "fonts"
+    notices = "\n\n".join((directory / name).read_text(encoding="utf-8")
+                          for name in ("NOTICE", "LICENSE", "CLOUDSCAPE-LICENSE"))
+    styles = ["/*\n" + notices.replace("*/", "* /") + "\n*/"]
+    for weight, filename in ((400, "open-sans-regular.woff2"),
+                             (700, "open-sans-bold.woff2")):
+        encoded = base64.b64encode((directory / filename).read_bytes()).decode("ascii")
+        styles.append(
+            "@font-face{font-family:'Open Sans';font-style:normal;"
+            f"font-weight:{weight};font-display:swap;"
+            f"src:url(data:font/woff2;base64,{encoded}) format('woff2');}}"
+        )
+    return "\n".join(styles)
 
 
 def discover_reports(project: Path) -> list[Path]:
@@ -187,6 +206,9 @@ def render_dashboard(project: Path, output: Path, *, title: str | None = None, f
     template = TEMPLATE.read_text(encoding="utf-8")
     if template.count(PLACEHOLDER) != 1:
         raise ValueError("Dashboard template must contain exactly one data placeholder.")
+    if template.count(FONT_PLACEHOLDER) != 1:
+        raise ValueError("Dashboard template must contain exactly one font placeholder.")
+    template = template.replace(FONT_PLACEHOLDER, embedded_fonts())
     payload = json.dumps(data, ensure_ascii=False, allow_nan=False, separators=(",", ":"))
     for character, replacement in (("<", "\\u003c"), (">", "\\u003e"), ("&", "\\u0026"),
                                     ("\u2028", "\\u2028"), ("\u2029", "\\u2029")):

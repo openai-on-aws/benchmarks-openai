@@ -35,6 +35,9 @@ codex plugin add prompt-optimizer@openai-on-aws
 You can also install **Prompt Optimizer** from **OpenAI on AWS** in Codex's plugin
 directory. Open a new chat and choose **Evaluate Workflows**.
 
+The [new-session quickstart](docs/QUICKSTART.md) includes refresh commands,
+copyable prompts and a terminal-only demo.
+
 If `openai-on-aws` is already registered from `main`, Codex rejects a second
 source with the same marketplace name. Switch the registration, then install:
 
@@ -188,7 +191,12 @@ Open the returned HTML file directly in a browser. It has three views:
 
 </details>
 
-Day and night views are included. The dashboard renders saved `report.json`
+Day and night views combine OpenAI-inspired monochrome surfaces, AWS orange
+and Squid Ink accents, and embedded Open Sans from AWS's Cloudscape design
+system. Headings use OpenAI Sans if it is installed locally; Open Sans is the
+offline fallback. [Typography sources and font licences](scripts/fonts/README.md).
+
+The dashboard renders saved `report.json`
 data in the browser, works offline and needs only Python's standard library
 to build. It reads a single report directory, or the `local/`, `agentcore/`
 and `results/` report locations within a project. Combined reports must have
