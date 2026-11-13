@@ -98,13 +98,19 @@ when applicable so related documents do not cross splits.
   --project "$EVAL_PROJECT"
 "$EVAL_PYTHON" "$PLUGIN/scripts/invoice_eval.py" results \
   --project "$EVAL_PROJECT" --backend local
+
+# Render compatible saved results together, without AWS or model calls.
+python3 "$PLUGIN/scripts/invoice_eval.py" dashboard \
+  --project "$EVAL_PROJECT" --output "$EVAL_PROJECT/dashboard.html"
 ```
 
 AgentCore execution qualifies two routes before submission, adding two model
 calls. `results/decision.html` is the cloud report; `local/decision.html` is
 the local report. Reports preserve usage, timing, checks and prompt evidence.
-The installed demo combines the historical reports into a comparison dashboard;
-new runs currently produce one decision dashboard per backend.
+The `dashboard` command combines the saved backend reports when their input
+fingerprints match. It also supports a single backend. Open `dashboard.html`
+for the overview, trial explorer and run-integrity views. It is an offline
+snapshot; retrieve results, then rebuild with `--force` to refresh it.
 
 For unsupported log formats or grading needs, inspect the bundled engine's
 `LOG_REPLAY.md` and `intake/skills/eval-intake/references/input-contract.md`.

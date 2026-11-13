@@ -28,9 +28,10 @@ For a first look, run:
 python3 /absolute/plugin/scripts/invoice_eval.py demo --output /absolute/workspace/invoice-demo
 ```
 
-Open the returned `index.html` in Codex or a browser. This copies a recorded
-live comparison from 13 November 2026; it makes no new model or AWS calls.
-It includes both execution backends, per-invoice answers and the numbered AWS
+Open the returned `dashboard` path (`dashboard.html`) in Codex or a browser.
+This renders a recorded live comparison from 13 November 2026; it makes no new
+model or AWS calls. Show the overview, trial explorer and run integrity views.
+The returned `report` (`index.html`) retains the historical narrative and AWS
 architecture. Explain that perfect agreement with these synthetic, unreviewed
 references does not establish production quality.
 
@@ -120,7 +121,20 @@ report. For local evidence, add `--backend local`. Never submit a second job
 because a request timed out; inspect saved receipts and checkpoints first.
 Use the same local output directory to resume completed work.
 
-Open the returned `decision.html` and link the machine-readable evidence.
+Render the saved results through the same entrypoint:
+
+```bash
+python3 /absolute/plugin/scripts/invoice_eval.py dashboard \
+  --project /absolute/workspace/my-study \
+  --output /absolute/workspace/my-study/dashboard.html
+```
+
+Open the dashboard and link the underlying `decision.html` and machine-readable
+evidence. It can combine local and downloaded AgentCore reports from the same
+frozen study, rejects incompatible fingerprints, and does not call AWS or models.
+It is a snapshot: retrieve results first, then rebuild with `--force` to refresh
+an existing output. The HTML includes evaluation inputs and outputs.
+
 Report quality scope, distinct cases, attempts, failures, estimated model cost
 and timing definitions. Missing usage remains unknown. Infrastructure and human
 review costs are separate. Cloud dispatch includes conversation time; do not

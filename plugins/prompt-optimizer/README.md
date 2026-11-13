@@ -9,6 +9,13 @@ Codex guides the setup and asks what the evidence needs to prove. You choose
 which errors matter, what a correct answer looks like and whether the result
 justifies a model change.
 
+![Prompt Optimizer evaluation flow through AgentCore, Bedrock and S3](docs/prompt-optimizer-architecture.drawio.png)
+
+**One reusable evaluation workflow.** Prepare your inputs and fixed prompt,
+run the study locally or on AgentCore, then explore the saved evidence in a
+browser. The cloud path above applies to any supported structured-output
+workflow. [Open the editable AWS diagram and six numbered steps](docs/prompt-optimizer-architecture.md).
+
 | Start here | What you get | What you need |
 | --- | --- | --- |
 | **Explore the invoice demo** | Interactive results from a recorded local and AgentCore run, plus an AWS architecture diagram | Python; no credentials or new model calls |
@@ -142,7 +149,8 @@ The [support-ticket guide](examples/support-ticket-triage/README.md) provides
 copyable preparation and execution commands. The
 [workflow reference](skills/evaluate-invoices/references/workflow.md) covers
 custom invoice logs, connection settings and the common commands:
-`start`, `inspect`, `configure`, `prepare`, `plan`, `run`, `status` and `results`.
+`start`, `inspect`, `configure`, `prepare`, `plan`, `run`, `status`, `results`
+and `dashboard`.
 
 ## 6. Inspect the evidence and decide what to do next
 
@@ -153,9 +161,43 @@ cost, timing and prompt evidence. Each backend produces its own report:
 - AgentCore: `<project>/results/decision.html` and `report.json` after retrieval.
 
 `status` and `results` inspect the existing job; they do not submit another
-study. Add `--backend local` to inspect local evidence. The combined local/cloud
-dashboard is currently the bundled historical invoice demo; fresh runs have
-one dashboard per backend.
+study. Add `--backend local` to inspect local evidence.
+
+Build an interactive dashboard from either backend, or compare both after
+retrieving their results into the same project:
+
+```bash
+python3 /absolute/plugin/scripts/invoice_eval.py dashboard \
+  --project /absolute/workspace/my-study \
+  --output /absolute/workspace/my-study/dashboard.html
+```
+
+Open the returned HTML file directly in a browser. It has three views:
+
+- **Overview:** backend filters, quality checks, cost/latency tradeoffs and
+  the exact comparison table.
+- **Trial explorer:** search inputs and outputs by case, filter check failures,
+  inspect answers and request receipts, and export filtered evidence.
+- **Run integrity:** completion, unresolved attempts, price coverage,
+  fingerprints and the frozen prompt.
+
+<details>
+<summary>Preview the results workspace using the recorded example</summary>
+
+![Prompt Optimizer dashboard showing recorded model cost, latency and quality evidence](docs/dashboard-overview.png)
+
+</details>
+
+Day and night views are included. The dashboard renders saved `report.json`
+data in the browser, works offline and needs only Python's standard library
+to build. It reads a single report directory, or the `local/`, `agentcore/`
+and `results/` report locations within a project. Combined reports must have
+matching input fingerprints and one report per backend.
+
+This is an interactive snapshot, not a live AWS monitoring service. Run
+`results` to retrieve cloud evidence, then rebuild with `--force` to refresh
+an existing dashboard. Rendering makes no AWS or model calls. The HTML and
+exports contain recorded inputs and outputs; share them as evaluation data.
 
 A useful conclusion may be that the data is too easy or the labels need review.
 Do not choose a winner just because one chart looks better. Repetitions are
@@ -173,24 +215,16 @@ cd benchmarks-openai
 python3 plugins/prompt-optimizer/scripts/invoice_eval.py demo --output invoice-demo
 ```
 
-Open `invoice-demo/index.html` in a browser. The demo uses only Python's standard
-library. It includes backend filters, case selection, answers, request receipts,
-cost/latency charts and the AWS diagram.
+Open `invoice-demo/dashboard.html` for the interactive results workspace.
+The original `invoice-demo/index.html` remains available with its detailed
+historical narrative and AWS diagram. The demo uses only Python's standard
+library and makes no AWS or model calls.
 
 These are the **recorded 13 November 2026 live measurements**: 96 evaluation
 trials and two route checks per backend, with a combined estimated model cost
 of $0.71, excluding infrastructure. Both models matched every synthetic,
 unreviewed reference. That leaves substantial uncertainty about quality on
 harder, real invoices. See the [recorded evidence](examples/recorded-invoice-comparison/).
-
-## AWS architecture
-
-![Prompt Optimizer: AgentCore, Bedrock and S3 with six numbered evaluation steps](docs/invoice-evaluation-flow.drawio.png)
-
-One AgentCore deployment hosts the coordinator and worker sessions. Bedrock
-provides inference; private S3 stores frozen inputs and run evidence; IAM
-controls access and CloudWatch records logs. Both starters use the cloud path shown in the diagram. See the
-[editable diagram and numbered steps](docs/invoice-evaluation-flow.md).
 
 ## Development and scope
 

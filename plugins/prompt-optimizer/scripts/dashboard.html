@@ -1,0 +1,1570 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Prompt Optimizer · Results workspace</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f5f6f3;
+        --surface: #fff;
+        --soft: #f7f9f7;
+        --ink: #172b30;
+        --muted: #65777b;
+        --line: #e0e7e3;
+        --accent: #087e72;
+        --accent-soft: #e9f5ef;
+        --orange: #c66c38;
+        --blue: #587eaa;
+        --warn: #986021;
+        --warn-bg: #fff6e9;
+        --shadow: 0 8px 32px #19302c05;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          14px/1.5 -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+      button,
+      select {
+        cursor: pointer;
+      }
+      button {
+        color: inherit;
+      }
+      button:focus-visible,
+      a:focus-visible,
+      input:focus-visible,
+      select:focus-visible {
+        outline: 3px solid #59b9ab;
+        outline-offset: 3px;
+      }
+      button {
+        border: 0;
+      }
+      a {
+        color: var(--accent);
+      }
+      .shell {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: 224px minmax(0, 1fr);
+      }
+      .sidebar {
+        background: #132c30;
+        color: #dce8e5;
+        padding: 31px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 35px;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 14px;
+        line-height: 1.3;
+        font-weight: 750;
+        letter-spacing: 0.05em;
+      }
+      .mark {
+        background: #d7f5d9;
+        color: #173f3a;
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+        font-size: 25px;
+        font-weight: 400;
+      }
+      .side-label,
+      .eyebrow {
+        font-size: 10px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        font-weight: 750;
+      }
+      .side-label {
+        color: #86a3a5;
+        margin: 0 13px 12px;
+      }
+      .navigation {
+        display: grid;
+        gap: 7px;
+      }
+      .nav {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 13px;
+        border-radius: 9px;
+        background: none;
+        color: #a6bdbc;
+        text-align: left;
+      }
+      .nav svg {
+        width: 18px;
+        height: 18px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.7;
+      }
+      .nav.active {
+        background: #28464a;
+        color: #eefff5;
+      }
+      .nav:hover {
+        background: #203e42;
+      }
+      .sidebar-bottom {
+        margin-top: auto;
+        padding: 17px 12px;
+        border-top: 1px solid #355055;
+        font-size: 12px;
+        color: #a3bab9;
+      }
+      .sidebar-bottom strong {
+        display: block;
+        color: #dce8e5;
+        margin-bottom: 6px;
+      }
+      .dot {
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #a4dba4;
+        margin-right: 7px;
+      }
+      .main {
+        min-width: 0;
+        padding: 0 38px 32px;
+        max-width: 1660px;
+        width: 100%;
+        margin: auto;
+      }
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        min-height: 83px;
+        border-bottom: 1px solid var(--line);
+        gap: 16px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .crumb span {
+        margin: 0 9px;
+        color: #a2b3ad;
+      }
+      .actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .btn {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        padding: 9px 13px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .btn:hover {
+        border-color: var(--accent);
+      }
+      .btn.primary {
+        background: var(--ink);
+        color: var(--surface);
+        border-color: var(--ink);
+      }
+      .hero {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 22px;
+        padding: 33px 0 24px;
+      }
+      .eyebrow {
+        color: var(--accent);
+        margin-bottom: 8px;
+      }
+      .hero h1 {
+        font-size: 32px;
+        line-height: 1.17;
+        letter-spacing: -1.1px;
+        margin: 0 0 10px;
+        font-weight: 650;
+      }
+      .hero p {
+        margin: 0;
+        color: var(--muted);
+        max-width: 700px;
+        font-size: 13px;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 5px 8px;
+        font-size: 10px;
+        font-weight: 650;
+        letter-spacing: 0.025em;
+        white-space: nowrap;
+        background: var(--surface);
+        color: var(--muted);
+      }
+      .badge.good {
+        background: var(--accent-soft);
+        color: var(--accent);
+        border-color: transparent;
+      }
+      .badge.warn {
+        background: var(--warn-bg);
+        color: var(--warn);
+        border-color: transparent;
+      }
+      .toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 23px;
+        flex-wrap: wrap;
+      }
+      .segments {
+        display: flex;
+        gap: 3px;
+        padding: 4px;
+        background: #e8eeea;
+        border-radius: 9px;
+      }
+      .segment {
+        background: transparent;
+        color: var(--muted);
+        font-size: 12px;
+        padding: 8px 17px;
+        border-radius: 6px;
+      }
+      .segment.active {
+        background: var(--surface);
+        box-shadow: 0 1px 4px #132c3012;
+        color: var(--ink);
+        font-weight: 650;
+      }
+      .scope {
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .kpis {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 15px;
+        margin-bottom: 22px;
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        box-shadow: var(--shadow);
+      }
+      .kpi {
+        padding: 20px 22px;
+      }
+      .kpi-label {
+        font-size: 11px;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .kpi-value {
+        font-size: 34px;
+        letter-spacing: -1.2px;
+        font-weight: 600;
+        line-height: 1.3;
+        margin: 9px 0 5px;
+        font-variant-numeric: tabular-nums;
+      }
+      .kpi-note {
+        font-size: 10px;
+        color: var(--muted);
+      }
+      .workspace-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.8fr) minmax(260px, 1fr);
+        gap: 21px;
+        align-items: stretch;
+      }
+      .panel-head {
+        padding: 22px 23px 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      .panel-head h2 {
+        font-size: 15px;
+        letter-spacing: -0.3px;
+        margin: 0 0 4px;
+        font-weight: 650;
+      }
+      .sub {
+        font-size: 11px;
+        color: var(--muted);
+        margin: 0;
+      }
+      .chart {
+        padding: 10px 13px 0;
+      }
+      .chart svg {
+        display: block;
+        width: 100%;
+        height: auto;
+        overflow: visible;
+      }
+      .chart-note {
+        padding: 0 24px 20px;
+        font-size: 10px;
+        color: var(--muted);
+      }
+      .legend {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        font-size: 10px;
+        color: var(--muted);
+        padding: 0 24px 16px;
+      }
+      .legend i,
+      .swatch {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 6px;
+      }
+      .insight {
+        padding: 23px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+      .insight .eyebrow {
+        margin: 0;
+      }
+      .insight h2 {
+        font-size: 23px;
+        font-weight: 550;
+        letter-spacing: -0.65px;
+        line-height: 1.25;
+        margin: 0;
+      }
+      .insight p {
+        font-size: 12px;
+        color: var(--muted);
+        margin: 0;
+      }
+      .insight .callout {
+        background: var(--accent-soft);
+        border-radius: 9px;
+        padding: 14px;
+        font-size: 12px;
+        color: var(--accent);
+      }
+      .questions {
+        border-top: 1px solid var(--line);
+        padding-top: 14px;
+        display: grid;
+        gap: 13px;
+        margin-top: auto;
+      }
+      .question {
+        display: flex;
+        gap: 10px;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .question b {
+        font-family: monospace;
+        font-size: 10px;
+        color: var(--accent);
+        padding-top: 2px;
+      }
+      .table-card {
+        margin-top: 21px;
+        overflow: hidden;
+      }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      .table {
+        border-collapse: collapse;
+        width: 100%;
+        text-align: left;
+        font-size: 12px;
+      }
+      .table th {
+        font-weight: 550;
+        font-size: 10px;
+        color: var(--muted);
+        padding: 14px 20px;
+        background: var(--soft);
+        white-space: nowrap;
+      }
+      .table td {
+        padding: 15px 20px;
+        border-top: 1px solid var(--line);
+        vertical-align: middle;
+        font-variant-numeric: tabular-nums;
+      }
+      .table .name {
+        font-weight: 650;
+      }
+      .table small {
+        display: block;
+        color: var(--muted);
+        font-size: 10px;
+        margin-top: 3px;
+      }
+      .mini-bar {
+        width: 75px;
+        height: 4px;
+        border-radius: 4px;
+        background: var(--line);
+        margin-top: 6px;
+        overflow: hidden;
+      }
+      .mini-bar span {
+        display: block;
+        height: 100%;
+        background: var(--accent);
+      }
+      .table-footer {
+        padding: 13px 22px;
+        border-top: 1px solid var(--line);
+        font-size: 10px;
+        color: var(--muted);
+      }
+      .table-head {
+        padding-bottom: 17px;
+      }
+      .view[hidden] {
+        display: none;
+      }
+      .filter-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 18px;
+      }
+      .search,
+      select {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px 13px;
+        background: var(--surface);
+        color: var(--ink);
+        font-size: 12px;
+      }
+      .search {
+        flex: 1;
+        min-width: 160px;
+      }
+      .explorer-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(340px, 1.1fr);
+        gap: 21px;
+        align-items: start;
+      }
+      .trial-list {
+        max-height: 660px;
+        overflow: auto;
+      }
+      .trial-button {
+        display: block;
+        width: 100%;
+        background: var(--surface);
+        text-align: left;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--line);
+      }
+      .trial-button:hover,
+      .trial-button.selected {
+        background: var(--accent-soft);
+      }
+      .trial-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .trial-top strong {
+        font-size: 12px;
+      }
+      .trial-meta {
+        font-size: 10px;
+        color: var(--muted);
+        margin-top: 7px;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        flex-wrap: wrap;
+      }
+      .detail {
+        padding: 23px;
+        min-width: 0;
+      }
+      .detail h2 {
+        margin: 0 0 5px;
+        font-size: 18px;
+      }
+      .detail h3 {
+        margin: 22px 0 10px;
+        font-size: 11px;
+        letter-spacing: 0.03em;
+      }
+      .code {
+        background: var(--soft);
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        font:
+          11px/1.6 ui-monospace,
+          SFMono-Regular,
+          Consolas,
+          monospace;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        max-height: 290px;
+        overflow: auto;
+        margin: 0;
+      }
+      .checks {
+        display: grid;
+        gap: 9px;
+      }
+      .check {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 12px;
+        font-size: 11px;
+      }
+      .check p {
+        color: var(--muted);
+        margin: 7px 0 0;
+      }
+      .detail-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-top: 19px;
+      }
+      .detail-stat {
+        padding: 12px;
+        background: var(--soft);
+        border-radius: 7px;
+      }
+      .detail-stat span {
+        font-size: 10px;
+        color: var(--muted);
+        display: block;
+      }
+      .detail-stat strong {
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .empty {
+        text-align: center;
+        padding: 48px 24px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .integrity-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 21px;
+      }
+      .integrity-card {
+        padding: 24px;
+        min-width: 0;
+      }
+      .integrity-card:only-child {
+        grid-column: 1 / -1;
+      }
+      .integrity-card h2 {
+        font-size: 16px;
+        margin: 0 0 17px;
+      }
+      .definition {
+        display: flex;
+        justify-content: space-between;
+        gap: 24px;
+        padding: 11px 0;
+        border-bottom: 1px solid var(--line);
+        font-size: 12px;
+      }
+      .definition span {
+        color: var(--muted);
+      }
+      .definition strong {
+        text-align: right;
+        font-weight: 550;
+      }
+      .fingerprint {
+        font:
+          10px/1.7 ui-monospace,
+          monospace;
+        overflow-wrap: anywhere;
+        background: var(--soft);
+        padding: 12px;
+        border-radius: 7px;
+        margin-top: 15px;
+      }
+      .provenance {
+        margin-top: 21px;
+        padding: 23px;
+        font-size: 12px;
+      }
+      .provenance h2 {
+        font-size: 15px;
+        margin: 0 0 9px;
+      }
+      .provenance p {
+        color: var(--muted);
+        margin: 8px 0;
+      }
+      .footer {
+        margin-top: 26px;
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        color: var(--muted);
+        font-size: 10px;
+      }
+      .notice {
+        border-left: 3px solid var(--orange);
+        padding: 12px 16px;
+        margin-bottom: 21px;
+        background: var(--warn-bg);
+        font-size: 12px;
+        color: var(--warn);
+      }
+      details summary {
+        cursor: pointer;
+        font-size: 11px;
+        color: var(--muted);
+        padding: 15px 0 8px;
+      }
+      .toast {
+        position: fixed;
+        bottom: 25px;
+        right: 25px;
+        padding: 12px 20px;
+        background: var(--ink);
+        color: var(--surface);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        font-size: 12px;
+        z-index: 3;
+      }
+      .toast:empty {
+        display: none;
+      }
+      body.dark {
+        color-scheme: dark;
+        --bg: #132125;
+        --surface: #1a2d31;
+        --soft: #203539;
+        --ink: #e6f0eb;
+        --muted: #a4b9b6;
+        --line: #334b4c;
+        --accent: #93ddc9;
+        --accent-soft: #254a44;
+        --warn: #efc58c;
+        --warn-bg: #3a332a;
+        --shadow: none;
+      }
+      body.dark .segments {
+        background: #203539;
+      }
+      body.dark .sidebar {
+        background: #0e1b1f;
+      }
+      body.dark .btn.primary {
+        background: #b6e9d6;
+        color: #132c30;
+        border-color: transparent;
+      }
+      @media (min-width: 1500px) {
+        .main {
+          padding-left: 48px;
+          padding-right: 48px;
+        }
+        .hero {
+          padding-top: 38px;
+        }
+        .chart {
+          padding: 16px 24px 0;
+        }
+      }
+      @media (max-width: 1100px) {
+        .shell {
+          grid-template-columns: 185px minmax(0, 1fr);
+        }
+        .sidebar {
+          padding: 28px 14px;
+        }
+        .main {
+          padding: 0 24px 25px;
+        }
+        .kpi {
+          padding: 17px;
+        }
+        .kpi-value {
+          font-size: 29px;
+        }
+        .workspace-grid {
+          grid-template-columns: minmax(0, 1.4fr) minmax(235px, 1fr);
+        }
+        .explorer-grid {
+          grid-template-columns: 1fr;
+        }
+        .trial-list {
+          max-height: 330px;
+        }
+        .table td,
+        .table th {
+          padding-left: 14px;
+          padding-right: 14px;
+        }
+      }
+      @media (min-width: 801px) and (max-width: 1050px) {
+        .workspace-grid {
+          grid-template-columns: 1fr;
+        }
+        .questions {
+          grid-template-columns: 1fr 1fr;
+        }
+        .chart svg {
+          max-height: 340px;
+        }
+        .insight {
+          gap: 13px;
+        }
+      }
+      @media (max-width: 800px) {
+        .shell {
+          display: block;
+        }
+        .sidebar {
+          position: static;
+          height: auto;
+          padding: 17px 20px;
+          gap: 18px;
+        }
+        .brand {
+          font-size: 12px;
+        }
+        .brand br {
+          display: none;
+        }
+        .sidebar-bottom,
+        .side-label {
+          display: none;
+        }
+        .navigation {
+          display: flex;
+          gap: 5px;
+        }
+        .nav {
+          padding: 9px 12px;
+          font-size: 12px;
+        }
+        .main {
+          padding: 0 18px 24px;
+        }
+        .topbar {
+          min-height: 67px;
+        }
+        .crumb {
+          display: none;
+        }
+        .actions {
+          margin-left: auto;
+        }
+        .hero {
+          padding-top: 26px;
+          align-items: flex-start;
+        }
+        .hero h1 {
+          font-size: 29px;
+        }
+        .hero > .badge {
+          display: none;
+        }
+        .kpis {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+        }
+        .workspace-grid,
+        .integrity-grid {
+          grid-template-columns: 1fr;
+        }
+        .insight {
+          gap: 14px;
+        }
+        .questions {
+          grid-template-columns: 1fr 1fr;
+        }
+        .kpi-value {
+          font-size: 30px;
+        }
+        .segment {
+          padding: 8px 12px;
+        }
+        .scope {
+          font-size: 10px;
+        }
+        .footer {
+          flex-direction: column;
+          gap: 6px;
+        }
+        .panel-head {
+          padding: 20px 18px 0;
+        }
+        .table-head {
+          padding-bottom: 16px;
+        }
+        .hero p {
+          font-size: 12px;
+        }
+        .explorer-grid {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        .view {
+          animation: appear 0.22s ease-out;
+        }
+        @keyframes appear {
+          from {
+            opacity: 0.4;
+            transform: translateY(4px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="mark" aria-hidden="true">⌘</div>
+          <div>
+            PROMPT<br />
+            OPTIMIZER
+          </div>
+        </div>
+        <div>
+          <div class="side-label">Results workspace</div>
+          <nav class="navigation" aria-label="Dashboard views">
+            <button class="nav active" data-view="overview" aria-current="page">
+              <svg viewBox="0 0 20 20" aria-hidden="true">
+                <rect x="2" y="2" width="6" height="6" rx="1" />
+                <rect x="12" y="2" width="6" height="6" rx="1" />
+                <rect x="2" y="12" width="6" height="6" rx="1" />
+                <rect x="12" y="12" width="6" height="6" rx="1" /></svg
+              >Overview
+            </button>
+            <button class="nav" data-view="explorer">
+              <svg viewBox="0 0 20 20" aria-hidden="true">
+                <circle cx="8" cy="8" r="5" />
+                <path d="m12 12 6 6" /></svg
+              >Trial explorer
+            </button>
+            <button class="nav" data-view="integrity">
+              <svg viewBox="0 0 20 20" aria-hidden="true">
+                <path d="M10 2 17 5v5q0 5-7 8-7-3-7-8V5Z" />
+                <path d="m6 10 3 3 5-6" /></svg
+              >Run integrity
+            </button>
+          </nav>
+        </div>
+        <div class="sidebar-bottom">
+          <strong><span class="dot"></span>Saved evidence</strong>Rendered
+          locally.<br />No model calls. No external assets.
+        </div>
+      </aside>
+      <main class="main">
+        <header class="topbar">
+          <div class="crumb">
+            Workspace<span>/</span>Evaluations<span>/</span
+            ><strong>Results</strong>
+          </div>
+          <div class="actions">
+            <button class="btn" id="theme" aria-pressed="false">
+              Night view</button
+            ><button class="btn primary" id="export">
+              Export visible trials ↓
+            </button>
+          </div>
+        </header>
+        <section class="hero">
+          <div>
+            <div class="eyebrow" id="eyebrow">Evidence before decisions</div>
+            <h1 id="title">Compare with confidence.</h1>
+            <p id="subtitle"></p>
+          </div>
+          <span class="badge" id="capture-badge"></span>
+        </section>
+        <div class="toolbar">
+          <div
+            class="segments"
+            id="backends"
+            role="group"
+            aria-label="Execution backend"
+          ></div>
+          <span class="scope"
+            >HOLDOUT ONLY · Repeats are attempts, not independent cases</span
+          >
+        </div>
+        <div id="status-notice"></div>
+        <section class="view" id="overview" aria-label="Overview">
+          <div class="kpis" id="kpis"></div>
+          <div class="workspace-grid">
+            <div class="card">
+              <div class="panel-head">
+                <div>
+                  <h2>Cost vs. responsiveness</h2>
+                  <p class="sub">
+                    Each point is one configuration and execution backend.
+                  </p>
+                </div>
+                <span class="badge">Lower ↙</span>
+              </div>
+              <div class="chart" id="tradeoff"></div>
+              <div class="legend" id="legend"></div>
+              <div class="chart-note">
+                Conversation time excludes setup, teardown and outer coordinator
+                work. Model cost excludes infrastructure.
+              </div>
+            </div>
+            <div class="card insight" id="insight"></div>
+          </div>
+          <div class="card table-card">
+            <div class="panel-head table-head">
+              <div>
+                <h2>The comparison, in detail</h2>
+                <p class="sub">
+                  Frozen holdout results. No automatic model selection.
+                </p>
+              </div>
+              <button class="btn" data-open="explorer">Explore trials ↗</button>
+            </div>
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Configuration</th>
+                    <th>Checks passed</th>
+                    <th>Model $ / attempt</th>
+                    <th>Median / p95</th>
+                    <th>Cases / attempts</th>
+                  </tr>
+                </thead>
+                <tbody id="comparison"></tbody>
+              </table>
+            </div>
+            <div class="table-footer">
+              Pass rates come from the evaluator's required checks. Reference
+              quality still determines what those rates mean.
+            </div>
+          </div>
+        </section>
+        <section class="view" id="explorer" aria-label="Trial explorer" hidden>
+          <div class="filter-row">
+            <input
+              class="search"
+              id="search"
+              aria-label="Search cases and outputs"
+              placeholder="Search a case, output or check reason…"
+            /><select id="configuration" aria-label="Model configuration">
+              <option value="all">All configurations</option></select
+            ><select id="outcome" aria-label="Trial outcome">
+              <option value="all">All outcomes</option>
+              <option value="failed">Any check failed</option>
+              <option value="passed">All recorded checks passed</option>
+              <option value="error">Execution / grading issue</option>
+            </select>
+          </div>
+          <div class="explorer-grid">
+            <div class="card">
+              <div class="panel-head table-head">
+                <div>
+                  <h2>Follow the evidence</h2>
+                  <p class="sub" id="trial-count"></p>
+                </div>
+                <span class="badge">Holdout</span>
+              </div>
+              <div class="trial-list" id="trial-list"></div>
+            </div>
+            <div class="card detail" id="detail"></div>
+          </div>
+        </section>
+        <section class="view" id="integrity" aria-label="Run integrity" hidden>
+          <div class="integrity-grid" id="integrity-cards"></div>
+          <div class="card provenance">
+            <h2>What this evidence can support</h2>
+            <p id="provenance"></p>
+            <p>
+              Run model costs use the scope in each report; separate route
+              qualification calls are not included. These are saved evaluation
+              snapshots. Rebuild the dashboard after retrieving new results; the
+              page does not poll AWS or run models.
+            </p>
+            <p>
+              Matching fingerprints let you inspect backends together. They do
+              not make repeated attempts independent observations, or turn
+              matching references into verified correctness.
+            </p>
+          </div>
+          <div class="card provenance">
+            <h2>Frozen prompt</h2>
+            <p id="prompt-note"></p>
+            <pre class="code" id="prompt"></pre>
+          </div>
+        </section>
+        <footer class="footer">
+          <span>Prompt Optimizer · Your evidence, in context.</span
+          ><span id="footer-meta"></span>
+        </footer>
+      </main>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script id="dashboard-data" type="application/json">
+      __PROMPT_OPTIMIZER_DATA__
+    </script>
+    <script>
+      "use strict";
+      const D = JSON.parse(
+        document.getElementById("dashboard-data").textContent,
+      );
+      const $ = (id) => document.getElementById(id);
+      const esc = (v) =>
+        String(v ?? "").replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+      const number = (v) => typeof v === "number" && Number.isFinite(v);
+      const fixed = (v, n = 2) => (number(v) ? v.toFixed(n) : "Unknown");
+      const money = (v, n = 4) => (number(v) ? "$" + v.toFixed(n) : "Unknown");
+      const pct = (v) =>
+        number(v)
+          ? (v * 100).toFixed(v === 0 || v === 1 ? 0 : 1) + "%"
+          : "Unknown";
+      const backendLabel = (v) =>
+        v === "agentcore"
+          ? "AgentCore"
+          : v === "local"
+            ? "Local"
+            : String(v || "Unknown");
+      const pretty = (v) => {
+        if (typeof v === "string") {
+          try {
+            return JSON.stringify(JSON.parse(v), null, 2);
+          } catch {
+            return v;
+          }
+        }
+        return JSON.stringify(v, null, 2);
+      };
+      const palette = [
+        "#138779",
+        "#c47b48",
+        "#6486b1",
+        "#9974a4",
+        "#7d9149",
+        "#b96071",
+      ];
+      const modelLabel = (v) =>
+        String(v || "Unresolved model")
+          .replace(/^(us|eu|apac|global)\./, "")
+          .replace(/^openai\./, "")
+          .replace(/^gpt-/, "GPT-")
+          .replace(/-sol$/, " Sol");
+      const state = {
+        backend: "all",
+        view: "overview",
+        search: "",
+        configuration: "all",
+        outcome: "all",
+        selected: null,
+      };
+      const allGroups = D.reports.flatMap((r) =>
+        (r.groups || []).map((g) => ({
+          ...g,
+          report: r,
+          key: r.id + "::" + g.id,
+        })),
+      );
+      const models = [...new Set(allGroups.map((g) => g.model))];
+      const color = (g) =>
+        palette[Math.max(0, models.indexOf(g.model)) % palette.length];
+      function reports() {
+        return D.reports.filter(
+          (r) => state.backend === "all" || r.backend === state.backend,
+        );
+      }
+      function groups() {
+        return allGroups.filter(
+          (g) => state.backend === "all" || g.report.backend === state.backend,
+        );
+      }
+      function allTrials() {
+        return groups().flatMap((g) =>
+          (g.trials || []).map((t) => ({
+            ...t,
+            group: g,
+            key: g.key + "::" + t.id,
+          })),
+        );
+      }
+      function outcome(t) {
+        const checks = Object.values(t.checks || {});
+        if (
+          t.status !== "completed" ||
+          checks.some((c) => c.error) ||
+          !checks.length
+        )
+          return "error";
+        return checks.some((c) => c.pass === false)
+          ? "failed"
+          : checks.every((c) => c.pass === true)
+            ? "passed"
+            : "error";
+      }
+      function trials() {
+        const q = state.search.toLocaleLowerCase();
+        return allTrials().filter(
+          (t) =>
+            (state.configuration === "all" ||
+              t.group.id === state.configuration) &&
+            (state.outcome === "all" || outcome(t) === state.outcome) &&
+            (!q ||
+              [
+                t.case_id,
+                ...(t.inputs || []),
+                ...(t.outputs || []),
+                JSON.stringify(t.checks || {}),
+              ]
+                .join(" ")
+                .toLocaleLowerCase()
+                .includes(q)),
+        );
+      }
+      function median(values) {
+        const a = values.filter(number).sort((a, b) => a - b);
+        if (!a.length) return null;
+        return a.length % 2
+          ? a[(a.length - 1) / 2]
+          : (a[a.length / 2 - 1] + a[a.length / 2]) / 2;
+      }
+      function conversation(t) {
+        return number(t.timing?.conversation_ms)
+          ? t.timing.conversation_ms / 1000
+          : null;
+      }
+      function badge(label, kind = "") {
+        return `<span class="badge ${kind}">${esc(label)}</span>`;
+      }
+      function showView(view) {
+        state.view = view;
+        document
+          .querySelectorAll(".view")
+          .forEach((e) => (e.hidden = e.id !== view));
+        document.querySelectorAll("[data-view]").forEach((e) => {
+          const active = e.dataset.view === view;
+          e.classList.toggle("active", active);
+          if (active) e.setAttribute("aria-current", "page");
+          else e.removeAttribute("aria-current");
+        });
+        renderHeader();
+      }
+      function renderHeader() {
+        const info = {
+          overview: [
+            "Evidence before decisions",
+            "Compare with confidence.",
+            "See where quality, model cost and responsiveness agree — and where they trade off.",
+          ],
+          explorer: [
+            "From aggregate to individual",
+            "Every result has a story.",
+            "Inspect actual inputs, outputs and recorded checks. Start with the cases that challenge your assumptions.",
+          ],
+          integrity: [
+            "Know what you measured",
+            "Trust starts with provenance.",
+            "Check completion, cost coverage and run identity before drawing conclusions.",
+          ],
+        }[state.view];
+        $("eyebrow").textContent = info[0];
+        $("title").textContent = info[1];
+        $("subtitle").textContent = info[2];
+        $("capture-badge").textContent = D.historical
+          ? "Recorded example · 13 Nov 2026"
+          : D.reports.some((r) => r.simulated)
+            ? "Simulated evidence"
+            : "Saved evaluation";
+        $("footer-meta").textContent =
+          (D.title || "Evaluation") +
+          " · " +
+          D.reports.length +
+          " saved backend report" +
+          (D.reports.length === 1 ? "" : "s");
+      }
+      function renderBackends() {
+        const values = ["all", ...new Set(D.reports.map((r) => r.backend))];
+        $("backends").innerHTML = values
+          .map(
+            (b) =>
+              `<button class="segment ${b === state.backend ? "active" : ""}" data-backend="${esc(b)}" aria-pressed="${b === state.backend}">${b === "all" ? "All backends" : esc(backendLabel(b))}</button>`,
+          )
+          .join("");
+        $("backends")
+          .querySelectorAll("button")
+          .forEach(
+            (e) =>
+              (e.onclick = () => {
+                state.backend = e.dataset.backend;
+                state.selected = null;
+                render();
+              }),
+          );
+      }
+      function renderSummary() {
+        const gs = groups(),
+          ts = allTrials(),
+          weighted = gs.filter(
+            (g) =>
+              number(g.score?.accuracy) &&
+              number(g.score?.n_sessions) &&
+              g.score.n_sessions > 0,
+          ),
+          denom = weighted.reduce((n, g) => n + g.score.n_sessions, 0);
+        const quality =
+          denom && weighted.length === gs.length
+            ? weighted.reduce(
+                (n, g) => n + g.score.accuracy * g.score.n_sessions,
+                0,
+              ) / denom
+            : null;
+        const cards = [
+          [
+            "Required-check pass rate",
+            pct(quality),
+            "Attempt-weighted · not production accuracy",
+          ],
+          [
+            "Distinct cases",
+            new Set(ts.map((t) => t.case_id)).size,
+            "Shared cases across the selected backends",
+          ],
+          [
+            "Holdout attempts",
+            ts.length,
+            "Includes repeats and each configuration",
+          ],
+          [
+            "Median conversation",
+            fixed(median(ts.map(conversation))) + " s",
+            "Across attempts with recorded conversation time",
+          ],
+        ];
+        $("kpis").innerHTML = cards
+          .map(
+            ([label, value, note]) =>
+              `<div class="card kpi"><div class="kpi-label">${esc(label)}</div><div class="kpi-value">${esc(value)}</div><div class="kpi-note">${esc(note)}</div></div>`,
+          )
+          .join("");
+        const bad = reports().filter(
+          (r) =>
+            r.status !== "complete" ||
+            r.simulated ||
+            !Array.isArray(r.unresolved_attempts) ||
+            (r.unresolved_attempts || []).length ||
+            !number(r.grading_error_records) ||
+            r.grading_error_records ||
+            !r.fingerprint,
+        );
+        $("status-notice").innerHTML = bad.length
+          ? '<div class="notice">Some selected evidence is simulated, incomplete, missing integrity metadata or has unresolved issues. Inspect Run integrity before comparing results.</div>'
+          : "";
+        const allPerfect = quality === 1 && !bad.length;
+        $("insight").innerHTML =
+          `<div class="eyebrow">Decision lens</div><h2>${allPerfect ? "A perfect score.<br>An open question." : "A tradeoff to investigate."}</h2><p>${allPerfect ? "Every selected configuration passed its required reference checks. That leaves cost and latency differences to inspect, while quality on harder cases is still an open question." : "Compare the recorded checks and inspect failures before deciding whether a cost or latency difference is useful."}</p><div class="callout">${esc(D.provenance || "Reference provenance is not available in this report. Review expected answers before interpreting the scores.")}</div><div class="questions"><div class="question"><b>01</b><span>Which failure would matter most to a real user?</span></div><div class="question"><b>02</b><span>What latency is acceptable at the cost you can sustain?</span></div></div>`;
+        $("comparison").innerHTML =
+          gs
+            .map(
+              (g) =>
+                `<tr><td class="name"><span class="swatch" style="background:${color(g)}"></span>${esc(modelLabel(g.model))}<small>${esc(backendLabel(g.report.backend))} · ${esc(g.label)}</small></td><td>${pct(g.score?.accuracy)}<div class="mini-bar"><span style="width:${number(g.score?.accuracy) ? Math.max(0, Math.min(100, g.score.accuracy * 100)) : 0}%"></span></div></td><td>${money(g.score?.cost_usd_per_session)}<small>${g.score?.unpriced_requests ? esc(g.score.unpriced_requests) + " unpriced requests" : "Configured list-price estimate"}</small></td><td>${fixed(g.score?.latency_p50_s)} / ${fixed(g.score?.latency_p95_s)} s<small>${esc(g.score?.latency_scope || "Recorded latency scope")}</small></td><td>${new Set((g.trials || []).map((t) => t.case_id)).size} / ${(g.trials || []).length}</td></tr>`,
+            )
+            .join("") ||
+          '<tr><td colspan="5">No holdout configurations available.</td></tr>';
+        renderChart(gs);
+      }
+      function renderChart(gs) {
+        const points = gs.filter(
+          (g) =>
+            number(g.score?.cost_usd_per_session) &&
+            number(g.score?.latency_p50_s) &&
+            g.score.latency_scope === "conversation",
+        );
+        if (!points.length) {
+          $("tradeoff").innerHTML =
+            '<div class="empty">No comparable conversation latency and priced model usage are available.</div>';
+          $("legend").innerHTML = "";
+          return;
+        }
+        const w = 650,
+          h = 305,
+          L = 65,
+          R = 27,
+          T = 32,
+          B = 48,
+          xmax =
+            Math.max(...points.map((g) => g.score.latency_p50_s), 0.01) * 1.26,
+          ymax =
+            Math.max(
+              ...points.map((g) => g.score.cost_usd_per_session * 1000),
+              0.01,
+            ) * 1.26;
+        const x = (v) => L + ((w - L - R) * v) / xmax,
+          y = (v) => h - B - ((h - T - B) * v) / ymax;
+        let svg = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Model cost per thousand attempts against median conversation seconds. Exact values are in the comparison table."><text x="${L}" y="15" fill="var(--muted)" font-size="10">Model USD / 1,000 attempts</text>`;
+        for (let i = 0; i <= 4; i++) {
+          const xv = (xmax * i) / 4,
+            yv = (ymax * i) / 4;
+          svg += `<path d="M${L} ${y(yv)}H${w - R}" stroke="var(--line)" stroke-dasharray="3 5"/><text x="${L - 12}" y="${y(yv) + 4}" text-anchor="end" font-size="10" fill="var(--muted)">$${yv.toFixed(1)}</text><text x="${x(xv)}" y="${h - B + 21}" text-anchor="middle" font-size="10" fill="var(--muted)">${xv.toFixed(1)}s</text>`;
+        }
+        const used = [];
+        points.forEach((g) => {
+          const xx = x(g.score.latency_p50_s),
+            yy = y(g.score.cost_usd_per_session * 1000),
+            ac = g.report.backend === "agentcore";
+          let offset = -17;
+          while (
+            used.some(
+              (p) =>
+                Math.abs(p[0] - xx) < 110 &&
+                Math.abs(p[1] - (yy + offset)) < 17,
+            )
+          )
+            offset += 34;
+          used.push([xx, yy + offset]);
+          svg += `<g><title>${esc(modelLabel(g.model))} · ${esc(g.label)} · ${esc(backendLabel(g.report.backend))}: ${money(g.score.cost_usd_per_session, 6)} / attempt, ${fixed(g.score.latency_p50_s, 3)} seconds</title><circle cx="${xx}" cy="${yy}" r="16" fill="${color(g)}" opacity=".09"/><circle cx="${xx}" cy="${yy}" r="6" fill="${ac ? color(g) : "var(--surface)"}" stroke="${color(g)}" stroke-width="2.5"/><text x="${xx}" y="${yy + offset}" text-anchor="middle" font-size="10" font-weight="550" fill="var(--ink)">${esc(modelLabel(g.model))}</text></g>`;
+        });
+        svg += `<text x="${w - R}" y="${h - 5}" text-anchor="end" font-size="10" fill="var(--muted)">Median conversation seconds →</text></svg>`;
+        $("tradeoff").innerHTML = svg;
+        $("legend").innerHTML =
+          `<span>${[...new Set(points.map((g) => g.report.backend))].map((b) => `${b === "agentcore" ? "●" : "○"} ${esc(backendLabel(b))}`).join(" &nbsp; ")}</span>` +
+          [...new Set(points.map((g) => g.model))]
+            .map(
+              (m) =>
+                `<span><i style="background:${palette[models.indexOf(m) % palette.length]}"></i>${esc(modelLabel(m))}</span>`,
+            )
+            .join("") +
+          (points.length < gs.length
+            ? "<span>Unpriced or different latency scopes omitted</span>"
+            : "");
+      }
+      function renderExplorer() {
+        const gs = groups(),
+          old = state.configuration,
+          ids = [...new Set(gs.map((g) => g.id))];
+        if (!ids.includes(old)) state.configuration = "all";
+        $("configuration").innerHTML =
+          '<option value="all">All configurations</option>' +
+          ids
+            .map(
+              (id) =>
+                `<option value="${esc(id)}">${esc(gs.find((g) => g.id === id).label)}</option>`,
+            )
+            .join("");
+        $("configuration").value = state.configuration;
+        const ts = trials();
+        $("trial-count").textContent =
+          ts.length +
+          " of " +
+          allTrials().length +
+          " attempts · " +
+          new Set(ts.map((t) => t.case_id)).size +
+          " distinct cases";
+        if (!ts.some((t) => t.key === state.selected))
+          state.selected = ts[0]?.key || null;
+        $("trial-list").innerHTML =
+          ts
+            .map(
+              (t, i) =>
+                `<button class="trial-button ${t.key === state.selected ? "selected" : ""}" data-trial-index="${i}" aria-pressed="${t.key === state.selected}"><div class="trial-top"><strong>${esc(t.case_id)}</strong>${badge(outcome(t) === "passed" ? "Checks passed" : outcome(t) === "failed" ? "Check failed" : "Needs inspection", outcome(t) === "passed" ? "good" : "warn")}</div><div class="trial-meta"><span class="swatch" style="background:${color(t.group)}"></span>${esc(modelLabel(t.group.model))} · ${esc(backendLabel(t.group.report.backend))}<span>Repeat ${Number(t.repeat) + 1}</span><span>${fixed(conversation(t))} s</span></div></button>`,
+            )
+            .join("") ||
+          '<div class="empty">No attempts match these filters.<br>Try another outcome or search.</div>';
+        $("trial-list")
+          .querySelectorAll("button")
+          .forEach(
+            (e) =>
+              (e.onclick = () => {
+                state.selected = ts[Number(e.dataset.trialIndex)].key;
+                renderExplorer();
+              }),
+          );
+        renderDetail(ts.find((t) => t.key === state.selected));
+      }
+      function renderDetail(t) {
+        if (!t) {
+          $("detail").innerHTML =
+            '<div class="empty">Select an attempt to inspect its evidence.</div>';
+          return;
+        }
+        const routes = t.route_calls || [],
+          knownUsage =
+            routes.length && routes.every((r) => number(r.usage?.total_tokens)),
+          tokens = knownUsage
+            ? routes.reduce((n, r) => n + r.usage.total_tokens, 0)
+            : null;
+        const inputs = t.inputs || (t.turn_records || []).map((r) => r.user);
+        const checks = Object.entries(t.checks || {});
+        $("detail").innerHTML =
+          `<div class="eyebrow">Trial detail</div><h2>${esc(t.case_id)}</h2><p class="sub">${esc(modelLabel(t.group.model))} · ${esc(backendLabel(t.group.report.backend))} · repeat ${Number(t.repeat) + 1}</p><div class="detail-stats"><div class="detail-stat"><span>Conversation</span><strong>${fixed(conversation(t), 3)} s</strong></div><div class="detail-stat"><span>Recorded tokens</span><strong>${number(tokens) ? tokens.toLocaleString() : "Unknown"}</strong></div><div class="detail-stat"><span>Execution</span><strong>${esc(t.status)}</strong></div></div><h3>Input conversation</h3><pre class="code">${esc(inputs.length ? inputs.map((v, i) => "TURN " + (i + 1) + "\n" + (typeof v === "string" ? v : pretty(v))).join("\n\n") : "Input messages were not recorded in this report.")}</pre><h3>Model output</h3><pre class="code">${esc((t.outputs || []).map(pretty).join("\n\n") || "No output recorded.")}</pre><h3>Recorded checks</h3><div class="checks">${checks.map(([id, c]) => `<div class="check">${badge(c.pass === true ? "Passed" : c.pass === false ? "Failed" : "Unknown", c.pass === true ? "good" : "warn")} <strong>${esc(id)}</strong><p>${esc(c.reason || "No reason recorded.")}</p>${c.differences?.length ? `<pre class="code">${esc(pretty(c.differences))}</pre>` : ""}</div>`).join("") || '<p class="sub">No checks recorded.</p>'}</div><p class="sub" style="margin-top:12px">The outcome filter includes every recorded check, including optional checks. It is not the aggregate required-check score.</p><details><summary>Request receipts & timing</summary><pre class="code">${esc(pretty({ trial_id: t.id, timing: t.timing, requests: routes.map((r) => ({ status: r.status, model: r.model_requested, request_id: r.request_id || r.response_id || null, started_at: r.started_at, usage: r.usage, timing: r.timing })) }))}</pre></details>`;
+      }
+      function renderIntegrity() {
+        $("integrity-cards").innerHTML = reports()
+          .map((r) => {
+            const c = r.model_costs || {},
+              known = c.known_model_cost_usd,
+              estimated = c.estimated_model_cost_usd;
+            return `<div class="card integrity-card"><div class="eyebrow">${esc(backendLabel(r.backend))}</div><h2>${esc(r.source_name || "Saved report")}</h2><div class="definition"><span>Evaluation status</span><strong>${esc(r.status || "Unknown")}</strong></div><div class="definition"><span>Execution evidence</span><strong>${r.simulated === true ? "Simulated" : r.simulated === false ? "Live inference recorded" : "Unknown"}</strong></div><div class="definition"><span>Unresolved attempts</span><strong>${Array.isArray(r.unresolved_attempts) ? r.unresolved_attempts.length : "Unknown"}</strong></div><div class="definition"><span>Grading error records</span><strong>${esc(r.grading_error_records ?? "Unknown")}</strong></div><div class="definition"><span>Estimated run model cost</span><strong>${money(estimated)}</strong></div><div class="definition"><span>Known priced portion</span><strong>${money(known)}</strong></div><div class="definition"><span>Unpriced / incomplete traces</span><strong>${esc(c.unpriced_requests_or_incomplete_traces ?? "Unknown")}</strong></div><p class="sub" style="margin-top:15px">${esc(c.scope || r.cost_note || "Cost scope not supplied.")}</p><div class="fingerprint">RUN FINGERPRINT<br>${esc(r.fingerprint || "Not recorded")}</div><details><summary>Latency and evidence scope</summary><p class="sub">${esc(r.latency_scope || "Not supplied")}</p><p class="sub" style="margin-top:9px">${esc(r.claim || "")}</p></details></div>`;
+          })
+          .join("");
+        $("provenance").textContent =
+          D.provenance ||
+          "Label provenance is unavailable. Review original inputs and expected answers before treating checks as evidence of correctness.";
+        const prompts = reports()
+          .map((r) => r.selected_prompt?.prompt)
+          .filter(Boolean);
+        $("prompt-note").textContent =
+          [...new Set(prompts)].length > 1
+            ? "Selected prompts differ across reports. Inspect each source report before comparing."
+            : "This is the selected prompt recorded in the saved evaluation. The dashboard never edits or promotes it.";
+        $("prompt").textContent = prompts[0] || "No prompt recorded.";
+      }
+      function render() {
+        renderHeader();
+        renderBackends();
+        renderSummary();
+        renderExplorer();
+        renderIntegrity();
+      }
+      document
+        .querySelectorAll("[data-view]")
+        .forEach((e) => (e.onclick = () => showView(e.dataset.view)));
+      document
+        .querySelectorAll("[data-open]")
+        .forEach((e) => (e.onclick = () => showView(e.dataset.open)));
+      $("search").oninput = (e) => {
+        state.search = e.target.value;
+        renderExplorer();
+      };
+      $("configuration").onchange = (e) => {
+        state.configuration = e.target.value;
+        renderExplorer();
+      };
+      $("outcome").onchange = (e) => {
+        state.outcome = e.target.value;
+        renderExplorer();
+      };
+      $("theme").onclick = () => {
+        const dark = document.body.classList.toggle("dark");
+        $("theme").textContent = dark ? "Day view" : "Night view";
+        $("theme").setAttribute("aria-pressed", String(dark));
+      };
+      $("export").onclick = () => {
+        const rows = (state.view === "explorer" ? trials() : allTrials()).map(
+          (t) => ({
+            backend: t.group.report.backend,
+            configuration: t.group.id,
+            model: t.group.model,
+            case_id: t.case_id,
+            repeat: t.repeat,
+            execution_status: t.status,
+            recorded_checks_outcome: outcome(t),
+            conversation_seconds: conversation(t),
+            outputs: t.outputs,
+            checks: t.checks,
+            trial_id: t.id,
+          }),
+        );
+        const blob = new Blob(
+            [
+              JSON.stringify(
+                {
+                  scope:
+                    "Filtered holdout attempts; contains model outputs and check details",
+                  fingerprints: [
+                    ...new Set(reports().map((r) => r.fingerprint)),
+                  ],
+                  trials: rows,
+                },
+                null,
+                2,
+              ),
+            ],
+            { type: "application/json" },
+          ),
+          url = URL.createObjectURL(blob),
+          a = document.createElement("a");
+        a.href = url;
+        a.download = "prompt-optimizer-visible-trials.json";
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        $("toast").textContent = rows.length + " filtered attempts exported.";
+        setTimeout(() => ($("toast").textContent = ""), 3500);
+      };
+      render();
+    </script>
+  </body>
+</html>

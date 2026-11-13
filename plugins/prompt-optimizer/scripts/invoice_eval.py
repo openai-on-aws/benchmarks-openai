@@ -25,6 +25,11 @@ def parser() -> argparse.ArgumentParser:
     commands = result.add_subparsers(dest="action", required=True)
     demo = commands.add_parser("demo", help="Copy the recorded invoice dashboard; no model or AWS calls")
     demo.add_argument("--output", required=True, help="New directory for the recorded report")
+    dashboard = commands.add_parser("dashboard", help="Render an interactive dashboard from saved evidence; no model or AWS calls")
+    dashboard.add_argument("--project", required=True, help="Directory containing saved local/AgentCore reports, or a single report.json")
+    dashboard.add_argument("--output", required=True, help="HTML file outside the installed plugin")
+    dashboard.add_argument("--title", help="Display title for this comparison")
+    dashboard.add_argument("--force", action="store_true", help="Replace an existing dashboard HTML file")
     for action in ("start", "inspect", "configure", "prepare", "plan", "run", "status", "results"):
         command = commands.add_parser(action)
         command.add_argument("--project", required=True, help="User-owned evaluation directory")
@@ -94,13 +99,22 @@ def main(argv=None) -> int:
             if output.exists():
                 raise ValueError("Demo output already exists. Open its index.html or choose a new directory.")
             shutil.copytree(PLUGIN_ROOT / "examples/recorded-invoice-comparison", output)
+            from dashboard import render_dashboard
+
+            interactive = render_dashboard(output, output / "dashboard.html")
             value = {
                 "status": "recorded_report_ready",
                 "recorded_on": "2026-11-13",
                 "fresh_model_calls": 0,
                 "report": str(output / "index.html"),
+                "dashboard": interactive["report"],
                 "scope": "Historical live measurements on synthetic, unreviewed invoice references.",
             }
+        elif args.action == "dashboard":
+            from dashboard import render_dashboard
+
+            value = render_dashboard(Path(args.project), writable_workspace(args.output),
+                                     title=args.title, force=args.force)
         else:
             directory = writable_workspace(args.project)
             # Reject accidental execution before loading any model/provider dependencies.
