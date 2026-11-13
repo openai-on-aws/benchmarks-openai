@@ -16,6 +16,18 @@ run the study locally or on AgentCore, then explore the saved evidence in a
 browser. The cloud path above applies to any supported structured-output
 workflow. [Open the editable AWS diagram and six numbered steps](docs/prompt-optimizer-architecture.md).
 
+Follow these six steps:
+
+1. [Install and verify the plugin](#1-install-in-codex), then open a new session.
+2. [Choose a starter](#2-choose-a-starter), or bring your own evaluation records.
+3. [Agree what the study should measure](#3-agree-what-the-study-should-measure).
+4. [Choose local, AgentCore, or both](#4-choose-local-agentcore-or-both).
+5. [Review the preview, then run](#5-review-the-preview-then-run).
+6. [Inspect the evidence and decide](#6-inspect-the-evidence-and-decide-what-to-do-next).
+
+For a first look without model calls, complete steps 1–2 using the recorded
+demo, then go straight to step 6. Fresh studies use all six steps.
+
 | Start here | What you get | What you need |
 | --- | --- | --- |
 | **Explore the invoice demo** | Interactive results from a recorded local and AgentCore run, plus an AWS architecture diagram | Python; no credentials or new model calls |
@@ -25,33 +37,56 @@ workflow. [Open the editable AWS diagram and six numbered steps](docs/prompt-opt
 
 ## 1. Install in Codex
 
-This plugin is currently on the feature branch. Add its marketplace and install it:
+### 1.1. Add or refresh the marketplace
+
+For a first installation, add the feature-branch marketplace:
 
 ```bash
 codex plugin marketplace add openai-on-aws/benchmarks-openai --ref feature/customer-eval-plugin
-codex plugin add prompt-optimizer@openai-on-aws
 ```
 
-You can also install **Prompt Optimizer** from **OpenAI on AWS** in Codex's plugin
-directory. Open a new chat and choose **Evaluate Workflows**.
+If this marketplace already uses the feature branch, refresh it instead:
 
-The [new-session quickstart](docs/QUICKSTART.md) includes refresh commands,
-copyable prompts and a terminal-only demo.
+```bash
+codex plugin marketplace upgrade openai-on-aws
+```
 
 If `openai-on-aws` is already registered from `main`, Codex rejects a second
-source with the same marketplace name. Switch the registration, then install:
+source with the same marketplace name. Switch the registration first:
 
 ```bash
 codex plugin marketplace remove openai-on-aws
 codex plugin marketplace add openai-on-aws/benchmarks-openai --ref feature/customer-eval-plugin
-codex plugin add prompt-optimizer@openai-on-aws
 ```
 
 This changes the marketplace source; existing installed plugin caches and
-settings are separate. Once registered on this branch, refresh its catalog
-with `codex plugin marketplace upgrade openai-on-aws`, then install the
-current Prompt Optimizer version. After merge, the default branch can be used.
+settings are separate. After merge, the default branch can be used.
 This repository marketplace is separate from the universal plugin directory.
+
+### 1.2. Install and verify
+
+```bash
+codex plugin add prompt-optimizer@openai-on-aws
+codex plugin list --marketplace openai-on-aws --json
+```
+
+Check that `installed` contains `prompt-optimizer@openai-on-aws` with
+`installed: true` and `enabled: true`. A marketplace registration by itself
+does not install the plugin.
+
+### 1.3. Open a new session
+
+Open a **new** Codex app chat in your workspace and choose **Evaluate Workflows**,
+or start the CLI:
+
+```bash
+mkdir -p ~/prompt-optimizer-work
+codex -C ~/prompt-optimizer-work
+```
+
+You can also install **Prompt Optimizer** from **OpenAI on AWS** in Codex's plugin
+directory. The [numbered new-session quickstart](docs/QUICKSTART.md) includes
+copyable prompts and a terminal-only demo.
 
 <details>
 <summary>Updating a preview installed under the former name</summary>
@@ -136,15 +171,24 @@ add AgentCore to an already frozen local study, create a new study revision.
 
 ## 5. Review the preview, then run
 
+### 5.1. Prepare the study
+
 For fresh studies, Codex creates a Python 3.12 environment and project in your
 workspace, outside the installed plugin cache. It uses a copy of the
 [connection template](connection.template.json) for model IDs, endpoints, AWS
 profile references and verified prices, including their source, verification
 date and priced context bound. Never place credential values in it.
 
-Before any paid execution, review `input-preview.html`, the expected answers
-and the plan's case counts, repetitions and budget. Then authorize the chosen
-backend. `run --backend local --live` runs local workers;
+### 5.2. Review the frozen plan
+
+Review `input-preview.html`, the expected answers and the plan's case counts,
+repetitions and budget before paid execution. Resolve any input, model or
+deployment changes in a new study revision before proceeding.
+
+### 5.3. Run the chosen backend
+
+Use your existing authorization or authorize the reviewed live run.
+`run --backend local --live` runs local workers;
 `run --backend agentcore --live` uses your deployed runtime. AgentCore also
 makes two model calls to qualify the source and target routes.
 
@@ -157,6 +201,8 @@ and `dashboard`.
 
 ## 6. Inspect the evidence and decide what to do next
 
+### 6.1. Retrieve the existing results
+
 Open the returned `decision.html` for quality checks, per-case failures, model
 cost, timing and prompt evidence. Each backend produces its own report:
 
@@ -165,6 +211,8 @@ cost, timing and prompt evidence. Each backend produces its own report:
 
 `status` and `results` inspect the existing job; they do not submit another
 study. Add `--backend local` to inspect local evidence.
+
+### 6.2. Build and open the dashboard
 
 Build an interactive dashboard from either backend, or compare both after
 retrieving their results into the same project:
@@ -207,6 +255,8 @@ This is an interactive snapshot, not a live AWS monitoring service. Run
 an existing dashboard. Rendering makes no AWS or model calls. The HTML and
 exports contain recorded inputs and outputs; share them as evaluation data.
 
+### 6.3. Decide what the evidence supports
+
 A useful conclusion may be that the data is too easy or the labels need review.
 Do not choose a winner just because one chart looks better. Repetitions are
 not additional independent customer cases; sequential local/cloud runs do not
@@ -215,13 +265,23 @@ cost excludes infrastructure and human review.
 
 ## Try the recorded dashboard from a terminal
 
-If you prefer a repository checkout, these commands make no model calls:
+This is an alternative to using Codex's installed skill. Follow these three
+steps; none makes model or AWS calls.
+
+### T1. Get the repository
 
 ```bash
 git clone --branch feature/customer-eval-plugin https://github.com/openai-on-aws/benchmarks-openai.git
 cd benchmarks-openai
+```
+
+### T2. Copy the recorded demo
+
+```bash
 python3 plugins/prompt-optimizer/scripts/invoice_eval.py demo --output invoice-demo
 ```
+
+### T3. Open and review the dashboard
 
 Open `invoice-demo/dashboard.html` for the interactive results workspace.
 The original `invoice-demo/index.html` remains available with its detailed

@@ -2,9 +2,10 @@
 
 Use the Codex app or CLI with a user-owned workspace. The plugin supplies
 the workflow and evaluator; your studies, environments and reports live
-outside its installed cache.
+outside its installed cache. Follow steps **1–5** for Codex, or use the
+[terminal-only alternative](#alternative-run-the-demo-directly-from-a-terminal).
 
-## Install or refresh
+## 1. Install or refresh the plugin
 
 For a first installation:
 
@@ -18,13 +19,24 @@ If the marketplace already uses this feature branch, get the current version:
 ```bash
 codex plugin marketplace upgrade openai-on-aws
 codex plugin add prompt-optimizer@openai-on-aws
-codex plugin list --marketplace openai-on-aws --json
 ```
 
 If the marketplace is registered from `main`, follow the
 [source-switch instructions](../README.md#1-install-in-codex). The feature
 branch is still named `feature/customer-eval-plugin`; the plugin itself is
 `prompt-optimizer`.
+
+## 2. Verify the local installation
+
+```bash
+codex plugin list --marketplace openai-on-aws --json
+```
+
+Find `pluginId: "prompt-optimizer@openai-on-aws"` with `installed: true` and
+`enabled: true`. This checks the plugin on this computer; a GitHub branch or an
+available marketplace entry alone does not establish local installation.
+
+## 3. Open a new session
 
 Start a **new** Codex app chat in your chosen workspace, or launch a fresh CLI
 session:
@@ -39,9 +51,12 @@ In the CLI, `/plugins` opens the plugin browser. Installed skills become
 available in new sessions; see the
 [official plugin guide](https://learn.chatgpt.com/docs/plugins#plugin-directory-in-codex-cli).
 
-## Prompts to try
+## 4. Choose one starting prompt
 
-**Explore the recorded dashboard without model or AWS calls:**
+Choose one of the following paths. For a first look, start with the recorded
+dashboard; the other prompts are alternatives, not additional required steps.
+
+**Recorded dashboard — no model or AWS calls:**
 
 ```text
 Use Prompt Optimizer. Copy the recorded demo into ./recorded-demo and open
@@ -93,18 +108,40 @@ Region and any existing runtime/bucket references. A local Bedrock run needs
 model access but no AgentCore deployment. Preparing or rendering a dashboard
 does not deploy resources or make model calls.
 
-## Run the demo directly from a terminal
+## 5. Open the results and decide what to try next
 
-This fallback uses a repository checkout and Python's standard library:
+For the recorded prompt, open `recorded-demo/dashboard.html`. For a fresh or
+existing study, open the dashboard path returned by Codex. Start in **Overview**
+for model tradeoffs, then use **Trial explorer** to inspect individual answers
+and **Run integrity** to check evidence coverage.
+
+A preparation prompt can stop at an input preview and a plan. Review those
+before authorizing a live run; there will be no fresh results yet. Use the
+[live setup guide](LIVE-SETUP.md) if the chosen backend needs model access or
+AgentCore infrastructure. Reuse choices and authorization already supplied.
+
+## Alternative: run the demo directly from a terminal
+
+This path replaces steps 1–5 and uses a repository checkout plus Python's
+standard library. It makes no model or AWS calls.
+
+### A1. Create a workspace and clone the feature branch
 
 ```bash
 mkdir -p ~/prompt-optimizer-work
 cd ~/prompt-optimizer-work
 git clone --branch feature/customer-eval-plugin \
   https://github.com/openai-on-aws/benchmarks-openai.git
+```
+
+### A2. Copy the recorded evidence and render its dashboard
+
+```bash
 python3 benchmarks-openai/plugins/prompt-optimizer/scripts/invoice_eval.py \
   demo --output recorded-demo
 ```
+
+### A3. Open the dashboard
 
 Open `~/prompt-optimizer-work/recorded-demo/dashboard.html` in a browser.
 On macOS:
@@ -114,7 +151,11 @@ open ~/prompt-optimizer-work/recorded-demo/dashboard.html
 ```
 
 The demo refuses to replace an existing directory. Choose a new output name
-for another copy. To rebuild its dashboard with an updated renderer:
+for another copy.
+
+### A4. Refresh the dashboard when you update the renderer
+
+After updating the checkout, rebuild from the same recorded evidence:
 
 ```bash
 python3 benchmarks-openai/plugins/prompt-optimizer/scripts/invoice_eval.py \
