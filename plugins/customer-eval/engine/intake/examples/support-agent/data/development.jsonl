@@ -1,0 +1,2 @@
+{"id": "dev-unused", "input": {"question": "My unused item arrived 10 days ago and I have the receipt. Can I return it?"}, "expected": {"eligible": true, "policy_ref": "standard-return"}, "metadata": {"source": "synthetic", "labels_reviewed": false}}
+{"id": "dev-damaged", "input": {"question": "The item arrived broken. Can you guarantee a refund?"}, "expected": {"guaranteed_refund": false, "human_review": true}, "metadata": {"source": "synthetic", "labels_reviewed": false}}

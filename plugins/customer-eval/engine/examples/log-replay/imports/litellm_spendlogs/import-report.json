@@ -1,0 +1,21 @@
+{
+  "found": 6,
+  "accepted": 6,
+  "dropped": 0,
+  "reconciles": true,
+  "formats": {
+    "litellm_spendlogs": 6
+  },
+  "drop_reasons": {},
+  "excluded_records": [],
+  "sources": [
+    {
+      "path": "./examples/log-replay/logs/litellm_spendlogs.jsonl",
+      "sha256": "f4738ca1c6c49da19ed2ca2d87822c9357026fa3b2944225f61e2aa46b402a03"
+    }
+  ],
+  "scope": "Text request replay. No tool execution, raw PDF/image input or automatic ground truth.",
+  "prompt_groups": {
+    "2c29a91795c85f86": 6
+  }
+}

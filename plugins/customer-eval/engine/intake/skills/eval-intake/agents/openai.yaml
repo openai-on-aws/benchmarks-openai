@@ -1,0 +1,4 @@
+interface:
+  display_name: "Evaluation Intake"
+  short_description: "Turn evaluation requirements into validated inputs"
+  default_prompt: "Use $eval-intake to gather evaluation requirements and create a validated configuration for models, prompts, agents, and scoring."

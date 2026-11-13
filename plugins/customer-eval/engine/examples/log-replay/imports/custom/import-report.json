@@ -1,0 +1,21 @@
+{
+  "found": 6,
+  "accepted": 6,
+  "dropped": 0,
+  "reconciles": true,
+  "formats": {
+    "custom": 6
+  },
+  "drop_reasons": {},
+  "excluded_records": [],
+  "sources": [
+    {
+      "path": "./examples/log-replay/logs/custom.jsonl",
+      "sha256": "5932856ac470d16d1af47b49aa1faf0e73b12bf84d3b1ec2e9e6e07ce6eb6872"
+    }
+  ],
+  "scope": "Text request replay. No tool execution, raw PDF/image input or automatic ground truth.",
+  "prompt_groups": {
+    "2c29a91795c85f86": 6
+  }
+}

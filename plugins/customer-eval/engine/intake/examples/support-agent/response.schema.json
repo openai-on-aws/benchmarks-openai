@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "answer": {
+      "type": "string"
+    },
+    "policy_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "needs_human_review": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "answer",
+    "policy_refs",
+    "needs_human_review"
+  ]
+}

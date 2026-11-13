@@ -1,0 +1,7 @@
+{
+  "extraction": {
+    "type": "json_equals",
+    "path": "",
+    "expected_key": "answer"
+  }
+}

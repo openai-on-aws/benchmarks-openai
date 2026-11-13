@@ -1,0 +1,6 @@
+{
+  "correctness": {
+    "type": "contains",
+    "expected_key": "phrase"
+  }
+}

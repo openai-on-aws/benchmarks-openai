@@ -1,0 +1,42 @@
+name: Customer Eval plugin
+
+on:
+  pull_request:
+    paths:
+      - "plugins/customer-eval/**"
+      - ".agents/plugins/marketplace.json"
+      - ".github/workflows/customer-eval.yml"
+  push:
+    branches: [main, "feature/customer-eval-plugin"]
+    paths:
+      - "plugins/customer-eval/**"
+      - ".agents/plugins/marketplace.json"
+      - ".github/workflows/customer-eval.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      AWS_EC2_METADATA_DISABLED: "true"
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            plugins/customer-eval/engine/requirements-integration.txt
+            plugins/customer-eval/engine/requirements-test.txt
+      - name: Install pinned test dependencies
+        run: python -m pip install -r plugins/customer-eval/requirements-test.txt
+      - name: Exercise an isolated installed plugin
+        run: python -B -m unittest discover -s plugins/customer-eval/tests -v
+      - name: Verify the evaluator and local harness protocols
+        run: python -B -m pytest -q plugins/customer-eval/engine/tests plugins/customer-eval/engine/intake/tests

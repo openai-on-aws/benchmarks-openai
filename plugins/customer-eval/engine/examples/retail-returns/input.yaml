@@ -1,0 +1,241 @@
+schema_version: 0.1.0
+experiment:
+  id: retail_returns_feedback_timing
+  title: Retail returns prompt optimization with measured development feedback
+  objective: Accurate multi-turn retail returns eligibility with the current order,
+    grounded tool evidence and application JSON output.
+  decision: Which prompt preserves the agreed behavior while providing the best observed
+    cost and latency tradeoff?
+  owner: Constructed customer-style example for Justin review
+models:
+- id: m1
+  provider: amazon_bedrock
+  model_id: us.openai.gpt-5.6-sol
+  model_id_env: null
+  api: responses
+  endpoint_env: EVAL_BEDROCK_BASE_URL
+  region: us-east-1
+  credential_ref: aws_profile:default
+  parameters:
+    reasoning:
+      effort: low
+    service_tier: default
+  compatibility: unverified
+  verification_ref: null
+- id: m2
+  provider: amazon_bedrock
+  model_id: us.openai.gpt-6.1-sol
+  model_id_env: null
+  api: responses
+  endpoint_env: EVAL_BEDROCK_BASE_URL
+  region: us-east-1
+  credential_ref: aws_profile:default
+  parameters:
+    reasoning:
+      effort: low
+    service_tier: default
+  compatibility: unverified
+  verification_ref: null
+- id: optimizer
+  provider: amazon_bedrock
+  model_id: us.openai.gpt-6.1-sol
+  model_id_env: null
+  api: responses
+  endpoint_env: EVAL_BEDROCK_BASE_URL
+  region: us-east-1
+  credential_ref: aws_profile:default
+  parameters:
+    reasoning:
+      effort: low
+    service_tier: default
+  compatibility: unverified
+  verification_ref: null
+prompts:
+- id: p1
+  path: prompts/p1.txt
+  version: '1'
+  variables: []
+agents:
+- id: support_agent
+  description: Evaluate a returns request using a read-only mock lookup_order tool.
+  harness: codex
+  harness_version: null
+  workspace: null
+  instructions_path: policy.txt
+  runtime: agentcore_runtime
+  runtime_ref: null
+  gateway_id: null
+  tool_allowlist:
+  - lookup_order
+  sandbox: read_only
+  side_effects: mocked
+  codex_profile: null
+gateways: []
+variants:
+- id: m1_p1
+  model_id: m1
+  prompt_id: p1
+  agent_id: support_agent
+  route: direct_model_api
+  gateway_id: null
+- id: m2_p1
+  model_id: m2
+  prompt_id: p1
+  agent_id: support_agent
+  route: direct_model_api
+  gateway_id: null
+baseline_variant_id: m1_p1
+datasets:
+- id: development
+  path: data/development.jsonl
+  format: jsonl
+  version: '1'
+  split: development
+  provenance: synthetic
+  label_status: unreviewed
+- id: validation
+  path: data/validation.jsonl
+  format: jsonl
+  version: '1'
+  split: validation
+  provenance: synthetic
+  label_status: unreviewed
+- id: holdout
+  path: data/holdout.jsonl
+  format: jsonl
+  version: '1'
+  split: holdout
+  provenance: synthetic
+  label_status: unreviewed
+checks:
+- id: trace
+  question: Does every user turn have a complete, consistent answer and tool receipt?
+  method: deterministic
+  implementation_ref: grading.json
+  judge_model_id: null
+  calibration_ref: null
+  required: true
+- id: responses
+  question: Does every JSON response use the correct current order, decision and reason
+    without unsupported action claims?
+  method: deterministic
+  implementation_ref: grading.json
+  judge_model_id: null
+  calibration_ref: null
+  required: true
+- id: tools
+  question: Do tool arguments and results support every turn, allowing the agreed
+    clarification and reuse behavior?
+  method: deterministic
+  implementation_ref: grading.json
+  judge_model_id: null
+  calibration_ref: null
+  required: true
+success_criteria:
+- id: quality
+  metric: all_required_checks_pass_rate
+  check_id: null
+  definition: Conversations whose every planned user turn satisfies all configured
+    response and tool checks / all planned conversations, including failed executions.
+  operator: '>='
+  threshold: 1.0
+  status: confirmed
+  confirmed_by: Assistant-authored synthetic example requirement, not a universal
+    customer threshold.
+execution:
+  repetitions: 3
+  max_cases_per_dataset: null
+  concurrency: 2
+  timeout_seconds: 180
+  budget_usd: null
+  fallback_policy: none
+optimization:
+  enabled: true
+  target_prompt_id: p1
+  development_dataset_ids:
+  - development
+  holdout_dataset_ids:
+  - holdout
+  max_iterations: 2
+  objective_criterion_id: quality
+open_questions: []
+evidence:
+- field: runner.selection
+  source: User requested joint cost and latency prioritization without arbitrary minimum
+    percentage improvements.
+  status: user_confirmed
+- field: /
+  source: Constructed Northstar Home support example; no real customer data or claim
+    of customer provenance. Editable operations prompt and immutable business policy
+    supplied separately.
+  status: proposed
+- field: execution
+  source: Two candidates per generation, two generations with patience two, three
+    repeats per case, concurrency two; no minimum cost or latency improvement percentage.
+  status: proposed
+- field: datasets
+  source: Distinct development, validation and holdout conversations authored and
+    frozen before execution. Labels are policy-derived and unreviewed by humans.
+  status: proposed
+- field: runner.measurement
+  source: Active conversation p95 is the primary latency preference; retain worker
+    total, setup, teardown, auth, provider and first-output timing separately.
+  status: proposed
+runner:
+  mode: agent
+  workload: customer_support
+  source_variant_id: m1_p1
+  target_variant_id: m2_p1
+  validation_dataset_ids:
+  - validation
+  protected_instructions_path: policy.txt
+  grading_path: grading.json
+  optimizer_model_id: optimizer
+  candidates_per_generation: 2
+  min_gain: 0.01
+  max_turns: 3
+  routes:
+    m1:
+      auth: sigv4
+      sigv4_service: bedrock
+      input_usd_per_million: 4.4
+      output_usd_per_million: 22
+      pricing_source: https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-openai-gpt-56-sol.html
+        ; Standard, US/Geo CRIS, <=272K input; premium included
+      cached_input_usd_per_million: 0.44
+      cache_write_usd_per_million: 5.5
+      pricing_max_input_tokens: 272000
+      pricing_verified_at: '2026-10-28'
+    m2:
+      auth: sigv4
+      sigv4_service: bedrock
+      input_usd_per_million: 2.2
+      output_usd_per_million: 11
+      pricing_source: https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-openai-gpt-6-1-sol.html
+        ; Standard, US/Geo CRIS, <=272K input; premium included
+      cached_input_usd_per_million: 0.11
+      cache_write_usd_per_million: 2.75
+      pricing_max_input_tokens: 272000
+      pricing_verified_at: '2026-10-28'
+    optimizer:
+      auth: sigv4
+      sigv4_service: bedrock
+      input_usd_per_million: 2.2
+      output_usd_per_million: 11
+      pricing_source: https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-openai-gpt-6-1-sol.html
+        ; Standard, US/Geo CRIS, <=272K input; premium included
+      cached_input_usd_per_million: 0.11
+      cache_write_usd_per_million: 2.75
+      pricing_max_input_tokens: 272000
+      pricing_verified_at: '2026-10-28'
+  limits:
+    max_requests: 12
+    max_output_tokens: 2048
+    max_request_bytes: 80000
+  budget_policy: unlimited
+  selection:
+    mode: joint_cost_latency
+    min_validation_sessions: 30
+  optimization_patience: 2
+  measurement:
+    primary_latency: conversation

@@ -1,0 +1,177 @@
+schema_version: 0.1.0
+experiment:
+  id: customer_support
+  title: customer-support integration example (synthetic)
+  objective: Complete the customer task while preserving the supplied policy.
+  decision: Compare two model configurations under the same Codex agent and starting
+    prompt.
+  owner: Workshop participant
+models:
+- id: m1
+  provider: openai
+  model_id: null
+  model_id_env: EVAL_MODEL_M1
+  api: responses
+  endpoint_env: EVAL_BASE_URL
+  region: null
+  credential_ref: env:EVAL_API_KEY
+  parameters: {}
+  compatibility: unverified
+  verification_ref: null
+- id: m2
+  provider: openai
+  model_id: null
+  model_id_env: EVAL_MODEL_M2
+  api: responses
+  endpoint_env: EVAL_BASE_URL
+  region: null
+  credential_ref: env:EVAL_API_KEY
+  parameters: {}
+  compatibility: unverified
+  verification_ref: null
+- id: optimizer
+  provider: openai
+  model_id: null
+  model_id_env: EVAL_OPTIMIZER_MODEL
+  api: responses
+  endpoint_env: EVAL_BASE_URL
+  region: null
+  credential_ref: env:EVAL_API_KEY
+  parameters: {}
+  compatibility: unverified
+  verification_ref: null
+prompts:
+- id: p1
+  path: prompts/p1.txt
+  version: '1'
+  variables: []
+agents:
+- id: support_agent
+  description: Read the supplied policy and answer the customer question.
+  harness: codex
+  harness_version: null
+  workspace: null
+  instructions_path: policy.txt
+  runtime: local
+  runtime_ref: null
+  gateway_id: null
+  tool_allowlist:
+  - lookup_order
+  sandbox: read_only
+  side_effects: mocked
+  codex_profile: null
+gateways: []
+variants:
+- id: m1_p1
+  model_id: m1
+  prompt_id: p1
+  agent_id: support_agent
+  route: direct_model_api
+  gateway_id: null
+- id: m2_p1
+  model_id: m2
+  prompt_id: p1
+  agent_id: support_agent
+  route: direct_model_api
+  gateway_id: null
+baseline_variant_id: m1_p1
+datasets:
+- id: development
+  path: data/development.jsonl
+  format: jsonl
+  version: '1'
+  split: development
+  provenance: synthetic
+  label_status: unreviewed
+- id: validation
+  path: data/validation.jsonl
+  format: jsonl
+  version: '1'
+  split: validation
+  provenance: synthetic
+  label_status: unreviewed
+- id: holdout
+  path: data/holdout.jsonl
+  format: jsonl
+  version: '1'
+  split: holdout
+  provenance: synthetic
+  label_status: unreviewed
+checks:
+- id: correctness
+  question: Does the response satisfy the expected result?
+  method: deterministic
+  implementation_ref: grading.json
+  judge_model_id: null
+  calibration_ref: null
+  required: true
+success_criteria:
+- id: quality
+  metric: all_required_checks_pass_rate
+  check_id: null
+  definition: All required checks pass / all planned trials, including failed trials.
+  operator: '>='
+  threshold: 1.0
+  status: confirmed
+  confirmed_by: Synthetic demo design; replace for customer use
+execution:
+  repetitions: 2
+  max_cases_per_dataset: 2
+  concurrency: 2
+  timeout_seconds: 120
+  budget_usd: 10
+  fallback_policy: none
+optimization:
+  enabled: true
+  target_prompt_id: p1
+  development_dataset_ids:
+  - development
+  holdout_dataset_ids:
+  - holdout
+  max_iterations: 2
+  objective_criterion_id: quality
+open_questions: []
+evidence:
+- field: /
+  source: Illustrative synthetic example authored for framework validation; not a
+    customer commitment.
+  status: proposed
+runner:
+  mode: agent
+  workload: customer_support
+  source_variant_id: m1_p1
+  target_variant_id: m2_p1
+  validation_dataset_ids:
+  - validation
+  protected_instructions_path: policy.txt
+  grading_path: grading.json
+  optimizer_model_id: optimizer
+  candidates_per_generation: 2
+  min_gain: 0.01
+  max_turns: 3
+  routes:
+    m1:
+      auth: bearer
+      sigv4_service: bedrock-agentcore
+      input_usd_per_million: 1.0
+      output_usd_per_million: 5.0
+      pricing_source: 'ILLUSTRATIVE ONLY: replace with exact route pricing before
+        live run'
+    m2:
+      auth: bearer
+      sigv4_service: bedrock-agentcore
+      input_usd_per_million: 1.0
+      output_usd_per_million: 5.0
+      pricing_source: 'ILLUSTRATIVE ONLY: replace with exact route pricing before
+        live run'
+    optimizer:
+      auth: bearer
+      sigv4_service: bedrock-agentcore
+      input_usd_per_million: 1.0
+      output_usd_per_million: 5.0
+      pricing_source: 'ILLUSTRATIVE ONLY: replace with exact route pricing before
+        live run'
+  limits:
+    max_requests: 6
+    max_output_tokens: 1024
+    max_request_bytes: 30000

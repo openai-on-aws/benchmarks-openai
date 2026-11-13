@@ -1,0 +1,7 @@
+{
+  "correctness": {
+    "type": "json_equals",
+    "path": "decision",
+    "expected_key": "decision"
+  }
+}

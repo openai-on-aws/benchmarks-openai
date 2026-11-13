@@ -53,3 +53,8 @@ performance/results/REPORT.html
 
 # Isolated benchmark campaigns; publish reviewed results explicitly.
 runs/
+
+# Customer Eval user projects, demo copies and local environments
+invoice-results/
+invoice-demo/
+.invoice-venv/

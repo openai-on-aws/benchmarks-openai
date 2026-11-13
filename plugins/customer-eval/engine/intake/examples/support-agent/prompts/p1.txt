@@ -1,0 +1,2 @@
+Read policy.md in the agent workspace. Answer this customer question using only the supplied policy. Return the required JSON response.
+Customer question: {{question}}

@@ -1,0 +1,1225 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "enum": [
+        "0.1.0"
+      ]
+    },
+    "experiment": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]*$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "objective": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "decision": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "owner": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "objective",
+        "decision",
+        "owner"
+      ]
+    },
+    "models": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/model"
+      },
+      "minItems": 0
+    },
+    "prompts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/prompt"
+      },
+      "minItems": 0
+    },
+    "agents": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/agent"
+      },
+      "minItems": 0
+    },
+    "gateways": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/gateway"
+      },
+      "minItems": 0
+    },
+    "variants": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/variant"
+      },
+      "minItems": 0
+    },
+    "baseline_variant_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "datasets": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/dataset"
+      },
+      "minItems": 0
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/check"
+      },
+      "minItems": 0
+    },
+    "success_criteria": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/criterion"
+      },
+      "minItems": 0
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "repetitions": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "max_cases_per_dataset": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "concurrency": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "timeout_seconds": {
+          "anyOf": [
+            {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "budget_usd": {
+          "anyOf": [
+            {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "fallback_policy": {
+          "enum": [
+            "none",
+            "explicit_separate_variant"
+          ]
+        }
+      },
+      "required": [
+        "repetitions",
+        "max_cases_per_dataset",
+        "concurrency",
+        "timeout_seconds",
+        "budget_usd",
+        "fallback_policy"
+      ]
+    },
+    "optimization": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "target_prompt_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "development_dataset_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]*$"
+          },
+          "minItems": 0
+        },
+        "holdout_dataset_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]*$"
+          },
+          "minItems": 0
+        },
+        "max_iterations": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "objective_criterion_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "enabled",
+        "target_prompt_id",
+        "development_dataset_ids",
+        "holdout_dataset_ids",
+        "max_iterations",
+        "objective_criterion_id"
+      ]
+    },
+    "open_questions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/open_question"
+      },
+      "minItems": 0
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/evidence"
+      },
+      "minItems": 0
+    },
+    "runner": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "enum": [
+            "prompt",
+            "agent"
+          ]
+        },
+        "workload": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "source_variant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_variant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "validation_dataset_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "protected_instructions_path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "intake_context_path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional local provenance, import coverage and grading-scope summary; never sent in candidate model requests."
+        },
+        "grading_path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "optimizer_model_id": {
+          "type": ["string", "null"],
+          "minLength": 1
+        },
+        "candidates_per_generation": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "min_gain": {
+          "type": "number",
+          "minimum": 0
+        },
+        "max_turns": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "routes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "auth": {
+                "enum": [
+                  "bearer",
+                  "sigv4"
+                ]
+              },
+              "sigv4_service": {
+                "type": "string",
+                "minLength": 1
+              },
+              "input_usd_per_million": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "exclusiveMinimum": 0
+              },
+              "output_usd_per_million": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "exclusiveMinimum": 0
+              },
+              "pricing_source": {
+                "type": "string",
+                "minLength": 1
+              },
+              "cached_input_usd_per_million": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "cache_write_usd_per_million": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "pricing_max_input_tokens": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "pricing_verified_at": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+              }
+            },
+            "required": [
+              "auth",
+              "sigv4_service",
+              "input_usd_per_million",
+              "output_usd_per_million",
+              "pricing_source"
+            ]
+          }
+        },
+        "limits": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "max_requests": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "max_output_tokens": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "max_request_bytes": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "max_requests",
+            "max_output_tokens",
+            "max_request_bytes"
+          ]
+        },
+        "budget_policy": {
+          "enum": [
+            "capped",
+            "unlimited"
+          ]
+        },
+        "selection": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mode": {
+              "const": "joint_cost_latency"
+            },
+            "cost_metric": {
+              "enum": [
+                "cost_usd_per_session",
+                "cost_usd_per_success"
+              ],
+              "description": "Cost objective for automatic selection. Omission preserves cost per session; cost per success includes spend on failed attempts and is unknown when there are no successes or incomplete usage."
+            },
+            "non_regression_checks": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": "Required per-turn check IDs whose failed-turn counts must not increase in matched validation comparisons."
+            },
+            "min_cost_improvement_fraction": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "exclusiveMaximum": 1
+            },
+            "min_latency_improvement_fraction": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "exclusiveMaximum": 1
+            },
+            "min_validation_sessions": {
+              "type": "integer",
+              "minimum": 20
+            }
+          },
+          "required": [
+            "mode",
+            "min_validation_sessions"
+          ]
+        },
+        "measurement": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "primary_latency": {
+              "enum": [
+                "worker",
+                "conversation"
+              ]
+            }
+          },
+          "required": [
+            "primary_latency"
+          ]
+        },
+        "optimization_patience": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        },
+        "report_challenger": {
+          "type": "boolean",
+          "description": "If the incumbent is retained, freeze the lowest-cost quality-eligible candidate from the final validation generation for a separately labeled holdout comparison. This does not promote it."
+        },
+        "input_mode": {
+          "enum": [
+            "conversation",
+            "replay"
+          ],
+          "description": "Replay evaluates one continuation with recorded history; conversation generates every assistant turn."
+        },
+        "optimizer_limits": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "max_requests": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "max_output_tokens": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "max_request_bytes": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "max_requests",
+            "max_output_tokens",
+            "max_request_bytes"
+          ]
+        }
+      },
+      "required": [
+        "mode",
+        "workload",
+        "source_variant_id",
+        "target_variant_id",
+        "validation_dataset_ids",
+        "protected_instructions_path",
+        "grading_path",
+        "optimizer_model_id",
+        "candidates_per_generation",
+        "min_gain",
+        "max_turns",
+        "routes",
+        "limits"
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "experiment",
+    "models",
+    "prompts",
+    "agents",
+    "gateways",
+    "variants",
+    "baseline_variant_id",
+    "datasets",
+    "checks",
+    "success_criteria",
+    "execution",
+    "optimization",
+    "open_questions",
+    "evidence"
+  ],
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:eval-input-framework:0.1.0",
+  "title": "Evaluation Input Contract",
+  "$defs": {
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]*$"
+        },
+        "provider": {
+          "enum": [
+            "openai",
+            "amazon_bedrock",
+            "self_hosted",
+            "other",
+            null
+          ]
+        },
+        "model_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "model_id_env": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[A-Z][A-Z0-9_]*$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "api": {
+          "enum": [
+            "responses",
+            "converse",
+            "invoke_model",
+            "chat_completions",
+            "custom",
+            null
+          ]
+        },
+        "endpoint_env": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[A-Z][A-Z0-9_]*$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "region": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "credential_ref": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(env|aws_profile|codex_profile|secret_ref):[A-Za-z0-9_./-]+$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "parameters": {
+          "type": "object"
+        },
+        "compatibility": {
+          "enum": [
+            "unverified",
+            "verified"
+          ]
+        },
+        "verification_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "id",
+        "provider",
+        "model_id",
+        "model_id_env",
+        "api",
+        "endpoint_env",
+        "region",
+        "credential_ref",
+        "parameters",
+        "compatibility",
+        "verification_ref"
+      ]
+    },
+    "prompt": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]*$"
+        },
+        "path": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "version": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "variables": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]*$"
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "id",
+        "path",
+        "version",
+        "variables"
+      ]
+    },
+    "agent": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]*$"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "harness": {
+          "enum": [
+            "codex",
+            "strands",
+            "openai_agents_sdk",
+            "custom",
+            null
+          ]
+        },
+        "harness_version": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "workspace": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "instructions_path": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "runtime": {
+          "enum": [
+            "local",
+            "agentcore_runtime",
+            "existing_endpoint",
+            null
+          ]
+        },
+        "runtime_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "gateway_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "tool_allowlist": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "minItems": 0
+        },
+        "sandbox": {
+          "enum": [
+            "read_only",
+            "workspace_write",
+            "external",
+            null
+          ]
+        },
+        "side_effects": {
+          "enum": [
+            "mocked",
+            "read_only",
+            "requires_runner_policy",
+            null
+          ]
+        },
+        "codex_profile": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "planned_runtime": {
+          "enum": [
+            "local",
+            "agentcore_runtime",
+            "existing_endpoint",
+            null
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "description",
+        "harness",
+        "harness_version",
+        "workspace",
+        "instructions_path",
+        "runtime",
+        "runtime_ref",
+        "gateway_id",
+        "tool_allowlist",
+        "sandbox",
+        "side_effects",
+        "codex_profile"
+      ]
+    },
+    "gateway": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]*$"
+        },
+        "kind": {
+          "enum": [
+            "agentcore_gateway"
+          ]
+        },
+        "role": {
+          "enum": [
+            "tools",
+            "model_invocation_tools",
+            "both",
+            null
+          ]
+        },
+        "endpoint_env": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[A-Z][A-Z0-9_]*$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "auth": {
+          "enum": [
+            "jwt_bearer",
+            "iam_sigv4",
+            null
+          ]
+        },
+        "credential_ref": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(env|aws_profile|codex_profile|secret_ref):[A-Za-z0-9_./-]+$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "adapter_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "compatibility": {
+          "enum": [
+            "unverified",
+            "verified"
+          ]
+        },
+        "verification_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "role",
+        "endpoint_env",
+        "auth",
+        "credential_ref",
+        "adapter_ref",
+        "compatibility",
+        "verification_ref"
+      ]
+    },
+    "variant": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]*$"
+        },
+        "model_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]*$"
+        },
+        "prompt_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]*$"
+        },
+        "agent_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]*$"
+        },
+        "route": {
+          "enum": [
+            "direct_model_api",
+            "gateway_model_tool",
+            null
+          ]
+        },
+        "gateway_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "id",
+        "model_id",
+        "prompt_id",
+        "agent_id",
+        "route",
+        "gateway_id"
+      ]
+    },
+    "dataset": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]*$"
+        },
+        "path": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "format": {
+          "enum": [
+            "jsonl"
+          ]
+        },
+        "version": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "split": {
+          "enum": [
+            "development",
+            "validation",
+            "holdout",
+            null
+          ]
+        },
+        "provenance": {
+          "enum": [
+            "customer",
+            "public",
+            "synthetic",
+            null
+          ]
+        },
+        "label_status": {
+          "enum": [
+            "human_reviewed",
+            "unreviewed",
+            "no_labels",
+            null
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "path",
+        "format",
+        "version",
+        "split",
+        "provenance",
+        "label_status"
+      ]
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]*$"
+        },
+        "question": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "method": {
+          "enum": [
+            "deterministic",
+            "human",
+            "llm_judge",
+            null
+          ]
+        },
+        "implementation_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "judge_model_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "calibration_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "required": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "question",
+        "method",
+        "implementation_ref",
+        "judge_model_id",
+        "calibration_ref",
+        "required"
+      ]
+    },
+    "criterion": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]*$"
+        },
+        "metric": {
+          "enum": [
+            "all_required_checks_pass_rate",
+            "check_pass_rate",
+            "latency_p95_ms",
+            "total_cost_usd",
+            "cost_per_success_usd",
+            "human_review_minutes",
+            "custom"
+          ]
+        },
+        "check_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "definition": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "operator": {
+          "enum": [
+            ">=",
+            "<=",
+            "==",
+            null
+          ]
+        },
+        "threshold": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "status": {
+          "enum": [
+            "proposed",
+            "confirmed",
+            "unknown"
+          ]
+        },
+        "confirmed_by": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "id",
+        "metric",
+        "check_id",
+        "definition",
+        "operator",
+        "threshold",
+        "status",
+        "confirmed_by"
+      ]
+    },
+    "open_question": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]*$"
+        },
+        "question": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "blocks": {
+          "enum": [
+            "planning",
+            "execution",
+            "interpretation"
+          ]
+        },
+        "field": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "id",
+        "question",
+        "blocks",
+        "field"
+      ]
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "status": {
+          "enum": [
+            "user_confirmed",
+            "observed",
+            "proposed"
+          ]
+        }
+      },
+      "required": [
+        "field",
+        "source",
+        "status"
+      ]
+    }
+  }
+}

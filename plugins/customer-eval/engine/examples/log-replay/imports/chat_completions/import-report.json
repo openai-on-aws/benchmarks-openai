@@ -1,0 +1,21 @@
+{
+  "found": 6,
+  "accepted": 6,
+  "dropped": 0,
+  "reconciles": true,
+  "formats": {
+    "chat_completions": 6
+  },
+  "drop_reasons": {},
+  "excluded_records": [],
+  "sources": [
+    {
+      "path": "./examples/log-replay/logs/chat_completions.json",
+      "sha256": "363668e2cc0a7fe0f440ba29e86d0448116b51f06a4a88c605647056a4e8846b"
+    }
+  ],
+  "scope": "Text request replay. No tool execution, raw PDF/image input or automatic ground truth.",
+  "prompt_groups": {
+    "2c29a91795c85f86": 6
+  }
+}

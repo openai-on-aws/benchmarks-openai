@@ -1,0 +1,201 @@
+{
+  "accepted": 36,
+  "formats": {
+    "litellm_spendlogs": 6,
+    "litellm_wrapped": 6,
+    "chat_completions": 6,
+    "responses": 6,
+    "custom": 6,
+    "manual": 6
+  },
+  "splits": {
+    "development": 12,
+    "validation": 12,
+    "holdout": 12
+  },
+  "labels": "synthetic_unreviewed",
+  "edge_cases": {
+    "found": 10,
+    "accepted": 1,
+    "dropped": 9,
+    "reconciles": true,
+    "formats": {
+      "chat_completions": 1
+    },
+    "drop_reasons": {
+      "tool_calls_unsupported": 1,
+      "unsupported_or_empty_content": 1,
+      "unsupported_request_setting": 1,
+      "incomplete_or_tool_response": 1,
+      "missing_request_or_response": 1,
+      "duplicate_case_id": 1,
+      "duplicate_json_key": 1,
+      "malformed_json": 1,
+      "non_object_row": 1
+    },
+    "excluded_records": [
+      {
+        "source_file": "edge-cases.jsonl",
+        "source_row": 1,
+        "reason": "tool_calls_unsupported"
+      },
+      {
+        "source_file": "edge-cases.jsonl",
+        "source_row": 2,
+        "reason": "unsupported_or_empty_content"
+      },
+      {
+        "source_file": "edge-cases.jsonl",
+        "source_row": 3,
+        "reason": "unsupported_request_setting"
+      },
+      {
+        "source_file": "edge-cases.jsonl",
+        "source_row": 4,
+        "reason": "incomplete_or_tool_response"
+      },
+      {
+        "source_file": "edge-cases.jsonl",
+        "source_row": 5,
+        "reason": "missing_request_or_response"
+      },
+      {
+        "source_file": "edge-cases.jsonl",
+        "source_row": 7,
+        "reason": "duplicate_case_id"
+      },
+      {
+        "source_file": "edge-cases.jsonl",
+        "source_row": 8,
+        "reason": "duplicate_json_key"
+      },
+      {
+        "source_file": "edge-cases.jsonl",
+        "source_row": 9,
+        "reason": "malformed_json"
+      },
+      {
+        "source_file": "edge-cases.jsonl",
+        "source_row": 10,
+        "reason": "non_object_row"
+      }
+    ],
+    "sources": [
+      {
+        "path": "./examples/log-replay/logs/edge-cases.jsonl",
+        "sha256": "d956d3e88e47bffdfdd54e1116d7955924fe791d23e2a901318c7926838ef187"
+      }
+    ],
+    "scope": "Text request replay. No tool execution, raw PDF/image input or automatic ground truth."
+  },
+  "source_reports": [
+    {
+      "found": 6,
+      "accepted": 6,
+      "dropped": 0,
+      "reconciles": true,
+      "formats": {
+        "litellm_spendlogs": 6
+      },
+      "drop_reasons": {},
+      "excluded_records": [],
+      "sources": [
+        {
+          "path": "./examples/log-replay/logs/litellm_spendlogs.jsonl",
+          "sha256": "f4738ca1c6c49da19ed2ca2d87822c9357026fa3b2944225f61e2aa46b402a03"
+        }
+      ],
+      "scope": "Text request replay. No tool execution, raw PDF/image input or automatic ground truth."
+    },
+    {
+      "found": 6,
+      "accepted": 6,
+      "dropped": 0,
+      "reconciles": true,
+      "formats": {
+        "litellm_wrapped": 6
+      },
+      "drop_reasons": {},
+      "excluded_records": [],
+      "sources": [
+        {
+          "path": "./examples/log-replay/logs/litellm_wrapped.json",
+          "sha256": "a14461679310a60b43504a53eb1368edf428cecf02ef3fc233f9d86bdd66a241"
+        }
+      ],
+      "scope": "Text request replay. No tool execution, raw PDF/image input or automatic ground truth."
+    },
+    {
+      "found": 6,
+      "accepted": 6,
+      "dropped": 0,
+      "reconciles": true,
+      "formats": {
+        "chat_completions": 6
+      },
+      "drop_reasons": {},
+      "excluded_records": [],
+      "sources": [
+        {
+          "path": "./examples/log-replay/logs/chat_completions.json",
+          "sha256": "363668e2cc0a7fe0f440ba29e86d0448116b51f06a4a88c605647056a4e8846b"
+        }
+      ],
+      "scope": "Text request replay. No tool execution, raw PDF/image input or automatic ground truth."
+    },
+    {
+      "found": 6,
+      "accepted": 6,
+      "dropped": 0,
+      "reconciles": true,
+      "formats": {
+        "responses": 6
+      },
+      "drop_reasons": {},
+      "excluded_records": [],
+      "sources": [
+        {
+          "path": "./examples/log-replay/logs/responses.json",
+          "sha256": "5cd266934ca212e0439158931610f7e819d33ff98166e639e37ba8fe1500133d"
+        }
+      ],
+      "scope": "Text request replay. No tool execution, raw PDF/image input or automatic ground truth."
+    },
+    {
+      "found": 6,
+      "accepted": 6,
+      "dropped": 0,
+      "reconciles": true,
+      "formats": {
+        "custom": 6
+      },
+      "drop_reasons": {},
+      "excluded_records": [],
+      "sources": [
+        {
+          "path": "./examples/log-replay/logs/custom.jsonl",
+          "sha256": "5932856ac470d16d1af47b49aa1faf0e73b12bf84d3b1ec2e9e6e07ce6eb6872"
+        }
+      ],
+      "scope": "Text request replay. No tool execution, raw PDF/image input or automatic ground truth."
+    },
+    {
+      "found": 6,
+      "accepted": 6,
+      "dropped": 0,
+      "reconciles": true,
+      "formats": {
+        "manual": 6
+      },
+      "drop_reasons": {},
+      "excluded_records": [],
+      "sources": [
+        {
+          "path": "./examples/log-replay/logs/manual.jsonl",
+          "sha256": "3c60ac4cb247e856d209b79dd112b3ec2789a9d8437cbafbbbdb8c04ef50ef90"
+        }
+      ],
+      "scope": "Text request replay. No tool execution, raw PDF/image input or automatic ground truth."
+    }
+  ]
+}

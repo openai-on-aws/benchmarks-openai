@@ -1,0 +1,216 @@
+schema_version: 0.1.0
+experiment:
+  id: multiformat_ocr_replay
+  title: Synthetic invoice OCR text replay across six log formats
+  objective: Preserve extracted invoice fields, corrections and review flags across
+    a model change.
+  decision: Compare exact structured answers, returned-usage model cost and observed
+    request latency.
+  owner: Workshop participant
+models:
+- id: m1
+  provider: amazon_bedrock
+  model_id: us.openai.gpt-5.6-sol
+  model_id_env: null
+  api: responses
+  endpoint_env: EVAL_BEDROCK_BASE_URL
+  region: us-east-1
+  credential_ref: aws_profile:YOUR_AWS_PROFILE
+  parameters:
+    reasoning:
+      effort: low
+    service_tier: default
+  compatibility: unverified
+  verification_ref: null
+- id: m2
+  provider: amazon_bedrock
+  model_id: us.openai.gpt-6.1-sol
+  model_id_env: null
+  api: responses
+  endpoint_env: EVAL_BEDROCK_BASE_URL
+  region: us-east-1
+  credential_ref: aws_profile:YOUR_AWS_PROFILE
+  parameters:
+    reasoning:
+      effort: low
+    service_tier: default
+  compatibility: unverified
+  verification_ref: null
+- id: optimizer
+  provider: amazon_bedrock
+  model_id: us.openai.gpt-6.1-sol
+  model_id_env: null
+  api: responses
+  endpoint_env: EVAL_BEDROCK_BASE_URL
+  region: us-east-1
+  credential_ref: aws_profile:YOUR_AWS_PROFILE
+  parameters:
+    reasoning:
+      effort: high
+    service_tier: default
+  compatibility: unverified
+  verification_ref: null
+prompts:
+- id: p1
+  path: prompts/p1.txt
+  version: '1'
+  variables: []
+agents:
+- id: text_replay
+  description: One captured text request; no application tools.
+  harness: codex
+  harness_version: null
+  workspace: null
+  instructions_path: policy.txt
+  runtime: agentcore_runtime
+  runtime_ref: null
+  gateway_id: null
+  tool_allowlist: []
+  sandbox: read_only
+  side_effects: mocked
+  codex_profile: null
+gateways: []
+variants:
+- id: m1_p1
+  model_id: m1
+  prompt_id: p1
+  agent_id: text_replay
+  route: direct_model_api
+  gateway_id: null
+- id: m2_p1
+  model_id: m2
+  prompt_id: p1
+  agent_id: text_replay
+  route: direct_model_api
+  gateway_id: null
+baseline_variant_id: m1_p1
+datasets:
+- id: development
+  path: data/development.jsonl
+  format: jsonl
+  version: '1'
+  split: development
+  provenance: synthetic
+  label_status: unreviewed
+- id: validation
+  path: data/validation.jsonl
+  format: jsonl
+  version: '1'
+  split: validation
+  provenance: synthetic
+  label_status: unreviewed
+- id: holdout
+  path: data/holdout.jsonl
+  format: jsonl
+  version: '1'
+  split: holdout
+  provenance: synthetic
+  label_status: unreviewed
+checks:
+- id: extraction
+  question: Does the full parsed JSON equal the synthetic fixture oracle?
+  method: deterministic
+  implementation_ref: grading.json
+  judge_model_id: null
+  calibration_ref: null
+  required: true
+success_criteria:
+- id: quality
+  metric: all_required_checks_pass_rate
+  check_id: null
+  definition: All fields match the constructed invoice oracle; includes failed requests
+    in the denominator.
+  operator: '>='
+  threshold: 1.0
+  status: confirmed
+  confirmed_by: Synthetic fixture test requirement; labels remain unreviewed and this
+    is not a customer acceptance threshold.
+execution:
+  repetitions: 3
+  max_cases_per_dataset: null
+  concurrency: 2
+  timeout_seconds: 180
+  budget_usd: null
+  fallback_policy: none
+optimization:
+  enabled: true
+  target_prompt_id: p1
+  development_dataset_ids:
+  - development
+  holdout_dataset_ids:
+  - holdout
+  max_iterations: 1
+  objective_criterion_id: quality
+open_questions: []
+evidence:
+- field: datasets
+  source: Generated synthetic OCR text, six unique cases per format. No PDF bytes.
+    Expected answers are constructed, not human-reviewed.
+  status: proposed
+- field: execution
+  source: Historical demonstration settings; this copy grants no live-run authorization. Three repeats, concurrency
+    two, one optimizer generation with two proposals. No dollar ceiling imposed.
+  status: user_confirmed
+runner:
+  mode: prompt
+  workload: none
+  source_variant_id: m1_p1
+  target_variant_id: m2_p1
+  validation_dataset_ids:
+  - validation
+  protected_instructions_path: policy.txt
+  grading_path: grading.json
+  optimizer_model_id: optimizer
+  candidates_per_generation: 2
+  min_gain: 0.01
+  max_turns: 1
+  routes:
+    m1:
+      auth: sigv4
+      sigv4_service: bedrock
+      input_usd_per_million: 4.4
+      output_usd_per_million: 22
+      pricing_source: https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-openai-gpt-56-sol.html
+        ; Standard, US/Geo CRIS, <=272K input; premium included
+      cached_input_usd_per_million: 0.44
+      cache_write_usd_per_million: 5.5
+      pricing_max_input_tokens: 272000
+      pricing_verified_at: '2026-11-04'
+    m2:
+      auth: sigv4
+      sigv4_service: bedrock
+      input_usd_per_million: 2.2
+      output_usd_per_million: 11
+      pricing_source: https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-openai-gpt-6-1-sol.html
+        ; Standard, US/Geo CRIS, <=272K input; premium included
+      cached_input_usd_per_million: 0.11
+      cache_write_usd_per_million: 2.75
+      pricing_max_input_tokens: 272000
+      pricing_verified_at: '2026-11-04'
+    optimizer:
+      auth: sigv4
+      sigv4_service: bedrock
+      input_usd_per_million: 2.2
+      output_usd_per_million: 11
+      pricing_source: https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-openai-gpt-6-1-sol.html
+        ; Standard, US/Geo CRIS, <=272K input; premium included
+      cached_input_usd_per_million: 0.11
+      cache_write_usd_per_million: 2.75
+      pricing_max_input_tokens: 272000
+      pricing_verified_at: '2026-11-04'
+  limits:
+    max_requests: 1
+    max_output_tokens: 2048
+    max_request_bytes: 80000
+  budget_policy: unlimited
+  selection:
+    mode: joint_cost_latency
+    min_validation_sessions: 30
+  optimization_patience: 1
+  measurement:
+    primary_latency: conversation
+  input_mode: replay
+  optimizer_limits:
+    max_requests: 1
+    max_output_tokens: 8192
+    max_request_bytes: 80000

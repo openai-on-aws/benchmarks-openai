@@ -1,0 +1,21 @@
+{
+  "found": 6,
+  "accepted": 6,
+  "dropped": 0,
+  "reconciles": true,
+  "formats": {
+    "responses": 6
+  },
+  "drop_reasons": {},
+  "excluded_records": [],
+  "sources": [
+    {
+      "path": "./examples/log-replay/logs/responses.json",
+      "sha256": "5cd266934ca212e0439158931610f7e819d33ff98166e639e37ba8fe1500133d"
+    }
+  ],
+  "scope": "Text request replay. No tool execution, raw PDF/image input or automatic ground truth.",
+  "prompt_groups": {
+    "2c29a91795c85f86": 6
+  }
+}

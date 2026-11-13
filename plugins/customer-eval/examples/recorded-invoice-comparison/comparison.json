@@ -1,0 +1,71 @@
+{
+  "date": "2026-11-13",
+  "scope": "Synthetic invoice OCR text; fixed prompt; live Bedrock inference locally and in AgentCore.",
+  "evaluation_trials": 192,
+  "qualification_requests": 4,
+  "total_model_requests": 196,
+  "model_cost_including_qualification_usd": 0.7130684,
+  "model_cost_by_backend_usd": {
+    "local": 0.3566112,
+    "agentcore": 0.35645720000000003
+  },
+  "infrastructure_included": false,
+  "holdout_unique_invoices": 12,
+  "holdout_repetitions": 2,
+  "rows": [
+    {
+      "backend": "local",
+      "model": "GPT-5.6 Sol",
+      "reference_agreement": 1.0,
+      "observations": 24,
+      "median_conversation_s": 2.2817546875,
+      "p95_conversation_s": 2.7121205,
+      "model_usd_per_invoice": 0.004939733333333334,
+      "median_cloud_dispatch_s": null
+    },
+    {
+      "backend": "local",
+      "model": "GPT-6.1 Sol",
+      "reference_agreement": 1.0,
+      "observations": 24,
+      "median_conversation_s": 3.024086375,
+      "p95_conversation_s": 3.618621375,
+      "model_usd_per_invoice": 0.0023690333333333336,
+      "median_cloud_dispatch_s": null
+    },
+    {
+      "backend": "agentcore",
+      "model": "GPT-5.6 Sol",
+      "reference_agreement": 1.0,
+      "observations": 24,
+      "median_conversation_s": 1.8304005195,
+      "p95_conversation_s": 2.131769701,
+      "model_usd_per_invoice": 0.004930566666666667,
+      "median_cloud_dispatch_s": 2.487097345
+    },
+    {
+      "backend": "agentcore",
+      "model": "GPT-6.1 Sol",
+      "reference_agreement": 1.0,
+      "observations": 24,
+      "median_conversation_s": 2.7351503255,
+      "p95_conversation_s": 3.402039023,
+      "model_usd_per_invoice": 0.002385533333333333,
+      "median_cloud_dispatch_s": 3.3621683465
+    }
+  ],
+  "verification": {
+    "local": {
+      "completed_evaluation_trials": 96,
+      "verified_model_requests": 96,
+      "unresolved_attempts": 0,
+      "fingerprint": "03a1d4fa5fa9abb3c8ab3b9a3c45ea0a034416048cca1403b23271b4f78a6bcb"
+    },
+    "agentcore": {
+      "completed_evaluation_trials": 96,
+      "verified_model_requests": 96,
+      "unresolved_attempts": 0,
+      "fingerprint": "03a1d4fa5fa9abb3c8ab3b9a3c45ea0a034416048cca1403b23271b4f78a6bcb"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+.venv
+runs
+tests
+**/__pycache__
+**/.pytest_cache
+**/*.ipynb
+data
+images
+gateway

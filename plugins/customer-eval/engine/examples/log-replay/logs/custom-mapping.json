@@ -1,0 +1,6 @@
+{
+  "id": "trace.id",
+  "request": "application.request_payload",
+  "response": "application.response_payload",
+  "api": "responses"
+}

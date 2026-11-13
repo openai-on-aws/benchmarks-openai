@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "models": {
+    "m1": {
+      "model": {
+        "id": "m1",
+        "provider": "amazon_bedrock",
+        "model_id": "us.openai.gpt-5.6-sol",
+        "model_id_env": null,
+        "api": "responses",
+        "endpoint_env": "EVAL_BEDROCK_BASE_URL",
+        "region": "us-east-1",
+        "credential_ref": "aws_profile:YOUR_AWS_PROFILE",
+        "parameters": {
+          "reasoning": {
+            "effort": "low"
+          },
+          "service_tier": "default"
+        },
+        "compatibility": "unverified",
+        "verification_ref": null
+      },
+      "route": {
+        "auth": "sigv4",
+        "sigv4_service": "bedrock",
+        "input_usd_per_million": null,
+        "output_usd_per_million": null,
+        "pricing_source": "REPLACE_WITH_VERIFIED_ROUTE_PRICING_SOURCE",
+        "cached_input_usd_per_million": null,
+        "cache_write_usd_per_million": null,
+        "pricing_max_input_tokens": null,
+        "pricing_verified_at": null,
+        "cache_read_usd_per_million": null
+      },
+      "base_url": "https://bedrock-runtime.us-east-1.amazonaws.com/openai/v1"
+    },
+    "m2": {
+      "model": {
+        "id": "m2",
+        "provider": "amazon_bedrock",
+        "model_id": "us.openai.gpt-6.1-sol",
+        "model_id_env": null,
+        "api": "responses",
+        "endpoint_env": "EVAL_BEDROCK_BASE_URL",
+        "region": "us-east-1",
+        "credential_ref": "aws_profile:YOUR_AWS_PROFILE",
+        "parameters": {
+          "reasoning": {
+            "effort": "low"
+          },
+          "service_tier": "default"
+        },
+        "compatibility": "unverified",
+        "verification_ref": null
+      },
+      "route": {
+        "auth": "sigv4",
+        "sigv4_service": "bedrock",
+        "input_usd_per_million": null,
+        "output_usd_per_million": null,
+        "pricing_source": "REPLACE_WITH_VERIFIED_ROUTE_PRICING_SOURCE",
+        "cached_input_usd_per_million": null,
+        "cache_write_usd_per_million": null,
+        "pricing_max_input_tokens": null,
+        "pricing_verified_at": null,
+        "cache_read_usd_per_million": null
+      },
+      "base_url": "https://bedrock-runtime.us-east-1.amazonaws.com/openai/v1"
+    }
+  },
+  "cloud": {
+    "profile": "YOUR_AWS_PROFILE",
+    "account": "YOUR_12_DIGIT_ACCOUNT",
+    "region": "us-east-1",
+    "runtime_arn": "YOUR_AGENTCORE_RUNTIME_ARN",
+    "bucket": "YOUR_ARTIFACT_BUCKET",
+    "prefix": "customer-evaluation"
+  }
+}

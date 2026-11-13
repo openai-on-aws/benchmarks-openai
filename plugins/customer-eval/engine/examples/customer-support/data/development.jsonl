@@ -1,0 +1,2 @@
+{"id": "development_0", "input": {"question": "Can I return order DEVELOPMENT-0?"}, "turns": ["Please look up order DEVELOPMENT-0.", "Can I return order DEVELOPMENT-0?"], "initial_state": {"orders": {"DEVELOPMENT-0": {"age_days": 10, "opened": false}}}, "expected": {"decision": "allow"}}
+{"id": "development_1", "input": {"question": "Can I return order DEVELOPMENT-1?"}, "turns": ["Please look up order DEVELOPMENT-1.", "Can I return order DEVELOPMENT-1?"], "initial_state": {"orders": {"DEVELOPMENT-1": {"age_days": 10, "opened": true}}}, "expected": {"decision": "deny"}}

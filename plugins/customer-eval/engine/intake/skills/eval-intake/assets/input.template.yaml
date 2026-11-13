@@ -1,0 +1,32 @@
+schema_version: 0.1.0
+experiment:
+  id: new_evaluation
+  title: New evaluation intake
+  objective: null
+  decision: null
+  owner: null
+models: []
+prompts: []
+agents: []
+gateways: []
+variants: []
+baseline_variant_id: null
+datasets: []
+checks: []
+success_criteria: []
+execution:
+  repetitions: null
+  max_cases_per_dataset: null
+  concurrency: null
+  timeout_seconds: null
+  budget_usd: null
+  fallback_policy: none
+optimization:
+  enabled: false
+  target_prompt_id: null
+  development_dataset_ids: []
+  holdout_dataset_ids: []
+  max_iterations: null
+  objective_criterion_id: null
+open_questions: []
+evidence: []

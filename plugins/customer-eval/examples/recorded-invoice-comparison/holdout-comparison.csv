@@ -1,0 +1,5 @@
+backend,model,reference_agreement,observations,median_conversation_s,p95_conversation_s,model_usd_per_invoice,median_cloud_dispatch_s
+local,GPT-5.6 Sol,1.0,24,2.2817546875,2.7121205,0.004939733333333334,
+local,GPT-6.1 Sol,1.0,24,3.024086375,3.618621375,0.0023690333333333336,
+agentcore,GPT-5.6 Sol,1.0,24,1.8304005195,2.131769701,0.004930566666666667,2.487097345
+agentcore,GPT-6.1 Sol,1.0,24,2.7351503255,3.402039023,0.002385533333333333,3.3621683465

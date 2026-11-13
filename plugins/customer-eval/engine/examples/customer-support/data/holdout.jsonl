@@ -1,0 +1,2 @@
+{"id": "holdout_0", "input": {"question": "Can I return order HOLDOUT-0?"}, "turns": ["Please look up order HOLDOUT-0.", "Can I return order HOLDOUT-0?"], "initial_state": {"orders": {"HOLDOUT-0": {"age_days": 12, "opened": false}}}, "expected": {"decision": "allow"}}
+{"id": "holdout_1", "input": {"question": "Can I return order HOLDOUT-1?"}, "turns": ["Please look up order HOLDOUT-1.", "Can I return order HOLDOUT-1?"], "initial_state": {"orders": {"HOLDOUT-1": {"age_days": 12, "opened": true}}}, "expected": {"decision": "deny"}}

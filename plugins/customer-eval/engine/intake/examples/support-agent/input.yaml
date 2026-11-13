@@ -1,0 +1,149 @@
+schema_version: 0.1.0
+experiment:
+  id: support_policy_comparison
+  title: "Support agent evaluation \u2014 illustrative example"
+  objective: Answer return-policy questions correctly without inventing exceptions.
+  decision: Compare two model configurations under the same Codex agent and starting
+    prompt.
+  owner: Workshop participant (example role)
+models:
+- id: m1
+  provider: openai
+  model_id: null
+  model_id_env: EVAL_MODEL_M1
+  api: responses
+  endpoint_env: null
+  region: null
+  credential_ref: codex_profile:current
+  parameters: {}
+  compatibility: unverified
+  verification_ref: null
+- id: m2
+  provider: openai
+  model_id: null
+  model_id_env: EVAL_MODEL_M2
+  api: responses
+  endpoint_env: null
+  region: null
+  credential_ref: codex_profile:current
+  parameters: {}
+  compatibility: unverified
+  verification_ref: null
+prompts:
+- id: p1
+  path: prompts/p1.txt
+  version: '1'
+  variables:
+  - question
+agents:
+- id: support_agent
+  description: Read the supplied policy and answer the customer question.
+  harness: codex
+  harness_version: null
+  workspace: agent
+  instructions_path: agent/AGENTS.md
+  runtime: local
+  runtime_ref: null
+  gateway_id: null
+  tool_allowlist: []
+  sandbox: read_only
+  side_effects: read_only
+  codex_profile: null
+gateways: []
+variants:
+- id: m1_p1
+  model_id: m1
+  prompt_id: p1
+  agent_id: support_agent
+  route: direct_model_api
+  gateway_id: null
+- id: m2_p1
+  model_id: m2
+  prompt_id: p1
+  agent_id: support_agent
+  route: direct_model_api
+  gateway_id: null
+baseline_variant_id: m1_p1
+datasets:
+- id: development
+  path: data/development.jsonl
+  format: jsonl
+  version: '1'
+  split: development
+  provenance: synthetic
+  label_status: unreviewed
+- id: holdout
+  path: data/holdout.jsonl
+  format: jsonl
+  version: '1'
+  split: holdout
+  provenance: synthetic
+  label_status: unreviewed
+checks:
+- id: policy_correctness
+  question: Does the answer follow the supplied return policy without invented terms?
+  method: human
+  implementation_ref: null
+  judge_model_id: null
+  calibration_ref: null
+  required: true
+success_criteria:
+- id: quality
+  metric: all_required_checks_pass_rate
+  check_id: null
+  definition: Cases passing every required check / all attempted cases; errors and
+    missing outputs are failures.
+  operator: '>='
+  threshold: null
+  status: unknown
+  confirmed_by: null
+- id: latency
+  metric: latency_p95_ms
+  check_id: null
+  definition: 95th percentile wall-clock latency from task dispatch to final response,
+    including tool calls.
+  operator: <=
+  threshold: null
+  status: unknown
+  confirmed_by: null
+- id: cost
+  metric: cost_per_success_usd
+  check_id: null
+  definition: Total model, judge, tool and infrastructure spend over all attempts
+    / successful cases; undefined when there are zero successes.
+  operator: <=
+  threshold: null
+  status: unknown
+  confirmed_by: null
+execution:
+  repetitions: 3
+  max_cases_per_dataset: 2
+  concurrency: 1
+  timeout_seconds: 120
+  budget_usd: null
+  fallback_policy: none
+optimization:
+  enabled: false
+  target_prompt_id: null
+  development_dataset_ids: []
+  holdout_dataset_ids: []
+  max_iterations: null
+  objective_criterion_id: null
+open_questions:
+- id: model_choices
+  question: Which two account-accessible model IDs should M1 and M2 resolve to?
+  blocks: execution
+  field: /models
+- id: thresholds
+  question: What quality, latency and cost thresholds does the customer accept?
+  blocks: interpretation
+  field: /success_criteria
+- id: budget
+  question: What is the total evaluation spending limit?
+  blocks: execution
+  field: /execution/budget_usd
+evidence:
+- field: /
+  source: Illustrative synthetic example authored for framework validation; not a
+    customer commitment.
+  status: proposed

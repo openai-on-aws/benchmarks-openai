@@ -1,0 +1,46 @@
+{
+  "trace": {
+    "type": "turn_trace"
+  },
+  "responses": {
+    "type": "turn_response",
+    "response_schema": {
+      "type": "object",
+      "required": [
+        "order_id",
+        "decision",
+        "reason_code"
+      ],
+      "properties": {
+        "order_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "decision": {
+          "enum": [
+            "allow",
+            "deny",
+            "needs_review",
+            "request_order_id"
+          ]
+        },
+        "reason_code": {
+          "enum": [
+            "within_window",
+            "opened_item",
+            "outside_window",
+            "order_not_found",
+            "lookup_unavailable",
+            "missing_order_id"
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "tools": {
+    "type": "turn_tools"
+  }
+}

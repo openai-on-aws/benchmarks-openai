@@ -1,0 +1,10 @@
+# Tested locally on Python 3.12. The original notebook requirements stay separate.
+openai-codex==0.163.0
+openai==3.40.0
+strands-agents==1.61.1
+bedrock-agentcore==1.24.2
+boto3==1.43.116
+urllib3==2.8.0
+mcp==2.1.1
+jsonschema==4.26.0
+PyYAML==6.0.3

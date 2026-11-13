@@ -1,0 +1,168 @@
+schema_version: 0.1.0
+experiment:
+  id: whiteboard_evaluation
+  title: "Whiteboard evaluation \u2014 intake draft"
+  objective: null
+  decision: null
+  owner: null
+models:
+- id: m1
+  provider: null
+  model_id: null
+  model_id_env: null
+  api: null
+  endpoint_env: null
+  region: null
+  credential_ref: null
+  parameters: {}
+  compatibility: unverified
+  verification_ref: null
+- id: m2
+  provider: null
+  model_id: null
+  model_id_env: null
+  api: null
+  endpoint_env: null
+  region: null
+  credential_ref: null
+  parameters: {}
+  compatibility: unverified
+  verification_ref: null
+prompts:
+- id: p1
+  path: null
+  version: null
+  variables: []
+agents:
+- id: a1
+  description: Agent under evaluation; its customer workflow is not yet specified.
+  harness: codex
+  harness_version: null
+  workspace: null
+  instructions_path: null
+  runtime: null
+  runtime_ref: null
+  gateway_id: null
+  tool_allowlist: []
+  sandbox: null
+  side_effects: null
+  codex_profile: null
+  planned_runtime: agentcore_runtime
+gateways:
+- id: ag
+  kind: agentcore_gateway
+  role: null
+  endpoint_env: null
+  auth: null
+  credential_ref: null
+  adapter_ref: null
+  compatibility: unverified
+  verification_ref: null
+variants:
+- id: m1_p1
+  model_id: m1
+  prompt_id: p1
+  agent_id: a1
+  route: null
+  gateway_id: null
+- id: m2_p1
+  model_id: m2
+  prompt_id: p1
+  agent_id: a1
+  route: null
+  gateway_id: null
+baseline_variant_id: null
+datasets: []
+checks: []
+success_criteria:
+- id: quality
+  metric: all_required_checks_pass_rate
+  check_id: null
+  definition: Quality measure and denominator to agree for the chosen agent workflow.
+  operator: '>='
+  threshold: null
+  status: unknown
+  confirmed_by: null
+- id: latency
+  metric: latency_p95_ms
+  check_id: null
+  definition: 95th percentile wall-clock latency from task dispatch to final response,
+    including tool calls.
+  operator: <=
+  threshold: null
+  status: unknown
+  confirmed_by: null
+- id: cost
+  metric: cost_per_success_usd
+  check_id: null
+  definition: Total model, judge, tool and infrastructure spend over all attempts
+    / successful cases; undefined when there are zero successes.
+  operator: <=
+  threshold: null
+  status: unknown
+  confirmed_by: null
+execution:
+  repetitions: null
+  max_cases_per_dataset: null
+  concurrency: null
+  timeout_seconds: null
+  budget_usd: null
+  fallback_policy: none
+optimization:
+  enabled: true
+  target_prompt_id: p1
+  development_dataset_ids: []
+  holdout_dataset_ids: []
+  max_iterations: null
+  objective_criterion_id: null
+open_questions:
+- id: workflow
+  question: What customer task should the agent perform, and what decision should
+    the evaluation support?
+  blocks: planning
+  field: /experiment
+- id: gateway_role
+  question: Does AgentCore Gateway expose model-invocation tools or business tools
+    while the agent calls its model directly?
+  blocks: planning
+  field: /gateways/0/role
+- id: model_ids
+  question: Which actual models/providers should M1 and M2 represent?
+  blocks: execution
+  field: /models
+- id: prompt_data
+  question: Where are P1 and the representative test cases, and which expected outcomes
+    have been reviewed?
+  blocks: planning
+  field: /datasets
+- id: runtime
+  question: Where will the first evaluation run, and is AgentCore Runtime the planned
+    deployment?
+  blocks: execution
+  field: /agents/0/runtime
+- id: targets
+  question: What quality, latency, cost and run-budget requirements are agreed?
+  blocks: interpretation
+  field: /success_criteria
+evidence:
+- field: /agents/0/harness
+  source: User confirmed Codex for both intake and the agents being evaluated.
+  status: user_confirmed
+- field: /gateways/0/kind
+  source: User clarified AG means AgentCore Gateway.
+  status: user_confirmed
+- field: /agents/0/description
+  source: User clarified A means Agents; no specific workflow supplied yet.
+  status: user_confirmed
+- field: /agents/0/planned_runtime
+  source: ACR is interpreted as AgentCore Runtime from the whiteboard; deployment
+    details remain to be confirmed.
+  status: proposed
+- field: /variants
+  source: Working interpretation of M1/M2 and P1 on the whiteboard; concrete model
+    and prompt selections are pending.
+  status: proposed
+- field: /optimization
+  source: Whiteboard shows Prompt Optimizer / Iterate on Score; exact optimization
+    settings remain to be agreed.
+  status: observed
