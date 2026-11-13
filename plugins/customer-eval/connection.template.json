@@ -29,8 +29,7 @@
         "cached_input_usd_per_million": null,
         "cache_write_usd_per_million": null,
         "pricing_max_input_tokens": null,
-        "pricing_verified_at": null,
-        "cache_read_usd_per_million": null
+        "pricing_verified_at": null
       },
       "base_url": "https://bedrock-runtime.us-east-1.amazonaws.com/openai/v1"
     },
@@ -62,8 +61,7 @@
         "cached_input_usd_per_million": null,
         "cache_write_usd_per_million": null,
         "pricing_max_input_tokens": null,
-        "pricing_verified_at": null,
-        "cache_read_usd_per_million": null
+        "pricing_verified_at": null
       },
       "base_url": "https://bedrock-runtime.us-east-1.amazonaws.com/openai/v1"
     }

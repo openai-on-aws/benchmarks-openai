@@ -1,4 +1,4 @@
 interface:
-  display_name: "Evaluate Invoices"
-  short_description: "Compare invoice quality, model cost and latency"
-  default_prompt: "Use $evaluate-invoices to show the recorded comparison and help me challenge how invoice correctness should be measured."
+  display_name: "Evaluate Customer Workflows"
+  short_description: "Compare extraction and triage quality, cost and latency"
+  default_prompt: "Use $evaluate-invoices to help me choose the invoice or support-ticket starter and decide what correctness should mean."

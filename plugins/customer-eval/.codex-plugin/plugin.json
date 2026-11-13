@@ -1,7 +1,7 @@
 {
   "name": "customer-eval",
-  "version": "0.1.0",
-  "description": "Evaluate invoice extraction with one fixed prompt on two models, locally or in AgentCore, and inspect quality, cost and latency.",
+  "version": "0.1.1",
+  "description": "Compare invoice extraction or support-ticket triage with one fixed prompt on two models, locally or in AgentCore, and inspect quality, cost and latency.",
   "author": {
     "name": "OpenAI on AWS",
     "url": "https://github.com/openai-on-aws"
@@ -11,8 +11,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Customer Eval",
-    "shortDescription": "Compare invoice quality, cost and latency",
-    "longDescription": "Start with invoice extraction from OCR text. Review a recorded local and AgentCore comparison, agree what correctness means, then run one fixed prompt on two models and inspect the resulting HTML reports.",
+    "shortDescription": "Compare extraction and triage quality, cost and latency",
+    "longDescription": "Start with invoice extraction or support-ticket triage. Explore a recorded invoice comparison, choose a starter, agree what correctness means, then run one fixed prompt on two models locally or on AgentCore and inspect the HTML reports.",
     "developerName": "OpenAI on AWS",
     "category": "Productivity",
     "capabilities": [
@@ -23,8 +23,8 @@
     "brandColor": "#007CBD",
     "defaultPrompt": [
       "Show the recorded invoice comparison and its AWS architecture.",
-      "Help me decide which invoice errors matter before preparing an evaluation.",
-      "Run my prepared invoice study locally and on AgentCore."
+      "Help me prepare the support-ticket triage starter and challenge its expected answers.",
+      "Prepare a model comparison and help me choose local or AgentCore execution."
     ]
   }
 }

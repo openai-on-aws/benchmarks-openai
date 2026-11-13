@@ -1,8 +1,10 @@
 # Customer Eval development
 
 The plugin must run from its installed cache without the source repository.
-Keep the public interface focused on invoice OCR-text replay: one skill,
-`evaluate-invoices`, and one entrypoint, `scripts/invoice_eval.py`.
+Keep the public interface focused on fixed-prompt structured-output comparisons:
+invoice OCR-text extraction and support-ticket triage share one skill,
+`evaluate-invoices`, and one entrypoint, `scripts/invoice_eval.py`. Retain those
+identifiers for compatibility; do not add a runner or skill for each example.
 
 Treat the plugin directory as read-only input. Projects, environments, reports,
 receipts and build output belong in the user's workspace. The `demo` command

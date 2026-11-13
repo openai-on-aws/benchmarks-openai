@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "customer-eval",
-  "version": "0.1.0",
-  "description": "Evaluate invoice extraction with one fixed prompt on two models, locally or in AgentCore, and inspect quality, cost and latency.",
+  "version": "0.1.1",
+  "description": "Compare invoice extraction or support-ticket triage with one fixed prompt on two models, locally or in AgentCore, and inspect quality, cost and latency.",
   "author": {
     "name": "OpenAI on AWS",
     "url": "https://github.com/openai-on-aws"

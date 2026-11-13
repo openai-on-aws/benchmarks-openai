@@ -1,0 +1,29 @@
+{
+  "title": "Support-ticket triage: fixed-prompt model comparison",
+  "owner": null,
+  "source_model": "m1",
+  "target_model": "m2",
+  "connection": null,
+  "prompt_location": 0,
+  "optimization_enabled": false,
+  "provenance": "synthetic",
+  "quality": {
+    "kind": "json_equals",
+    "reference_source": "supplied",
+    "fields": [
+      "category",
+      "priority",
+      "queue",
+      "needs_review"
+    ],
+    "description": "Does each configured triage field match its constructed synthetic reference? These labels are unreviewed."
+  },
+  "repetitions": 1,
+  "concurrency": 2,
+  "timeout_seconds": 180,
+  "split_seed": "support-ticket-triage-v1",
+  "budget_policy": null,
+  "budget_usd": null,
+  "cost_metric": "cost_usd_per_session",
+  "primary_latency": "conversation"
+}

@@ -1,0 +1,45 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "category": {
+      "type": "string",
+      "enum": [
+        "security",
+        "account_access",
+        "billing",
+        "bug",
+        "feature_request",
+        "other"
+      ]
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "urgent",
+        "high",
+        "normal"
+      ]
+    },
+    "queue": {
+      "type": "string",
+      "enum": [
+        "security",
+        "identity",
+        "billing",
+        "technical",
+        "product",
+        "general_support"
+      ]
+    },
+    "needs_review": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "category",
+    "priority",
+    "queue",
+    "needs_review"
+  ]
+}

@@ -1,15 +1,15 @@
 ---
 name: evaluate-invoices
-description: Compare invoice extraction from OCR text or recorded conversations using a fixed prompt on two models, locally or on Amazon Bedrock AgentCore. Preview inputs, define correctness, inspect saved results, and discuss quality, cost and latency tradeoffs.
+description: Compare invoice extraction or support-ticket triage using a fixed prompt on two models, locally or on Amazon Bedrock AgentCore. Preview inputs, define JSON correctness checks, inspect saved results, and discuss quality, cost and latency tradeoffs.
 ---
 
-# Evaluate invoices
+# Evaluate customer workflows
 
-Start with the decision the user wants to make. The initial use case is one
-invoice extraction continuation, one fixed prompt, two models, deterministic
-JSON checks and an HTML report. Codex hosts this conversation; the application
-under test calls the model directly. Raw PDF extraction and customer tools are
-outside this workflow.
+Start with the decision the user wants to make. Invoice extraction and
+support-ticket triage share one fixed prompt, two models, deterministic JSON
+checks and an HTML report. Codex hosts this conversation; the application under
+test calls the model directly. Raw PDF extraction, ticket-system actions and
+customer tools are outside this workflow.
 
 Resolve this skill's installed location. The plugin root is two directories
 above this file's folder. Use its absolute `scripts/invoice_eval.py` path for
@@ -34,6 +34,12 @@ It includes both execution backends, per-invoice answers and the numbered AWS
 architecture. Explain that perfect agreement with these synthetic, unreviewed
 references does not establish production quality.
 
+For a new support-ticket study, read the
+[starter guide](../../examples/support-ticket-triage/README.md). It supplies
+synthetic inputs and labels, a triage policy and an editable decision template.
+It has no recorded live results. Use its explicit goal with `start --goal`;
+the entrypoint's default goal remains invoice extraction.
+
 Ask one or two questions that change the experiment, for example:
 
 - Which error costs more: silently accepting a wrong total or sending a correct
@@ -41,6 +47,8 @@ Ask one or two questions that change the experiment, for example:
 - Do we need to match historical answers, or do we have independently reviewed
   correct answers? Which fields determine acceptance?
 - What would justify a model change if cost improves but latency worsens?
+- For triage, which is worse: missing a security incident or escalating an
+  ordinary ticket? What should happen when the ticket lacks enough evidence?
 
 Present alternatives and their consequences. Let the user's answers shape the
 study; do not manufacture a winner, a threshold or a need for optimization.
@@ -69,7 +77,24 @@ credentials, prices or deployment references do not prevent a useful draft.
 Use deterministic JSON checks. Whole-object equality treats all differences
 alike; field-specific checks measure only those fields. Ask which reflects the
 business decision. Propose concrete case counts, repetitions, timeouts and
-concurrency, keeping repeated trials distinct from independent invoices.
+concurrency, keeping repeated trials distinct from independent cases.
+
+## Choose execution and resolve cloud setup
+
+Choose local, AgentCore or both before `prepare`. The recorded demo needs no
+AWS resources; local execution needs model access but no AgentCore deployment.
+For AgentCore, ask whether to reuse an existing matching runtime and private
+artifact bucket or provision them in the chosen account and Region. Reuse
+scope and authorization already supplied.
+
+If setup is needed, read [AWS setup](../../docs/LIVE-SETUP.md), explain the
+concrete runtime, scoped IAM role, private S3 bucket and CloudWatch logs, and
+resolve authorization before creating resources. The evaluator's `run` command
+does not provision them. Check identity, runtime READY state, implementation
+version and artifact access; put the resulting references in the connection
+before preparing. This deployment can be reused for either starter and later
+studies while the engine version matches. Keep a useful draft if access is
+unavailable; do not represent missing cloud setup as ready to run.
 
 Review `input-preview.html` and `plan` before live execution. `prepare` freezes
 the configuration and assets. A changed study or engine requires a new project
@@ -79,10 +104,9 @@ revision; do not edit a prepared project in place.
 
 Use `run --backend local --live` for local workers and
 `run --backend agentcore --live` for the deployed coordinator and worker pool.
-Both use the same prepared study. The AgentCore route requires an existing
-matching runtime and private artifact bucket; installation does not deploy
-resources. Read `docs/LIVE-SETUP.md` only when provisioning or updating that
-runtime is requested.
+Both use the same prepared study when configured for both before preparation.
+If a local-only study is already frozen, create a new revision with cloud
+references instead of changing it in place.
 
 Use the user's current authorization for paid execution. Installation, a
 recorded example, or a budget value alone does not authorize model calls.

@@ -4,6 +4,11 @@ The MIT-0 evaluation engine derives from https://github.com/aws-samples/sample-g
 
 Packaging adds the invoice entrypoint, one discoverable Codex skill, manifests, installation tests, a recorded report and the AWS architecture. The guided engine also accepts `optimization_enabled: false` so this entrypoint does not require a third model or change the prompt. The input schema permits a null optimizer reference for that disabled mode. Existing engine callers retain their previous optimization default.
 
+Plugin 0.1.1 adds a synthetic support-ticket triage starter using the same
+entrypoint, clarifies the guided AgentCore setup before preparation, and fixes
+the connection template's duplicate unsupported cache-price field. These
+changes do not modify the bundled engine.
+
 The independently vendored ModelShift importer retains its MIT-0 license and exact upstream reference under `engine/customer_eval/vendor/modelshift/`.
 
 `source-manifest.json` records imported file hashes before these documented integration edits. This plugin and the importer use MIT-0; it does not change the licenses of neighboring repository content.

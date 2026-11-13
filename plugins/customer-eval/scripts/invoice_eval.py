@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""One entrypoint for invoice evaluation in Codex, locally, or on AgentCore."""
+"""Compare invoice extraction or ticket triage in Codex, locally, or on AgentCore."""
 from __future__ import annotations
 
 import argparse
@@ -31,7 +31,7 @@ def parser() -> argparse.ArgumentParser:
         if action == "start":
             command.add_argument("--goal", default="Compare invoice extraction quality, model cost and latency with one fixed prompt.")
         elif action == "inspect":
-            command.add_argument("--input", action="append", help="Invoice log or manual JSON/JSONL file; repeat as needed")
+            command.add_argument("--input", action="append", help="Evaluation log or manual JSON/JSONL file; repeat as needed")
             command.add_argument("--sources", help="JSON array of paths with optional per-file mappings")
         elif action == "configure":
             command.add_argument("--decisions", required=True, help="JSON containing the user's newly resolved choices")
@@ -121,7 +121,7 @@ def main(argv=None) -> int:
                     raise ValueError("Use either --input or --sources, not both.")
                 sources = project.read(args.sources) if args.sources else [{"path": p} for p in args.input or []]
                 if not sources:
-                    raise ValueError("Provide --input invoice logs or a --sources mapping file.")
+                    raise ValueError("Provide --input evaluation logs or a --sources mapping file.")
                 state = project.read(directory / "project.json")
                 value = project.inspect(directory, sources, prompt_location=state["decisions"].get("prompt_location"))
             elif args.action == "configure":
