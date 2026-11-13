@@ -60,7 +60,7 @@ the Python environment created during intake; the triage starter names it
 `.venv`. Set `EVAL_PROJECT` to your existing prepared study:
 
 ```bash
-export PLUGIN=/absolute/path/to/customer-eval
+export PLUGIN=/absolute/path/to/prompt-optimizer
 export EVAL_WORKSPACE=/absolute/path/to/your-workspace
 export EVAL_PYTHON="$EVAL_WORKSPACE/.venv/bin/python"
 export EVAL_PROJECT=/absolute/path/to/your-prepared-study
@@ -105,12 +105,12 @@ dependencies, build output and deployment receipts stay **outside the plugin
 cache**:
 
 ```bash
-export PLUGIN=/absolute/path/to/customer-eval
+export PLUGIN=/absolute/path/to/prompt-optimizer
 export EVAL_WORKSPACE=/absolute/path/to/your-workspace
 export EVAL_PYTHON="$EVAL_WORKSPACE/.venv/bin/python"
 export AWS_PROFILE=YOUR_AWS_PROFILE
 export AWS_REGION=us-east-1
-export EVAL_RUNTIME_NAME=customer_eval_example
+export EVAL_RUNTIME_NAME=prompt_optimizer_example
 export EVAL_BUILD="$EVAL_WORKSPACE/agentcore-build-v1"
 export EVAL_DEPLOY_RECEIPTS="$EVAL_WORKSPACE/agentcore-deployment-v1"
 
@@ -125,7 +125,7 @@ mkdir "$EVAL_BUILD"
   -r "$PLUGIN/engine/requirements-integration.txt"
 "$EVAL_PYTHON" "$PLUGIN/engine/scripts/package_agentcore.py" \
   --package "$EVAL_BUILD/linux-arm64" \
-  --output "$EVAL_BUILD/customer-eval-runtime.zip"
+  --output "$EVAL_BUILD/prompt-optimizer-runtime.zip"
 
 # These commands create IAM, S3 and AgentCore resources in your account.
 "$EVAL_PYTHON" "$PLUGIN/engine/scripts/deploy_agentcore.py" bootstrap \
@@ -134,7 +134,7 @@ mkdir "$EVAL_BUILD"
 "$EVAL_PYTHON" "$PLUGIN/engine/scripts/deploy_agentcore.py" create \
   --profile "$AWS_PROFILE" --region "$AWS_REGION" --name "$EVAL_RUNTIME_NAME" \
   --receipt-dir "$EVAL_DEPLOY_RECEIPTS" \
-  --artifact "$EVAL_BUILD/customer-eval-runtime.zip"
+  --artifact "$EVAL_BUILD/prompt-optimizer-runtime.zip"
 "$EVAL_PYTHON" "$PLUGIN/engine/scripts/deploy_agentcore.py" status \
   --profile "$AWS_PROFILE" --region "$AWS_REGION" --name "$EVAL_RUNTIME_NAME" \
   --receipt-dir "$EVAL_DEPLOY_RECEIPTS"

@@ -5,7 +5,7 @@ executable in the user's Python 3.12 workspace environment. Use the same
 entrypoint for local and AgentCore execution.
 
 ```bash
-export PLUGIN=/absolute/path/to/customer-eval
+export PLUGIN=/absolute/path/to/prompt-optimizer
 export EVAL_WORKSPACE=/absolute/path/to/your-workspace
 mkdir -p "$EVAL_WORKSPACE"
 python3.12 -m venv "$EVAL_WORKSPACE/.venv"

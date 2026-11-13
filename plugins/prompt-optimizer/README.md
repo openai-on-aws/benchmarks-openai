@@ -1,4 +1,4 @@
-# Customer Eval
+# Prompt Optimizer
 
 Compare two models on a customer workflow with **one fixed prompt**, then
 inspect quality, model cost and latency in an HTML dashboard. Start with
@@ -22,11 +22,11 @@ This plugin is currently on the feature branch. Add its marketplace and install 
 
 ```bash
 codex plugin marketplace add openai-on-aws/benchmarks-openai --ref feature/customer-eval-plugin
-codex plugin add customer-eval@openai-on-aws
+codex plugin add prompt-optimizer@openai-on-aws
 ```
 
-You can also install **Customer Eval** from **OpenAI on AWS** in Codex's plugin
-directory. Open a new chat and choose **Evaluate Customer Workflows**.
+You can also install **Prompt Optimizer** from **OpenAI on AWS** in Codex's plugin
+directory. Open a new chat and choose **Evaluate Workflows**.
 
 If `openai-on-aws` is already registered from `main`, Codex rejects a second
 source with the same marketplace name. Switch the registration, then install:
@@ -34,14 +34,30 @@ source with the same marketplace name. Switch the registration, then install:
 ```bash
 codex plugin marketplace remove openai-on-aws
 codex plugin marketplace add openai-on-aws/benchmarks-openai --ref feature/customer-eval-plugin
-codex plugin add customer-eval@openai-on-aws
+codex plugin add prompt-optimizer@openai-on-aws
 ```
 
 This changes the marketplace source; existing installed plugin caches and
 settings are separate. Once registered on this branch, refresh its catalog
 with `codex plugin marketplace upgrade openai-on-aws`, then install the
-current Customer Eval version. After merge, the default branch can be used.
+current Prompt Optimizer version. After merge, the default branch can be used.
 This repository marketplace is separate from the universal plugin directory.
+
+<details>
+<summary>Updating a preview installed under the former name</summary>
+
+Refresh the catalog and install the renamed plugin:
+
+```bash
+codex plugin marketplace upgrade openai-on-aws
+codex plugin add prompt-optimizer@openai-on-aws
+```
+
+After Prompt Optimizer works in a new chat, remove the old cached preview with
+`codex plugin remove customer-eval@openai-on-aws`. Your study directories and
+reports remain in your workspace, outside the plugin cache.
+
+</details>
 
 ## 2. Choose a starter
 
@@ -52,13 +68,13 @@ This repository marketplace is separate from the universal plugin directory.
 
 For the quickest first look, ask Codex:
 
-> Use Customer Eval to open the recorded invoice comparison and AWS diagram.
+> Use Prompt Optimizer to open the recorded invoice comparison and AWS diagram.
 > Explain what the results establish, and ask me which errors would matter in
 > my own workflow.
 
 To prepare the new example, ask:
 
-> Use Customer Eval to start the support-ticket triage example. Show me the
+> Use Prompt Optimizer to start the support-ticket triage example. Show me the
 > policy and ambiguous cases, and help me challenge the expected answers.
 > Prepare a local study first; stop before paid model calls.
 
@@ -154,7 +170,7 @@ If you prefer a repository checkout, these commands make no model calls:
 ```bash
 git clone --branch feature/customer-eval-plugin https://github.com/openai-on-aws/benchmarks-openai.git
 cd benchmarks-openai
-python3 plugins/customer-eval/scripts/invoice_eval.py demo --output invoice-demo
+python3 plugins/prompt-optimizer/scripts/invoice_eval.py demo --output invoice-demo
 ```
 
 Open `invoice-demo/index.html` in a browser. The demo uses only Python's standard
@@ -169,18 +185,17 @@ harder, real invoices. See the [recorded evidence](examples/recorded-invoice-com
 
 ## AWS architecture
 
-![AWS invoice evaluation through AgentCore, Bedrock and S3, with six numbered steps](docs/invoice-evaluation-flow.drawio.png)
+![Prompt Optimizer: AgentCore, Bedrock and S3 with six numbered evaluation steps](docs/invoice-evaluation-flow.drawio.png)
 
 One AgentCore deployment hosts the coordinator and worker sessions. Bedrock
 provides inference; private S3 stores frozen inputs and run evidence; IAM
-controls access and CloudWatch records logs. The diagram uses invoice inputs;
-the triage starter uses the same cloud path with ticket inputs. See the
+controls access and CloudWatch records logs. Both starters use the cloud path shown in the diagram. See the
 [editable diagram and numbered steps](docs/invoice-evaluation-flow.md).
 
 ## Development and scope
 
 ```text
-customer-eval/
+prompt-optimizer/
 ├── plugin.json                 Portable plugin identity
 ├── .codex-plugin/plugin.json   Codex presentation and skill discovery
 ├── skills/evaluate-invoices/   One shared workflow (stable skill identifier)
@@ -199,9 +214,9 @@ Install `requirements-test.txt` in an isolated environment, then run from the
 repository root:
 
 ```bash
-python -m unittest discover -s plugins/customer-eval/tests -v
-python -m pytest -q plugins/customer-eval/engine/tests \
-  plugins/customer-eval/engine/intake/tests
+python -m unittest discover -s plugins/prompt-optimizer/tests -v
+python -m pytest -q plugins/prompt-optimizer/engine/tests \
+  plugins/prompt-optimizer/engine/intake/tests
 ```
 
 Tests use local fixtures and loopback protocol servers, without live model

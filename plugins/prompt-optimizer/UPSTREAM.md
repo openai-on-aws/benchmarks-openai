@@ -9,6 +9,10 @@ entrypoint, clarifies the guided AgentCore setup before preparation, and fixes
 the connection template's duplicate unsupported cache-price field. These
 changes do not modify the bundled engine.
 
+Plugin 0.1.2 renames the public package and marketplace entry to
+`prompt-optimizer`. The bundled engine and its deployment artifact prefixes
+remain unchanged.
+
 The independently vendored ModelShift importer retains its MIT-0 license and exact upstream reference under `engine/customer_eval/vendor/modelshift/`.
 
 `source-manifest.json` records imported file hashes before these documented integration edits. This plugin and the importer use MIT-0; it does not change the licenses of neighboring repository content.

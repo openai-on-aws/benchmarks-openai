@@ -1,6 +1,6 @@
 {
-  "name": "customer-eval",
-  "version": "0.1.1",
+  "name": "prompt-optimizer",
+  "version": "0.1.2",
   "description": "Compare invoice extraction or support-ticket triage with one fixed prompt on two models, locally or in AgentCore, and inspect quality, cost and latency.",
   "author": {
     "name": "OpenAI on AWS",
@@ -10,7 +10,7 @@
   "license": "MIT-0",
   "skills": "./skills/",
   "interface": {
-    "displayName": "Customer Eval",
+    "displayName": "Prompt Optimizer",
     "shortDescription": "Compare extraction and triage quality, cost and latency",
     "longDescription": "Start with invoice extraction or support-ticket triage. Explore a recorded invoice comparison, choose a starter, agree what correctness means, then run one fixed prompt on two models locally or on AgentCore and inspect the HTML reports.",
     "developerName": "OpenAI on AWS",

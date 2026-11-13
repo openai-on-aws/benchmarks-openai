@@ -1,17 +1,17 @@
-name: Customer Eval plugin
+name: Prompt Optimizer plugin
 
 on:
   pull_request:
     paths:
-      - "plugins/customer-eval/**"
+      - "plugins/prompt-optimizer/**"
       - ".agents/plugins/marketplace.json"
-      - ".github/workflows/customer-eval.yml"
+      - ".github/workflows/prompt-optimizer.yml"
   push:
     branches: [main, "feature/customer-eval-plugin"]
     paths:
-      - "plugins/customer-eval/**"
+      - "plugins/prompt-optimizer/**"
       - ".agents/plugins/marketplace.json"
-      - ".github/workflows/customer-eval.yml"
+      - ".github/workflows/prompt-optimizer.yml"
 
 permissions:
   contents: read
@@ -32,11 +32,11 @@ jobs:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: |
-            plugins/customer-eval/engine/requirements-integration.txt
-            plugins/customer-eval/engine/requirements-test.txt
+            plugins/prompt-optimizer/engine/requirements-integration.txt
+            plugins/prompt-optimizer/engine/requirements-test.txt
       - name: Install pinned test dependencies
-        run: python -m pip install -r plugins/customer-eval/requirements-test.txt
+        run: python -m pip install -r plugins/prompt-optimizer/requirements-test.txt
       - name: Exercise an isolated installed plugin
-        run: python -B -m unittest discover -s plugins/customer-eval/tests -v
+        run: python -B -m unittest discover -s plugins/prompt-optimizer/tests -v
       - name: Verify the evaluator and local harness protocols
-        run: python -B -m pytest -q plugins/customer-eval/engine/tests plugins/customer-eval/engine/intake/tests
+        run: python -B -m pytest -q plugins/prompt-optimizer/engine/tests plugins/prompt-optimizer/engine/intake/tests

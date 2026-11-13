@@ -1,4 +1,4 @@
-# Customer Eval development
+# Prompt Optimizer development
 
 The plugin must run from its installed cache without the source repository.
 Keep the public interface focused on fixed-prompt structured-output comparisons:

@@ -41,7 +41,7 @@ Model and region choices depend on the suite and endpoint.
 
 | What do you want to measure? | Start here |
 | --- | --- |
-| Invoice extraction or support-ticket triage quality, cost and latency | **[Customer Eval](plugins/customer-eval/)** — one fixed prompt, two models, local or AgentCore execution |
+| Invoice extraction or support-ticket triage quality, cost and latency | **[Prompt Optimizer](plugins/prompt-optimizer/)** — one fixed prompt, two models, local or AgentCore execution |
 | Agent task success and cost per successful task | **[Bedrock Bench](plugins/bedrock-bench/)** — starter tasks, CDK repair, Terminal-Bench, SWE-bench, AWS-Bench |
 | Response latency and throughput | [Performance](docs/benchmark-reference.md#performance) — time to first token, tokens/sec, p50/p95/p99 |
 | Accuracy, tool use, research, and work products | [Quality](docs/benchmark-reference.md#quality) — quick evals, agentic tasks, DeepSearchQA, GDPval |
@@ -59,5 +59,5 @@ Model and region choices depend on the suite and endpoint.
 Contributions welcome: see [Contributing](CONTRIBUTING.md) and the
 [Code of Conduct](CODE_OF_CONDUCT.md).
 Code is [MIT-0](LICENSE); documentation is [CC-BY-SA 4.0](LICENSE-DOCS.md).
-The [Customer Eval plugin](plugins/customer-eval/UPSTREAM.md) retains the
+The [Prompt Optimizer plugin](plugins/prompt-optimizer/UPSTREAM.md) retains the
 MIT-0 licenses of its evaluation engine and importer.

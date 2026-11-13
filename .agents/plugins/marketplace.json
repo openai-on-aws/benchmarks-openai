@@ -17,10 +17,10 @@
       "category": "Productivity"
     },
     {
-      "name": "customer-eval",
+      "name": "prompt-optimizer",
       "source": {
         "source": "local",
-        "path": "./plugins/customer-eval"
+        "path": "./plugins/prompt-optimizer"
       },
       "policy": {
         "installation": "AVAILABLE",

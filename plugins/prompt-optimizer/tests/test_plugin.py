@@ -17,7 +17,7 @@ class InstalledPluginTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.cache = tempfile.TemporaryDirectory(prefix="invoice-plugin-cache-")
-        cls.installed = Path(cls.cache.name) / "cache with spaces" / "customer-eval"
+        cls.installed = Path(cls.cache.name) / "cache with spaces" / "prompt-optimizer"
         shutil.copytree(PLUGIN, cls.installed, ignore=shutil.ignore_patterns("__pycache__", ".pytest_cache"))
 
     @classmethod

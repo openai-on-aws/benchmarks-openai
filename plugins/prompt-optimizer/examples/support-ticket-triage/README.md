@@ -2,7 +2,7 @@
 
 Compare two models on a fixed prompt that assigns a support ticket's
 **category, priority, destination queue and human-review flag**. This uses the
-same Customer Eval entrypoint as the invoice example. It evaluates one
+same Prompt Optimizer entrypoint as the invoice example. It evaluates one
 structured decision per ticket; it does not create tickets, send replies,
 change permissions or execute help-desk tools.
 
@@ -32,8 +32,8 @@ record; editing `prompt.txt` alone does not change the requests.
 
 ## 1. Start in Codex
 
-Install Customer Eval using the [plugin instructions](../../README.md), then
-ask its **Evaluate Customer Workflows** skill:
+Install Prompt Optimizer using the [plugin instructions](../../README.md), then
+ask its **Evaluate Workflows** skill:
 
 > Use the support-ticket-triage starter. Show me its routing policy and some
 > difficult cases. Help me decide which mistakes matter, then prepare a
@@ -48,8 +48,8 @@ your project, connection file, environment and reports in your workspace.
 For terminal use, set the absolute plugin directory. From the repository root:
 
 ```bash
-export EVAL_PLUGIN="$PWD/plugins/customer-eval"
-export EVAL_WORKSPACE="$HOME/customer-eval-workspace"
+export EVAL_PLUGIN="$PWD/plugins/prompt-optimizer"
+export EVAL_WORKSPACE="$HOME/prompt-optimizer-workspace"
 mkdir -p "$EVAL_WORKSPACE"
 
 python3.12 -m venv "$EVAL_WORKSPACE/.venv"
