@@ -181,8 +181,36 @@ class Inputs(unittest.TestCase):
 
     def test_duplicate_yaml_key(self):
         file = self.base/'duplicate.yaml'
-        file.write_text('a: 1\na: 2\n')
-        with self.assertRaises(ValueError): load_document(file)
+        for text in ('a: 1\na: 2\n', 'outer:\n  a: 1\n  a: 2\n',
+                     'items:\n  - a: 1\n    a: 2\n'):
+            with self.subTest(text=text):
+                file.write_text(text)
+                with self.assertRaisesRegex(ValueError, 'Duplicate field'):
+                    load_document(file)
+
+    def test_yaml_python_tags_are_rejected_without_execution(self):
+        for suffix in ('yaml', 'yml'):
+            file = self.base/f'untrusted.{suffix}'
+            for payload in ('!!python/object/apply:os.system [PRIVATE_SENTINEL]',
+                            '!!python/object/new:builtins.object {}',
+                            '!!python/name:os.system',
+                            'nested: !!python/object/apply:os.system [PRIVATE_SENTINEL]'):
+                with self.subTest(suffix=suffix, payload=payload):
+                    file.write_text(payload)
+                    with patch('os.system') as system:
+                        with self.assertRaisesRegex(ValueError, 'YAML syntax error') as error:
+                            load_document(file)
+                        system.assert_not_called()
+                    self.assertNotIn('PRIVATE_SENTINEL', str(error.exception))
+
+    def test_yaml_aliases_and_single_document_limit(self):
+        file = self.base/'aliases.yaml'
+        file.write_text('original: &value {a: [1, true, null]}\ncopy: *value\n')
+        expected = {'a': [1, True, None]}
+        self.assertEqual(load_document(file), {'original': expected, 'copy': expected})
+        file.write_text('a: 1\n---\na: 2\n')
+        with self.assertRaisesRegex(ValueError, 'YAML syntax error'):
+            load_document(file)
 
     def test_duplicate_json_key(self):
         file = self.base/'duplicate.json'

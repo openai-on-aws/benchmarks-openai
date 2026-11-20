@@ -62,7 +62,14 @@ def load_document(path: Path):
     text = path.read_text(encoding='utf-8')
     try:
         if path.suffix.lower() in ('.yaml', '.yml'):
-            doc = yaml.load(text, Loader=StrictLoader)
+            # safe_load does not accept a custom loader. Validate duplicate
+            # fields separately without changing PyYAML's global constructors.
+            loader = StrictLoader(text)
+            try:
+                loader.get_single_data()
+            finally:
+                loader.dispose()
+            doc = yaml.safe_load(text)
         else:
             doc = json.loads(text, object_pairs_hook=unique_pairs, parse_constant=reject_nonfinite)
     except json.JSONDecodeError as exc:
