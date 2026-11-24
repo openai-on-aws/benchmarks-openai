@@ -71,13 +71,18 @@ independent output-shape validation and `quality.checks` with entries such as:
 
 Expected values come from the supplied reference answer at the same field path.
 `json_equals` checks values and types. `json_set_equals` compares unordered sets of
-unique JSON scalar values, rejecting duplicates. Use exact evidence-set matching
+unique JSON scalar values, rejecting duplicates. `json_unordered_equals` compares
+structured records with unordered arrays at every depth, rejecting duplicate
+array members; object keys, scalar types and values remain exact. Use it only
+when all array order within the selected field is immaterial. Use exact evidence-set matching
 only when the output contract defines that set unambiguously. JSON Schema checks
 types, required fields and extra-field rules; local references are supported.
 
 Name checks after business outcomes. Include every decision field that determines
 success. If a narrative explanation is not graded, say so; passing structured
-checks does not establish that the prose is correct. Customer requirements and
+checks does not establish that the prose is correct. Optional `quality.source_checks`
+can assess explanations against the same fixed sources while keeping required
+reference correctness separate; see [mixed assessment](reference-and-source.md). Customer requirements and
 reference answers are separate from the model's request.
 
 ## Compare models and prompt changes separately

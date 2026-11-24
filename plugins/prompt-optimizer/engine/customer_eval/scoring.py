@@ -47,6 +47,10 @@ def grade(config, case, result, judge):
                     from .json_grading import grade_json_set
                     checks[check['id']] = grade_json_set(result.get('outputs'), expected, rule['path'], at)
                     continue
+                elif kind == 'json_unordered_equals':
+                    from .json_grading import grade_json_unordered
+                    checks[check['id']] = grade_json_unordered(result.get('outputs'), expected, rule['path'], at)
+                    continue
                 elif kind == 'contains':
                     passed = str(expected).casefold() in result['outputs'][-1].casefold()
                 elif kind == 'tool_called':
@@ -120,9 +124,11 @@ def source_judge_metrics(config, rows):
         review_attempts += 'needs_review' in values
         result = next((kind for kind in precedence if kind in values), 'passed' if required else 'unknown')
         totals[result] += 1
-    return {'quality_label': 'Source-assessed quality', 'method': 'source_judge',
-            'scope': 'Judge assessment against supplied text and a fixed rubric, not human-verified extraction accuracy. '
-                     'Needs-review judgments and missing grades are not passes. Required checks determine attempt outcomes.',
+    mixed = config['document'].get('runner', {}).get('grading_reference_mode') == 'references_with_source_judges'
+    return {'quality_label': 'Reference check pass rate' if mixed else 'Source-assessed quality',
+            'method': 'reference_and_source' if mixed else 'source_judge',
+            'scope': ('Required checks compare outputs with supplied reference facts; optional source-judge explanations are reported separately. References retain their recorded review status.' if mixed else 'Judge assessment against supplied text and a fixed rubric, not human-verified extraction accuracy. ')
+                     + ' Needs-review judgments and missing grades are not passes. Required checks determine attempt outcomes.',
             'attempts': len(rows), **totals, 'attempts_with_needs_review': review_attempts,
             'required_check_ids': required, 'by_check': by_check}
 

@@ -556,6 +556,12 @@
             "max_request_bytes"
           ],
           "description": "Separate limits for source-based judge requests, including source context, candidate output and rubric."
+        },
+        "grading_reference_mode": {
+          "type": "string",
+          "enum": [
+            "references_with_source_judges"
+          ]
         }
       },
       "required": [

@@ -85,7 +85,7 @@ def load(path: str | Path, *, live=False):
     if set(grading) != set(indexes['checks']):
         raise ValueError('grading file must define exactly the intake checks')
     for check_id, rule in grading.items():
-        if rule.get('type') not in {'json_equals', 'json_set_equals', 'json_schema', 'contains', 'tool_called', 'state_equals', 'llm_rubric', 'llm_source_rubric'} | TYPES:
+        if rule.get('type') not in {'json_equals', 'json_set_equals', 'json_unordered_equals', 'json_schema', 'contains', 'tool_called', 'state_equals', 'llm_rubric', 'llm_source_rubric'} | TYPES:
             raise ValueError(f'Unknown grading type for {check_id}')
         method = indexes['checks'][check_id]['method']
         if method != ('llm_judge' if rule['type'] in ('llm_rubric', 'turn_semantic', 'llm_source_rubric') else 'deterministic'):
@@ -98,18 +98,28 @@ def load(path: str | Path, *, live=False):
         if rule['type'] == 'json_schema':
             from .json_grading import schema_validator
             schema_validator(rule.get('schema'))
-        if rule['type'] == 'json_set_equals' and (not isinstance(rule.get('path'), str) or not isinstance(rule.get('expected_key'), str)):
-            raise ValueError('json_set_equals requires path and expected_key strings')
+        if rule['type'] in ('json_set_equals', 'json_unordered_equals') and (not isinstance(rule.get('path'), str) or not isinstance(rule.get('expected_key'), str)):
+            raise ValueError('JSON set/unordered checks require path and expected_key strings')
     semantic_models = {indexes['checks'][key]['judge_model_id'] for key, rule in grading.items()
                        if rule['type'] == 'turn_semantic'}
     if len(semantic_models) > 1:
         raise ValueError('Turn semantic criteria must use one judge model')
     source_checks = [key for key, rule in grading.items() if rule['type'] == 'llm_source_rubric']
+    reference_and_source = cfg.get('grading_reference_mode') == 'references_with_source_judges'
+    if reference_and_source and not source_checks:
+        raise ValueError('references_with_source_judges requires optional source checks alongside required reference checks')
     if source_checks:
         if cfg['mode'] != 'prompt' or cfg['workload'] != 'none':
             raise ValueError('Source-grounded judging currently supports text prompt mode with no tools')
-        if any(rule['type'] not in ('llm_source_rubric', 'json_schema') for rule in grading.values()):
-            raise ValueError('Source-grounded rubrics may be combined with JSON schema checks, not reference-based checks')
+        if reference_and_source:
+            if any(indexes['checks'][key]['required'] for key in source_checks):
+                raise ValueError('Source checks accompanying references must be optional')
+            if any(rule['type'] not in ('llm_source_rubric', 'json_schema', 'json_equals', 'json_set_equals', 'json_unordered_equals') for rule in grading.values()):
+                raise ValueError('Mixed source judging supports JSON reference checks only')
+            if not any(indexes['checks'][key]['required'] and rule['type'] in ('json_equals', 'json_set_equals', 'json_unordered_equals') for key, rule in grading.items()):
+                raise ValueError('Mixed source judging needs a required reference value check')
+        elif any(rule['type'] not in ('llm_source_rubric', 'json_schema') for rule in grading.values()):
+            raise ValueError('Source-grounded rubrics may be combined with JSON schema checks, not reference-based checks without explicit reference mode')
         if len({indexes['checks'][key]['judge_model_id'] for key in source_checks}) != 1:
             raise ValueError('Source-grounded criteria must use one judge model')
     datasets, all_ids, seen = {}, set(), {}
@@ -146,13 +156,13 @@ def load(path: str | Path, *, live=False):
                 if turns != [message_text(row['replay']['request']['input'][-1])]:
                     raise ValueError('Replay grading turn must equal the captured final user message')
             if source_checks:
-                if 'expected' in row:
+                if not reference_and_source and 'expected' in row:
                     raise ValueError('Source-grounded judging uses no expected answers; remove references or choose reference-based grading')
                 if len(turns) != 1:
                     raise ValueError('Source-grounded judging currently supports one text extraction response per case')
                 from .source_grading import build_source_context
                 build_source_context(row, policy=policy)
-            elif 'expected' not in row:
+            if (not source_checks or reference_and_source) and 'expected' not in row:
                 raise ValueError('Runnable cases need expected values; use intake for incomplete drafts')
             from .scoring import at
             from .json_grading import scalar_set
@@ -162,6 +172,12 @@ def load(path: str | Path, *, live=False):
                         scalar_set(at(row['expected'], rule['expected_key']))
                     except (KeyError, IndexError, TypeError, ValueError) as exc:
                         raise ValueError('Invalid JSON set reference for case ' + row['id']) from exc
+                elif rule['type'] == 'json_unordered_equals':
+                    try:
+                        from .json_grading import unordered_value
+                        unordered_value(at(row['expected'], rule['expected_key']))
+                    except (KeyError, IndexError, TypeError, ValueError) as exc:
+                        raise ValueError('Invalid JSON unordered reference for case ' + row['id']) from exc
             validate_expectations(row, grading)
             if any(rule['type'] in TYPES for rule in grading.values()):
                 for turn in row['expected']['turns']:

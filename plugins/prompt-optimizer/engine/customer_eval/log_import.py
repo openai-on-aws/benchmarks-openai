@@ -82,7 +82,7 @@ def at(obj, path):
 
 
 def mapped_row(raw, mapping, *, reference_mode="standard"):
-    required = {'request'} if reference_mode == 'source_judge' else {'request', 'response'}
+    required = {'request'} if reference_mode == 'source_judge' or 'expected' in mapping else {'request', 'response'}
     if set(mapping) - {'request', 'response', 'id', 'api', 'expected', 'group'} or not required <= set(mapping):
         raise ValueError('Mapping requires ' + '/'.join(sorted(required)) + ' paths; optional id, api, expected, group')
     try:
@@ -91,7 +91,7 @@ def mapped_row(raw, mapping, *, reference_mode="standard"):
             try:
                 row['response'] = at(raw, mapping['response'])
             except (KeyError, IndexError, TypeError, ValueError):
-                if reference_mode != 'source_judge':
+                if reference_mode != 'source_judge' and 'expected' not in mapping:
                     raise
         for key in ('id', 'expected'):
             if key in mapping:
@@ -154,18 +154,21 @@ def normalize(raw, *, mapping=None, prompt_location=None, reference_mode="standa
                           else 'litellm_wrapped' if shape == 'wrapped'
                           else 'responses' if isinstance(request, dict) and 'input' in request
                           else 'chat_completions')
+    supplied_only = not source_judge and response is None and 'expected' in row
+    if supplied_only and row['expected'] is None:
+        raise ImportIssue('missing_supplied_reference')
     if isinstance(request, str):
         request = strict_json(request)
     if not source_judge and isinstance(response, str):
         response = strict_json(response)
-    if not isinstance(request, dict) or (not source_judge and not isinstance(response, dict)):
+    if not isinstance(request, dict) or (not source_judge and not supplied_only and not isinstance(response, dict)):
         raise ImportIssue('missing_request' if source_judge else 'missing_request_or_response')
     # Do not silently discard controls such as stop, seed, tool_choice, remote history.
     if set(request) - _CAPTURE_FIELDS:
         raise ImportIssue('unsupported_request_setting')
     if request.get('tools'):
         raise ImportIssue('tool_calls_unsupported')
-    if not source_judge:
+    if not source_judge and not supplied_only:
         if response.get('error') or response.get('status', 'completed') != 'completed':
             raise ImportIssue('incomplete_or_failed_response')
         for c in response.get('choices', []):
@@ -228,7 +231,18 @@ def normalize(raw, *, mapping=None, prompt_location=None, reference_mode="standa
         prompt = validate_replay(replay)
     except ValueError:
         raise ImportIssue('invalid_replay_or_missing_prompt')
-    if not source_judge:
+    if supplied_only:
+        answer = row['expected']
+        try:
+            parsed = strict_json(answer) if isinstance(answer, str) else answer
+        except ValueError:
+            parsed = answer
+        try:
+            strict_json(json.dumps(parsed, allow_nan=False))
+        except (TypeError, ValueError):
+            raise ImportIssue('invalid_supplied_reference')
+        expected = {'answer': parsed, 'reference': answer if isinstance(answer, str) else json.dumps(answer, ensure_ascii=False, allow_nan=False)}
+    elif not source_judge:
         # Reuse upstream response extraction and evaluability. Its canonicalized request
         # is for detection only; the worker receives body above with all original roles.
         canonical = {'id': str(row.get('id', row.get('request_id', fingerprint(raw)[:20]))),
@@ -259,9 +273,8 @@ def normalize(raw, *, mapping=None, prompt_location=None, reference_mode="standa
                          'reference_kind': 'source_judge' if source_judge else ('supplied_expected' if 'expected' in row else 'recorded_response'),
                          'intentional_changes': ['candidate model selected by run', 'store=false', 'stream=false'],
                          'captured_controls': {k: request[k] for k in ('model', 'store', 'stream') if k in request}}}
-    if source_judge:
-        case['metadata']['recorded_response_present'] = response is not None
-    else:
+    case['metadata']['recorded_response_present'] = response is not None and not manual
+    if not source_judge:
         case['expected'] = expected
     if mapping and 'group' in mapping:
         case['metadata']['evaluation_group'] = at(raw, mapping['group'])

@@ -23,6 +23,12 @@ When optimizing one application model, source and target may select the same
 connection key; they represent the starting-model comparison roles, not a
 requirement to migrate to another model.
 
+A model-migration study has three application configurations: the source model
+with the original prompt, the target model with the original prompt, and the
+target model with the selected prompt. Keep source and target distinct when that
+is the customer's requested migration. An optimizer or judge using the source
+model does not substitute for running that model as the application baseline.
+
 For a worked starter, use `examples/support-ticket-triage/tickets.jsonl` and its
 decision template. Set `optimization_enabled: true`, `optimizer_model` to the
 chosen connection key, and put the general policy from `prompt.txt` in
@@ -80,3 +86,13 @@ counts, application cost and application latency. Report judge and optimizer
 spend separately from those application metrics. A high judge pass rate is not
 human-verified accuracy; inspect representative judgments before an adoption
 decision.
+
+## Keep reference correctness separate from explanations
+
+With reference facts, configure `quality.kind: "json_checks"` and optional
+`quality.source_checks` as described in [mixed assessment](reference-and-source.md).
+Required deterministic checks drive selection and cost per successful result.
+Source judgments can inform development feedback but stay optional in this mode.
+Show their pass, fail, needs-review and grading-error counts separately. A candidate
+can preserve reference correctness while its explanation worsens; surface that
+tradeoff for review instead of hiding it in an aggregate correctness number.

@@ -110,7 +110,11 @@ Application, optimizer and judge are separate roles: select source and target
 connection keys, an optimizer key only for optimization, and an explicit
 `judge_model` key for source-based judging. The optimizer may share the same
 underlying model as the judge, but does not choose the grades or rubric. The Codex chat
-model is selected in Codex and is not set by these connection keys. Follow the
+model is selected in Codex and is not set by these connection keys. For a requested
+migration, source and target must represent the requested distinct models; do not
+replace that comparison with a target-only prompt optimization. A target-only
+study is a separate choice. Show three application configurations for migration:
+source/original, target/original and target/revised. Follow the
 [optimization workflow](references/optimization.md) for prompt revisions.
 
 Inspect the supplied logs and show accepted and excluded records. Keep the
@@ -144,6 +148,16 @@ For long text cases or decisions with several independently scored fields, read
 [complex text studies](references/complex-text.md). Set request, output and
 provider timeout limits from the actual inputs. Use named checks and an output
 schema when required by the task; do not treat unscored explanations as verified.
+When reference facts are available but explanations need semantic review, read
+[reference checks with source judgments](references/reference-and-source.md).
+Use `quality.kind: "json_checks"` for required correctness and optional
+`quality.source_checks` for source-backed explanation assessments. Keep their
+results separate: an incomplete explanation must not silently become a wrong
+amount or incorrect routing result. The source judge does not receive reference
+answers. For unordered collections of structured records, `json_unordered_equals`
+ignores array order while preserving exact fields, scalar types and duplicate
+rejection; ordinary `json_equals` remains order-sensitive.
+
 For source judging, set `quality.kind: "source_judge"` and the agreed named
 rubric checks before `inspect`; setting it afterward reimports the original
 sources. Expected answers stay absent. Add `quality.schema` for independent

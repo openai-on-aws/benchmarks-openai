@@ -1249,13 +1249,37 @@
       function sourceJudged(r) {
         return r?.assessment?.mode === "source_judge";
       }
+      function mixedAssessed(r) {
+        return r?.assessment?.mode === "reference_and_source";
+      }
+      function hasSourceJudgments(r) {
+        return sourceJudged(r) || mixedAssessed(r);
+      }
+      function qualityLabel(r, fallback = "Test runs passing every required check") {
+        return sourceJudged(r) ? "LLM-assessed: all required checks passed" : mixedAssessed(r) ? "Reference checks passed" : fallback;
+      }
       function assessmentNote(r) {
+        if (mixedAssessed(r)) return `<p class="sub"><strong>Reference checks and separate LLM assessments</strong> · Required reference checks determine the pass rate and cost per successful result. Optional source judgments are reported separately and do not change that score. Judge: ${esc(modelLabel(r.assessment.judge_model))}. Neither check agreement nor a model judgment establishes human-verified accuracy.</p>`;
         return sourceJudged(r) ? `<p class="sub"><strong>LLM-assessed quality</strong> · Judge: ${esc(modelLabel(r.assessment.judge_model))}. Judgments use the frozen sources and rubric, not expected answers. Needs-review judgments remain in every-attempt denominators and are not passes.</p>` : "";
       }
+      function modelRolesNote(r) {
+        const roles = r.model_roles || [];
+        return roles.length ? `<p class="sub model-roles">${roles.map((role) => `<strong>${role.role === "optimizer" ? "Prompt optimizer" : mixedAssessed(r) ? "Explanation judge" : "Source judge"}:</strong> ${esc(modelLabel(role.model))}${role.reasoning ? ` · ${esc(role.reasoning)} reasoning` : ""} (${esc(role.requests)} recorded requests)`).join("<br>")}<br>These roles are separate from the application models in the comparison.</p>` : "";
+      }
+      function optionalAssessmentNote(g) {
+        if (!mixedAssessed(g.report)) return "";
+        const ids = g.report.assessment.source_check_ids || [], counts = {pass: 0, fail: 0, needs_review: 0, unknown: 0};
+        for (const trial of g.trials || []) for (const id of ids) {
+          const c = trial.checks?.[id], status = c && !c.error && c.failure_category !== "grading" && ["pass", "fail", "needs_review"].includes(c.status) && c.pass === (c.status === "pass") ? c.status : "unknown";
+          counts[status]++;
+        }
+        return `<small>Reference checks determine this score.</small><small>Optional LLM checks: ${counts.pass} passed, ${counts.fail} failed, ${counts.needs_review} need review${counts.unknown ? `, ${counts.unknown} unknown` : ""}.</small>`;
+      }
       function assessmentReference(t, r) {
-        if (!sourceJudged(r)) return `<h3>Expected answer</h3><pre class="code">${esc(t.expected_available ? pretty(t.expected_answer) : "Expected answer unavailable: a matching frozen input manifest was not included.")}</pre><p class="sub">${esc(t.expected_available ? "From the verified frozen input; reference status: " + (t.reference_metadata?.label_status || "not recorded") + "." : "The dashboard does not infer a reference from the model output.")}</p>`;
+        const reference = `<h3>Expected answer</h3><pre class="code">${esc(t.expected_available ? pretty(t.expected_answer) : "Expected answer unavailable: a matching frozen input manifest was not included.")}</pre><p class="sub">${esc(t.expected_available ? "From the verified frozen input; reference status: " + (t.reference_metadata?.label_status || "not recorded") + "." : "The dashboard does not infer a reference from the model output.")}</p>`;
+        if (!hasSourceJudgments(r)) return reference;
         const sources = r.source_bundles?.[t.source_ref];
-        return `<h3>Source-based assessment</h3>${assessmentNote(r)}<p>No expected answer was supplied or used.</p><details><summary>Full frozen sources used by the judge</summary>${Array.isArray(sources) ? sources.map((source) => `<h3>${esc(source.source_id)} · ${esc(source.role)}</h3><pre class="code">${esc(source.text)}</pre>`).join("") : '<p>Verified source text is unavailable.</p>'}</details><details><summary>Frozen evaluation rubric</summary><pre class="code">${esc(pretty(r.assessment.criteria))}</pre></details>`;
+        return `${mixedAssessed(r) ? reference : ""}<h3>Source-based assessment</h3>${assessmentNote(r)}<p>${mixedAssessed(r) ? "Reference answers are used by deterministic checks; the LLM judge receives only the fixed sources, rubric and candidate output." : "No expected answer was supplied or used."}</p><details><summary>Full frozen sources used by the judge</summary>${Array.isArray(sources) ? sources.map((source) => `<h3>${esc(source.source_id)} · ${esc(source.role)}</h3><pre class="code">${esc(source.text)}</pre>`).join("") : '<p>Verified source text is unavailable.</p>'}</details><details><summary>Frozen evaluation rubric</summary><pre class="code">${esc(pretty(r.assessment.criteria))}</pre></details>`;
       }
       function outcome(t) {
         const checks = Object.values(t.checks || {});
@@ -1452,7 +1476,7 @@
           return coverage && coverage.observations !== s.n_sessions;
         })) issues.push("The selected latency measure does not cover every attempt.");
         const rows = [
-          [sourceJudged(r) ? "LLM-assessed: all required checks passed" : "Test runs passing all checks", countA === null ? "Unknown" : `${countA}/${a.n_sessions} (${pct(a.accuracy)})`, countB === null ? "Unknown" : `${countB}/${b.n_sessions} (${pct(b.accuracy)})`],
+          [qualityLabel(r, "Test runs passing all checks"), countA === null ? "Unknown" : `${countA}/${a.n_sessions} (${pct(a.accuracy)})`, countB === null ? "Unknown" : `${countB}/${b.n_sessions} (${pct(b.accuracy)})`],
           [metric ? costName : "Choose a cost measure", before && metric ? costDisplay(before, metric, 6) : "Unknown", after && metric ? costDisplay(after, metric, 6) : "Unknown"],
           [`P95 ${latencyKnown ? a.latency_scope + " " : ""}time`, latencyKnown ? fixed(a.latency_p95_s, 3) + " s" : "Unknown", latencyKnown ? fixed(b.latency_p95_s, 3) + " s" : "Unknown"],
         ];
@@ -1570,7 +1594,7 @@
         const afterLabel = e.after_id === "target_challenger" ? "Candidate prompt (not selected)" : "Revised prompt";
         const inputs = trialInputs({...a, group: {...before, report: r}});
         const criteria = new Map((e.criteria || []).map((c) => [c.id, c]));
-        const output = (trial, group, label) => `<div class="paired-output"><h3>${promptLink(r, group.id, label)}</h3><pre class="code">${esc((trial.outputs || []).map(pretty).join("\n\n") || "No output recorded.")}</pre><p>Attempt ${esc(trial.id)}</p><h3>Recorded checks</h3><div class="checks">${Object.entries(trial.checks || {}).map(([id, check]) => recordedCheck(id, check, criteria.get(id)?.label || id, sourceJudged(r))).join("") || '<p>No checks recorded.</p>'}</div></div>`;
+        const output = (trial, group, label) => `<div class="paired-output"><h3>${promptLink(r, group.id, label)}</h3><pre class="code">${esc((trial.outputs || []).map(pretty).join("\n\n") || "No output recorded.")}</pre><p>Attempt ${esc(trial.id)}</p><h3>Recorded checks</h3><div class="checks">${Object.entries(trial.checks || {}).map(([id, check]) => recordedCheck(id, check, criteria.get(id)?.label || id, hasSourceJudgments(r))).join("") || '<p>No checks recorded.</p>'}</div></div>`;
         const isDefault = example.before_trial_id === e.example?.before_trial_id && example.after_trial_id === e.example?.after_trial_id;
         const selection = example.selection_reason || (isDefault ? e.example.selection_reason : null) || "Selected from the saved attempts with the same case and repeat.";
         return `<label class="pair-label" for="prompt-example-select-${esc(r.id)}-${index}">Matched case <select id="prompt-example-select-${esc(r.id)}-${index}" aria-label="Choose a matched case">${examples.map((pair, i) => `<option value="${i}"${i === exampleIndex ? " selected" : ""}>${esc(promptEvidenceExampleLabel(pair))}</option>`).join("")}</select></label><p>${esc(selection)}</p><p>This is one recorded pair, not an explanation of what caused the aggregate change. Review improved and regressed cases before drawing conclusions.</p><details><summary>Full input shared by both attempts</summary><pre class="code">${esc(inputs.length ? inputs.map((v, i) => "TURN " + (i + 1) + "\n" + (typeof v === "string" ? v : pretty(v))).join("\n\n") : "Input messages were not recorded.")}</pre></details>${assessmentReference(a, r)}<div class="answer-grid">${output(a, before, "Starting prompt")}${output(b, after, afterLabel)}</div>`;
@@ -1594,7 +1618,7 @@
             return first > 0 ? `${fixed(Math.abs(second - first) / first * 100, 1)}% ${second > first ? "higher" : "lower"}` : `${fixed(second - first, 1)} more`;
           };
           const rows = [
-            [sourceJudged(r) ? "LLM-assessed: all required checks passed" : "Test runs passing every required check", passes(counts.before_passes), passes(counts.after_passes), number(counts.before_passes) && number(counts.after_passes) && attempts > 0 ? `${fixed((counts.after_passes - counts.before_passes) / attempts * 100, 1)} percentage points` : "Unknown"],
+            [qualityLabel(r), passes(counts.before_passes), passes(counts.after_passes), number(counts.before_passes) && number(counts.after_passes) && attempts > 0 ? `${fixed((counts.after_passes - counts.before_passes) / attempts * 100, 1)} percentage points` : "Unknown"],
             ["Mean output tokens (includes reasoning)", fixed(e.usage?.before?.output_tokens?.mean, 1), fixed(e.usage?.after?.output_tokens?.mean, 1), change(e.usage?.before?.output_tokens?.mean, e.usage?.after?.output_tokens?.mean)],
             [`P95 ${sameLatency ? a.latency_scope + " " : ""}time`, number(p95(a)) ? fixed(p95(a), 3) + " s" : "Unknown", number(p95(b)) ? fixed(p95(b), 3) + " s" : "Unknown", change(p95(a), p95(b))],
             ["Model cost per attempt", costDisplay(before, "cost_usd_per_session", 6), costDisplay(after, "cost_usd_per_session", 6), change(costValue(before, "cost_usd_per_session"), costValue(after, "cost_usd_per_session"))],
@@ -1661,7 +1685,7 @@
           if (selected && !reused) notes.push("These test cases were not used to choose the revised prompt.");
           if (!comparisons.length && !promptEvidencePairs(r).length && !sameModelBaseline) notes.push("No supported comparison pair is available in this saved report.", ...evidenceIssues(r));
           notes.push("P95 is the time within which 95% of test runs finished. Timing differences may vary between runs.");
-          return `<section class="run-summary"><div class="eyebrow">${esc(r.backend === "local" ? "Run locally" : "Run on " + backendLabel(r.backend))}</div>${assessmentNote(r)}` + comparisons.map((c) =>
+          return `<section class="run-summary"><div class="eyebrow">${esc(r.backend === "local" ? "Run locally" : "Run on " + backendLabel(r.backend))}</div>${assessmentNote(r)}${modelRolesNote(r)}` + comparisons.map((c) =>
             `<div class="result-comparison" data-result="${esc(c.status)}" data-comparison="${c.kind}"><h2>${esc(c.label)}</h2><p>${esc(c.description)}</p><p><strong>${esc(c.headline)}</strong></p><table class="summary-table"><thead><tr><th scope="col">Measure</th>${c.columns.map((col, i) => `<th scope="col">${c.promptGroups ? promptLink(r, c.promptGroups[i], col) : esc(col)}</th>`).join("")}</tr></thead><tbody>${c.rows.map((row) => `<tr><th scope="row">${esc(row[0])}</th><td>${esc(row[1])}</td><td>${esc(row[2])}</td></tr>`).join("")}</tbody></table>${c.kind === "model" && promptEntry(r, "target_original") ? `<p>${promptLink(r, "target_original", "View starting prompt")}</p>` : ""}${c.issues.length ? `<p><strong>${esc(c.issues.join(" "))}</strong></p>` : ""}</div>`).join("") +
             `<p>${esc(notes.join(" "))}</p></section>`;
         }).join("");
@@ -1689,7 +1713,7 @@
               g.score.n_sessions > 0,
           ),
           denom = weighted.reduce((n, g) => n + g.score.n_sessions, 0);
-        const assessmentModes = [...new Set(reports().map((r) => sourceJudged(r) ? "source_judge" : "reference"))];
+        const assessmentModes = [...new Set(reports().map((r) => r.assessment?.mode || "reference"))];
         const quality =
           assessmentModes.length === 1 && denom && weighted.length === gs.length
             ? weighted.reduce(
@@ -1699,7 +1723,7 @@
             : null;
         const cards = [
           [
-            assessmentModes.length > 1 ? "Different assessment methods" : assessmentModes[0] === "source_judge" ? "LLM-assessed pass rate" : "Required-check pass rate",
+            assessmentModes.length > 1 ? "Different assessment methods" : assessmentModes[0] === "source_judge" ? "LLM-assessed pass rate" : assessmentModes[0] === "reference_and_source" ? "Reference check pass rate" : "Required-check pass rate",
             pct(quality),
             assessmentModes.length > 1 ? "Choose one backend to compare like assessments" : "All attempts included · not production accuracy",
           ],
@@ -1734,7 +1758,7 @@
           gs
             .map(
               (g) =>
-                `<tr><td class="name"><span class="swatch" style="background:${color(g)}"></span>${esc(modelLabel(g.model))}<small>${esc(backendLabel(g.report.backend))} · ${esc(g.label)}</small></td><td>${pct(g.score?.accuracy)}${sourceJudged(g.report) ? `<small>LLM-assessed · ${(g.trials || []).filter((t) => Object.values(t.checks || {}).some((c) => c?.status === "needs_review")).length} attempts need review</small>` : ""}<div class="mini-bar"><span style="width:${number(g.score?.accuracy) ? Math.max(0, Math.min(100, g.score.accuracy * 100)) : 0}%"></span></div></td><td>${costDisplay(g, "cost_usd_per_session")}<small>${g.score?.unpriced_requests ? esc(g.score.unpriced_requests) + " unpriced requests" : "Configured list-price estimate"}</small></td><td>${costDisplay(g, "cost_usd_per_success")}<small>Includes spend on failed attempts</small></td><td>${fixed(g.score?.latency_p50_s)} / ${fixed(g.score?.latency_p95_s)} s<small>${esc(g.score?.latency_scope || "Recorded latency scope")}</small></td><td>${new Set((g.trials || []).map((t) => t.case_id)).size} / ${(g.trials || []).length}</td></tr>`,
+                `<tr><td class="name"><span class="swatch" style="background:${color(g)}"></span>${esc(modelLabel(g.model))}<small>${esc(backendLabel(g.report.backend))} · ${esc(g.label)}</small></td><td>${pct(g.score?.accuracy)}${sourceJudged(g.report) ? `<small>LLM-assessed · ${(g.trials || []).filter((t) => Object.values(t.checks || {}).some((c) => c?.status === "needs_review")).length} attempts need review</small>` : ""}${optionalAssessmentNote(g)}<div class="mini-bar"><span style="width:${number(g.score?.accuracy) ? Math.max(0, Math.min(100, g.score.accuracy * 100)) : 0}%"></span></div></td><td>${costDisplay(g, "cost_usd_per_session")}<small>${g.score?.unpriced_requests ? esc(g.score.unpriced_requests) + " unpriced requests" : "Configured list-price estimate"}</small></td><td>${costDisplay(g, "cost_usd_per_success")}<small>Includes spend on failed attempts</small></td><td>${fixed(g.score?.latency_p50_s)} / ${fixed(g.score?.latency_p95_s)} s<small>${esc(g.score?.latency_scope || "Recorded latency scope")}</small></td><td>${new Set((g.trials || []).map((t) => t.case_id)).size} / ${(g.trials || []).length}</td></tr>`,
             )
             .join("") ||
           '<tr><td colspan="6">No holdout configurations available.</td></tr>';
@@ -1780,7 +1804,7 @@
         });
         const h = Math.max(305, T + Math.max(...panels.map((panel) => panel.labelHeight)) + B + 10);
         $("tradeoff").innerHTML = panels.map(({report, labels, labelHeight}) => {
-          const context = `<p class="chart-execution">Execution location: ${esc(backendLabel(report.backend))}</p>${sourceJudged(report) ? '<p class="sub">Successful results are LLM-assessed passes, not independently verified answers. Judge spend is separate from these application costs.</p>' : ""}`;
+          const context = `<p class="chart-execution">Execution location: ${esc(backendLabel(report.backend))}</p>${sourceJudged(report) ? '<p class="sub">Successful results are LLM-assessed passes, not independently verified answers. Judge spend is separate from these application costs.</p>' : mixedAssessed(report) ? '<p class="sub">Successful results pass every required reference check. Optional LLM assessments, judge spend and optimizer spend are separate.</p>' : ""}`;
           if (!labels.length)
             return `<section class="chart-panel">${context}<p class="sub">No comparable points are available for this location.</p></section>`;
           const x = (value) => L + ((w - L - R) * value) / xmax;
@@ -1895,7 +1919,7 @@
         const inputs = trialInputs(t);
         const checks = Object.entries(t.checks || {});
         $("detail").innerHTML =
-          `<div class="eyebrow">Trial detail</div><h2>${esc(t.case_id)}</h2><p class="sub">${esc(modelLabel(t.group.model))} · ${esc(backendLabel(t.group.report.backend))} · repeat ${Number(t.repeat) + 1}</p><p class="sub">${promptLink(t.group.report, t.group.id, promptEntry(t.group.report, t.group.id)?.label || promptLabel(t.group))}</p><div class="detail-stats"><div class="detail-stat"><span>Conversation</span><strong>${fixed(conversation(t), 3)} s</strong></div><div class="detail-stat"><span>Recorded tokens</span><strong>${number(tokens) ? tokens.toLocaleString() : "Unknown"}</strong></div><div class="detail-stat"><span>Execution</span><strong>${esc(t.status)}</strong></div></div><h3>Input conversation</h3><pre class="code">${esc(inputs.length ? inputs.map((v, i) => "TURN " + (i + 1) + "\n" + (typeof v === "string" ? v : pretty(v))).join("\n\n") : "Input messages were not recorded in this report.")}</pre><div class="answer-grid"><div>${assessmentReference(t, t.group.report)}</div><div><h3>Model output</h3><pre class="code">${esc((t.outputs || []).map(pretty).join("\n\n") || "No output recorded.")}</pre></div></div><h3>Recorded checks</h3><div class="checks">${checks.map(([id, c]) => recordedCheck(id, c, id, sourceJudged(t.group.report))).join("") || '<p class="sub">No checks recorded.</p>'}</div><p class="sub" style="margin-top:12px">The outcome filter includes every recorded check, including optional checks. It is not the aggregate required-check score.</p><details><summary>Request receipts & timing</summary><pre class="code">${esc(pretty({ trial_id: t.id, timing: t.timing, requests: routes.map((r) => ({ status: r.status, model: r.model_requested, request_id: r.request_id || r.response_id || null, started_at: r.started_at, usage: r.usage, timing: r.timing })) }))}</pre></details>`;
+          `<div class="eyebrow">Trial detail</div><h2>${esc(t.case_id)}</h2><p class="sub">${esc(modelLabel(t.group.model))} · ${esc(backendLabel(t.group.report.backend))} · repeat ${Number(t.repeat) + 1}</p><p class="sub">${promptLink(t.group.report, t.group.id, promptEntry(t.group.report, t.group.id)?.label || promptLabel(t.group))}</p><div class="detail-stats"><div class="detail-stat"><span>Conversation</span><strong>${fixed(conversation(t), 3)} s</strong></div><div class="detail-stat"><span>Recorded tokens</span><strong>${number(tokens) ? tokens.toLocaleString() : "Unknown"}</strong></div><div class="detail-stat"><span>Execution</span><strong>${esc(t.status)}</strong></div></div><h3>Input conversation</h3><pre class="code">${esc(inputs.length ? inputs.map((v, i) => "TURN " + (i + 1) + "\n" + (typeof v === "string" ? v : pretty(v))).join("\n\n") : "Input messages were not recorded in this report.")}</pre><div class="answer-grid"><div>${assessmentReference(t, t.group.report)}</div><div><h3>Model output</h3><pre class="code">${esc((t.outputs || []).map(pretty).join("\n\n") || "No output recorded.")}</pre></div></div><h3>Recorded checks</h3><div class="checks">${checks.map(([id, c]) => recordedCheck(id, c, id, hasSourceJudgments(t.group.report))).join("") || '<p class="sub">No checks recorded.</p>'}</div><p class="sub" style="margin-top:12px">The outcome filter includes every recorded check, including optional checks. It is not the aggregate required-check score.</p><details><summary>Request receipts & timing</summary><pre class="code">${esc(pretty({ trial_id: t.id, timing: t.timing, requests: routes.map((r) => ({ status: r.status, model: r.model_requested, request_id: r.request_id || r.response_id || null, started_at: r.started_at, usage: r.usage, timing: r.timing })) }))}</pre></details>`;
         bindPromptNavigation($("detail"));
       }
       function renderIntegrity() {
@@ -1904,7 +1928,7 @@
             const c = r.model_costs || {},
               known = c.known_model_cost_usd,
               estimated = c.estimated_model_cost_usd;
-            return `<div class="card integrity-card"><div class="eyebrow">${esc(backendLabel(r.backend))}</div><h2>${esc(r.source_name || "Saved report")}</h2><div class="definition"><span>Evaluation status</span><strong>${esc(r.status || "Unknown")}</strong></div><div class="definition"><span>Execution evidence</span><strong>${r.simulated === true ? "Simulated" : r.simulated === false ? "Live inference recorded" : "Unknown"}</strong></div><div class="definition"><span>Unresolved attempts</span><strong>${Array.isArray(r.unresolved_attempts) ? r.unresolved_attempts.length : "Unknown"}</strong></div><div class="definition"><span>Grading error records</span><strong>${esc(r.grading_error_records ?? "Unknown")}</strong></div><div class="definition"><span>Estimated run model cost</span><strong>${money(estimated)}</strong></div><div class="definition"><span>Known priced portion</span><strong>${money(known)}</strong></div>${[ ["agent", "Application model costs"], ["optimizer", "Prompt optimizer costs"], ["judge", "Judge model costs"] ].map(([purpose, label]) => `<div class="definition"><span>${esc(label)} · known priced portion</span><strong>${money(c.by_purpose_usd?.[purpose], 6)}</strong></div>`).join("")}<p class="sub">Purpose totals cover the whole campaign, including development and validation. Judge and optimizer costs are separate from the application cost per attempt shown in Overview. Missing receipts or prices make these known portions incomplete, not final totals.</p>${assessmentNote(r)}<div class="definition"><span>Unpriced / incomplete traces</span><strong>${esc(c.unpriced_requests_or_incomplete_traces ?? "Unknown")}</strong></div><p class="sub" style="margin-top:15px">${esc(c.scope || r.cost_note || "Cost scope not supplied.")}</p><div class="fingerprint">RUN FINGERPRINT<br>${esc(r.fingerprint || "Not recorded")}</div><details><summary>Latency and evidence scope</summary><p class="sub">${esc(r.latency_scope || "Not supplied")}</p><p class="sub" style="margin-top:9px">${esc(r.claim || "")}</p></details></div>`;
+            return `<div class="card integrity-card"><div class="eyebrow">${esc(backendLabel(r.backend))}</div><h2>${esc(r.source_name || "Saved report")}</h2><div class="definition"><span>Evaluation status</span><strong>${esc(r.status || "Unknown")}</strong></div><div class="definition"><span>Execution evidence</span><strong>${r.simulated === true ? "Simulated" : r.simulated === false ? "Live inference recorded" : "Unknown"}</strong></div><div class="definition"><span>Unresolved attempts</span><strong>${Array.isArray(r.unresolved_attempts) ? r.unresolved_attempts.length : "Unknown"}</strong></div><div class="definition"><span>Grading error records</span><strong>${esc(r.grading_error_records ?? "Unknown")}</strong></div><div class="definition"><span>Estimated run model cost</span><strong>${money(estimated)}</strong></div><div class="definition"><span>Known priced portion</span><strong>${money(known)}</strong></div>${[ ["agent", "Application model costs"], ["optimizer", "Prompt optimizer costs"], ["judge", "Judge model costs"] ].map(([purpose, label]) => `<div class="definition"><span>${esc(label)} · known priced portion</span><strong>${money(c.by_purpose_usd?.[purpose], 6)}</strong></div>`).join("")}<p class="sub">Purpose totals cover the whole campaign, including development and validation. Judge and optimizer costs are separate from the application cost per attempt shown in Overview. Missing receipts or prices make these known portions incomplete, not final totals.</p>${assessmentNote(r)}${modelRolesNote(r)}<div class="definition"><span>Unpriced / incomplete traces</span><strong>${esc(c.unpriced_requests_or_incomplete_traces ?? "Unknown")}</strong></div><p class="sub" style="margin-top:15px">${esc(c.scope || r.cost_note || "Cost scope not supplied.")}</p><div class="fingerprint">RUN FINGERPRINT<br>${esc(r.fingerprint || "Not recorded")}</div><details><summary>Latency and evidence scope</summary><p class="sub">${esc(r.latency_scope || "Not supplied")}</p><p class="sub" style="margin-top:9px">${esc(r.claim || "")}</p></details></div>`;
           })
           .join("");
         $("provenance").textContent =

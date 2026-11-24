@@ -151,3 +151,50 @@ def grade_json(outputs, expected, path, lookup):
             'JSON differs from the reference: ' + '; '.join(d['path'] + ' ' + d['issue'] for d in diffs[:5]),
             'failure_category': None if not diffs else 'behavior', 'differences': diffs,
             'difference_limit': 20}
+
+
+def unordered_value(value):
+    """Canonical JSON with unordered arrays at every depth and no duplicate items.
+
+    This is an explicit check type for record collections, not the default JSON
+    equality behavior. Object keys, scalar types and values remain exact. Use
+    ordered json_equals when sequence matters. Duplicate array members, including
+    duplicate IDs inside records, are invalid rather than silently deduplicated.
+    """
+    if isinstance(value, dict):
+        if any(not isinstance(k, str) for k in value):
+            raise ValueError('JSON object keys must be strings')
+        return ('object', tuple((k, unordered_value(v)) for k, v in sorted(value.items())))
+    if isinstance(value, list):
+        items = [unordered_value(v) for v in value]
+        if len(set(items)) != len(items):
+            raise ValueError('Unordered JSON arrays must not contain duplicate items')
+        return ('array', tuple(sorted(items, key=repr)))
+    if type(value) not in (str, int, float, bool, type(None)) or isinstance(value, float) and not math.isfinite(value):
+        raise ValueError('Unordered JSON values must be finite JSON values')
+    return (type(value).__name__, json.dumps(value, ensure_ascii=False, allow_nan=False))
+
+
+def grade_json_unordered(outputs, expected, path, lookup):
+    expected_key = unordered_value(expected)
+    actual, error = output_value(outputs, path, lookup)
+    if error:
+        return error
+    try:
+        actual_key = unordered_value(actual)
+    except (TypeError, ValueError) as exc:
+        return {'pass': False, 'reason': str(exc), 'failure_category': 'behavior',
+                'path': path, 'issue': 'invalid_unordered_value'}
+    passed = actual_key == expected_key
+    outcome = {'pass': passed, 'reason': 'Unordered JSON matches the reference' if passed else
+               'Unordered JSON differs from the reference', 'failure_category': None if passed else 'behavior', 'path': path}
+    if not passed and isinstance(expected, list) and isinstance(actual, list):
+        e = {unordered_value(v): v for v in expected}
+        a = {unordered_value(v): v for v in actual}
+        missing = [e[k] for k in sorted(e.keys() - a.keys(), key=repr)]
+        unexpected = [a[k] for k in sorted(a.keys() - e.keys(), key=repr)]
+        outcome.update(missing_values=missing[:20], unexpected_values=unexpected[:20],
+                       missing_count=len(missing), unexpected_count=len(unexpected))
+    elif not passed:
+        outcome['differences'] = differences(actual, expected, path or '$')
+    return outcome

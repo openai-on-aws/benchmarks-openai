@@ -71,7 +71,7 @@ def _failure_diagnostics(config, allowed, rows):
                 detail['expected_key'] = expected_key
             except (KeyError, IndexError, TypeError, ValueError):
                 detail['expected_status'] = 'Unavailable at the frozen check expected_key'
-        if kind in ('json_equals', 'json_set_equals', 'json_schema'):
+        if kind in ('json_equals', 'json_set_equals', 'json_unordered_equals', 'json_schema'):
             from .json_grading import output_value
             actual, error = output_value(row['result'].get('outputs'), rule.get('path', ''), at)
             if error:
@@ -165,7 +165,7 @@ def development_feedback(config, prompt, rows):
             from .source_grading import build_source_context
             evidence['source_context'] = build_source_context(case, policy=config.get('policy', ''),
                 general_rules=(config.get('intake_context') or {}).get('quality', {}).get('rules', ''))
-            evidence['assessment'] = 'LLM-assessed against source inputs; no verified expected answers'
+            evidence['assessment'] = ('Required reference checks with separate optional source-based explanation assessment; reference review status is unchanged' if config['document'].get('runner', {}).get('grading_reference_mode') == 'references_with_source_judges' else 'LLM-assessed against source inputs; no verified expected answers')
         if 'replay' in case:
             from .replay import request_body
             evidence['recorded_request'] = request_body(case['replay'], prompt)

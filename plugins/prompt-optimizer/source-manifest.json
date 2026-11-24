@@ -847,11 +847,12 @@
     "engine/tests/test_large_cloud_study.py",
     "engine/tests/test_provider_error_diagnostics.py",
     "engine/tests/test_provider_request_timeouts.py",
+    "engine/tests/test_reference_source_grading.py",
     "engine/tests/test_source_feedback.py",
     "engine/tests/test_source_grading.py",
     "engine/tests/test_source_grading_recovery.py",
     "engine/tests/test_source_judge_intake.py",
     "engine/tests/test_source_policy.py"
   ],
-  "integration_version": "0.6.0"
+  "integration_version": "0.7.0"
 }

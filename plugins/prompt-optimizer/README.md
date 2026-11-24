@@ -14,6 +14,13 @@ uses a separately selected model and an agreed rubric to assess extraction
 outputs against their sources. It reports source-assessed quality, not
 human-verified accuracy. It does not create reference answers from past outputs.
 
+Have reference facts for amounts or decisions, but want an LLM to review explanations too?
+Use [reference checks with separate source judgments](skills/evaluate-workflows/references/reference-and-source.md).
+Required deterministic checks determine correctness and cost per successful result;
+optional LLM assessments stay visible separately. For model migration, results show
+the original prompt on the source model, the same prompt on the target model, and
+the revised prompt on the target. Optimizer and judge calls are separate roles.
+
 For longer inputs, the [complex support-case example](examples/complex-support-resolution/README.md)
 includes contracts, invoice lines and incident histories, with named decision and
 evidence checks. The same plugin supports configurable request/output limits and

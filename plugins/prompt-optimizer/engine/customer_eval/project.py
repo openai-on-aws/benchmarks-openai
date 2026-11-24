@@ -90,8 +90,8 @@ ALLOWED = {'title', 'owner', 'source_model', 'target_model', 'optimizer_model', 
            'candidates', 'concurrency', 'timeout_seconds', 'budget_usd', 'budget_policy', 'split_seed',
            'minimum_quality', 'minimum_quality_owner', 'intent', 'exclude_records', 'group_by',
            'cost_metric', 'primary_latency', 'optimization_enabled', 'label_review_file',
-           'limits', 'optimizer_limits', 'judge_limits'}
-QUALITY = {'kind', 'fields', 'reference_source', 'reference_file', 'description', 'rules', 'checks', 'schema'}
+           'limits', 'optimizer_limits', 'judge_limits', 'split_counts'}
+QUALITY = {'kind', 'fields', 'reference_source', 'reference_file', 'description', 'rules', 'checks', 'schema', 'source_checks'}
 QUALITY_KINDS = ('json_equals', 'contains', 'json_checks', 'source_judge')
 DEFAULT_LIMITS = {'max_requests': 1, 'max_output_tokens': 2048, 'max_request_bytes': 80000,
                   'request_timeout_seconds': 60}
@@ -114,8 +114,14 @@ def replay_limits(value, *, optimizer=False, judge=False):
     return limits
 
 
+def has_source_checks(quality):
+    return quality.get('kind') == 'source_judge' or bool(quality.get('source_checks'))
+
+
 def quality_checks(quality):
     """Turn the small guided declaration into independent deterministic rules."""
+    if 'source_checks' in quality and quality.get('kind') != 'json_checks':
+        raise ValueError('quality.source_checks requires kind json_checks; source_judge uses checks instead')
     if quality.get('kind') == 'source_judge':
         if any(key in quality for key in ('fields', 'reference_source', 'reference_file')):
             raise ValueError('source_judge uses source inputs and a rubric, not expected-answer or recorded-output references')
@@ -158,8 +164,8 @@ def quality_checks(quality):
             if not isinstance(ident, str) or not re.fullmatch(r'[A-Za-z][A-Za-z0-9_]*', ident) or ident in seen:
                 raise ValueError('Quality check IDs must be unique identifiers; output_schema is reserved')
             seen.add(ident)
-            if check.get('type') not in ('json_equals', 'json_set_equals') or not isinstance(check.get('path'), str):
-                raise ValueError('Quality checks need type json_equals/json_set_equals and a JSON field path')
+            if check.get('type') not in ('json_equals', 'json_set_equals', 'json_unordered_equals') or not isinstance(check.get('path'), str):
+                raise ValueError('Quality checks need type json_equals/json_set_equals/json_unordered_equals and a JSON field path')
             if type(check.get('required', True)) is not bool:
                 raise ValueError('Quality check required must be a boolean')
             if 'description' in check and (not isinstance(check['description'], str) or not check['description'].strip()):
@@ -171,6 +177,24 @@ def quality_checks(quality):
                 check.get('required', True)))
         if not any(entry[3] for entry in normalized):
             raise ValueError('At least one JSON value check must be required')
+        if 'source_checks' in quality:
+            source_checks = quality['source_checks']
+            if not isinstance(source_checks, list) or not source_checks:
+                raise ValueError('quality.source_checks must be a nonempty array when supplied')
+            for check in source_checks:
+                if not isinstance(check, dict) or set(check) - {'id', 'rubric', 'description', 'required'}:
+                    raise ValueError('Each source check accepts id, rubric, description and required only')
+                ident = check.get('id')
+                if not isinstance(ident, str) or not re.fullmatch(r'[A-Za-z][A-Za-z0-9_]*', ident) or ident in seen:
+                    raise ValueError('Quality check IDs must be unique across deterministic and source checks')
+                seen.add(ident)
+                if check.get('required', False) is not False:
+                    raise ValueError('Source checks accompanying references must be optional; required reference checks determine correctness')
+                rubric = check.get('rubric')
+                description = check.get('description', 'Is the explanation supported by the supplied sources?')
+                if not isinstance(rubric, str) or not rubric.strip() or not isinstance(description, str) or not description.strip():
+                    raise ValueError('Source checks need nonempty rubric and description text')
+                normalized.append((ident, {'type': 'llm_source_rubric', 'rubric': rubric}, description, False))
         if 'schema' in quality:
             from .json_grading import schema_validator
             schema_validator(quality['schema'])
@@ -256,7 +280,7 @@ def status(directory):
         ('prompt_location', 'Which instruction slot may the optimizer change? Other instructions remain protected.'),
         ('provenance', 'Are these synthetic, customer, or public examples? Record any redaction in the intake notes.'),
         ('budget_policy', 'Use the existing paid-run authorization, or obtain a budget decision before execution.')]:
-        if key == 'judge_model' and d.get('quality', {}).get('kind') != 'source_judge':
+        if key == 'judge_model' and not has_source_checks(d.get('quality', {})):
             continue
         if key == 'optimizer_model' and not d.get('optimization_enabled', True):
             continue
@@ -269,7 +293,7 @@ def status(directory):
         quality_checks(quality)
         limits = replay_limits(d.get('limits', {}))
         replay_limits(d.get('optimizer_limits', {}), optimizer=True)
-        if quality.get('kind') == 'source_judge' or 'judge_limits' in d:
+        if has_source_checks(quality) or 'judge_limits' in d:
             replay_limits(d.get('judge_limits', {}), judge=True)
         trial_timeout = d.get('timeout_seconds', 180)
         if type(trial_timeout) is not int or trial_timeout < 1:
@@ -286,7 +310,7 @@ def status(directory):
         try:
             selected, _, _ = prepare_cases(directory, state)
             splits = _split(selected, d.get('split_seed', 'customer-eval-v1'), d.get('group_by'),
-                            optimize=d.get('optimization_enabled', True))
+                            optimize=d.get('optimization_enabled', True), split_counts=d.get('split_counts'))
             repeats = d.get('repetitions', 3)
             if type(repeats) is not int or repeats < 1:
                 raise ValueError('repetitions must be a positive integer')
@@ -296,7 +320,7 @@ def status(directory):
                     'repetitions': repeats, 'validation_observations': len(splits['validation']) * repeats,
                     'limits': replay_limits(d.get('limits', {})),
                     'optimizer_limits': replay_limits(d.get('optimizer_limits', {}), optimizer=True) if d.get('optimization_enabled', True) else None,
-                    'judge_limits': replay_limits(d.get('judge_limits', {}), judge=True) if source_judge else None,
+                    'judge_limits': replay_limits(d.get('judge_limits', {}), judge=True) if has_source_checks(quality) else None,
                     'evidence_scope': 'Exploratory workload comparison; repeated attempts are not independent cases.'}
             if d.get('optimization_enabled', True) and plan['validation_observations'] < 20:
                 missing.append('Prompt optimization needs at least 20 validation observations; the current split provides '
@@ -307,7 +331,7 @@ def status(directory):
             'project': str(directory), 'decisions': d, 'prepared': state.get('prepared'), 'evaluation_plan': plan}
 
 
-def _split(cases, seed, group_by, *, optimize=True):
+def _split(cases, seed, group_by, *, optimize=True, split_counts=None):
     groups = {}
     for case in cases:
         ident = at(case, group_by) if group_by else case['id']
@@ -319,8 +343,21 @@ def _split(cases, seed, group_by, *, optimize=True):
         raise ValueError('Need at least ' + str(len(names)) + ' independent groups for ' + ', '.join(names) + '; add examples or save a draft.')
     ordered = sorted(groups, key=lambda x: digest([seed, x]))
     result = {key: [] for key in ('development', 'validation', 'holdout')}
-    for i, ident in enumerate(ordered):
-        result[names[i % len(names)]].extend(groups[ident])
+    if split_counts is not None:
+        if (not isinstance(split_counts, dict) or set(split_counts) != set(names) or
+                any(type(v) is not int or v < 1 for v in split_counts.values()) or
+                sum(split_counts.values()) != len(cases)):
+            raise ValueError('split_counts must give positive case counts for each active split and sum to all selected cases')
+        if any(len(group) != 1 for group in groups.values()):
+            raise ValueError('Exact split_counts currently requires independent one-case groups; use grouped default splitting for related cases')
+        cursor = 0
+        for name in names:
+            for ident in ordered[cursor:cursor + split_counts[name]]:
+                result[name].extend(groups[ident])
+            cursor += split_counts[name]
+    else:
+        for i, ident in enumerate(ordered):
+            result[names[i % len(names)]].extend(groups[ident])
     return result
 
 
@@ -402,7 +439,7 @@ def prepare(directory):
     cases, report, group = prepare_cases(directory, state)
     quality = d['quality']
     optimize = d.get('optimization_enabled', True)
-    splits = _split(cases, d.get('split_seed', 'customer-eval-v1'), d.get('group_by'), optimize=optimize)
+    splits = _split(cases, d.get('split_seed', 'customer-eval-v1'), d.get('group_by'), optimize=optimize, split_counts=d.get('split_counts'))
     repetitions = d.get('repetitions', 3)
     if type(repetitions) is not int or repetitions < 1:
         raise ValueError('repetitions must be a positive integer')
@@ -417,7 +454,7 @@ def prepare(directory):
     if optimize:
         model_roles.append(('optimizer', 'optimizer_model'))
     source_judge = quality.get('kind') == 'source_judge'
-    if source_judge:
+    if has_source_checks(quality):
         model_roles.append(('judge', 'judge_model'))
     for role, field in model_roles:
         entry = connection['models'].get(d[field])
@@ -439,7 +476,7 @@ def prepare(directory):
     doc['baseline_variant_id'] = 'm1_p1'
     grading = {}
     for ident, rule, question, required in quality_checks(quality):
-        for c in ([] if source_judge else cases):
+        for c in ([] if source_judge or rule['type'] == 'llm_source_rubric' else cases):
             try:
                 if rule['type'] == 'json_schema':
                     from .json_grading import schema_validator
@@ -450,6 +487,9 @@ def prepare(directory):
                     if rule['type'] == 'json_set_equals':
                         from .json_grading import scalar_set
                         scalar_set(expected)
+                    elif rule['type'] == 'json_unordered_equals':
+                        from .json_grading import unordered_value
+                        unordered_value(expected)
             except (KeyError, IndexError, TypeError, ValueError):
                 raise ValueError('Expected answer for ' + c['id'] + ' is invalid for check ' + ident + '; repair the reference before running.')
         grading[ident] = rule
@@ -480,7 +520,9 @@ def prepare(directory):
             'cost_metric': d.get('cost_metric', 'cost_usd_per_session')},
         'optimization_patience': 1, 'measurement': {'primary_latency': d.get('primary_latency', 'conversation')},
         'report_challenger': True}
-    if source_judge:
+    if quality.get('source_checks'):
+        doc['runner']['grading_reference_mode'] = 'references_with_source_judges'
+    if has_source_checks(quality):
         doc['runner']['judge_limits'] = replay_limits(d.get('judge_limits', {}), judge=True)
     doc['evidence'] = [
         {'field': 'datasets', 'source': ('No expected answers are supplied; model judgments use the source inputs and fixed rubric. ' if source_judge else 'References are ' + quality['reference_source'] + '; scoped label review is recorded per case. ') + d['provenance'] + ' examples.', 'status': 'observed'},
@@ -511,6 +553,9 @@ def prepare(directory):
         'quality': quality, 'group_by': d.get('group_by'), 'splits': {k: [c['id'] for c in v] for k, v in splits.items()}}
     if source_judge:
         context['expected_answers_provided'] = False
+    elif quality.get('source_checks'):
+        context['expected_answers_provided'] = True
+        context['assessment_method'] = 'reference_and_source'
     save(package / 'customer-context.json', context)
     config = load_with_endpoints(package / 'input.yaml')
     write_preview(directory, cases, report, config=config)

@@ -187,3 +187,11 @@ excludes grading time. Preserve failed-attempt spend and mark missing usage as
 unknown; infrastructure and human-review costs are excluded. More criteria in
 one judge request do not mean separate requests per criterion, but longer
 sources, rubrics or outputs can increase judge usage.
+
+## When reference facts also exist
+
+Source-only mode intentionally rejects expected answers. For structured reference
+checks plus an LLM assessment of explanation quality, use
+[reference checks with source judgments](reference-and-source.md). That explicit
+mode preserves both reference evidence and the judge's source evidence; it does
+not relabel generated or historical answers as verified human truth.

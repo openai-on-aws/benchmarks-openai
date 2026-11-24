@@ -190,12 +190,20 @@ def _assessment(config: dict | None) -> dict:
             any(not isinstance(c, dict) or not isinstance(c.get("id"), str) or type(c.get("required")) is not bool for c in definitions) or
             set(rules) != {c["id"] for c in definitions} or len(definitions) != len(rules)):
         return unavailable
+    mixed = document.get("runner", {}).get("grading_reference_mode") == "references_with_source_judges"
+    reference_types = ("json_schema", "json_equals", "json_set_equals", "json_unordered_equals")
+    allowed_types = ("llm_source_rubric", *reference_types) if mixed else ("llm_source_rubric", "json_schema")
+    if mixed and not any(c["required"] and isinstance(rules[c["id"]], dict) and rules[c["id"]].get("type") in reference_types
+                         and rules[c["id"]].get("type") != "json_schema" for c in definitions):
+        return unavailable
     judges = set()
     for check in definitions:
         rule = rules[check["id"]]
-        if not isinstance(rule, dict) or rule.get("type") not in ("llm_source_rubric", "json_schema"):
+        if not isinstance(rule, dict) or rule.get("type") not in allowed_types:
             return unavailable
         if rule["type"] == "llm_source_rubric":
+            if mixed and check["required"]:
+                return unavailable
             if (check.get("method") != "llm_judge" or not isinstance(check.get("judge_model_id"), str) or not check["judge_model_id"] or
                     not isinstance(rule.get("rubric"), str) or not rule["rubric"].strip()):
                 return unavailable
@@ -214,9 +222,12 @@ def _assessment(config: dict | None) -> dict:
     routes = config.get("routes")
     route = routes.get(judge_id, {}) if isinstance(routes, dict) else {}
     route = route if isinstance(route, dict) else {}
-    return {"mode": "source_judge", "quality_label": "LLM-assessed pass rate", "judge_model_id": judge_id,
+    return {"mode": "reference_and_source" if mixed else "source_judge",
+            "quality_label": "Reference check pass rate" if mixed else "LLM-assessed pass rate", "judge_model_id": judge_id,
             "judge_model": route.get("model_id") or judge_id, "criteria": criteria,
-            "rubric_sha256": rubric_sha256, "reference_requirement": "not_used"}
+            "rubric_sha256": rubric_sha256, "reference_requirement": "required" if mixed else "not_used",
+            "required_check_ids": [c["id"] for c in definitions if c["required"]],
+            "source_check_ids": [c["id"] for c in definitions if rules[c["id"]]["type"] == "llm_source_rubric"]}
 
 
 def _trial(row: dict, case: dict | None = None, *, input_bundles: dict | None = None,
@@ -244,9 +255,10 @@ def _trial(row: dict, case: dict | None = None, *, input_bundles: dict | None = 
         "expected_checks": expected,
         "reference_metadata": case.get("metadata") or {},
     }
-    if assessment and assessment["mode"] == "source_judge":
-        trial.update(assessment_mode="source_judge", expected_available=False, expected_answer=None, expected_checks=None,
-                     source_available=False, rubric_sha256=assessment["rubric_sha256"])
+    if assessment and assessment["mode"] in ("source_judge", "reference_and_source"):
+        trial.update(assessment_mode=assessment["mode"], source_available=False, rubric_sha256=assessment["rubric_sha256"])
+        if assessment["mode"] == "source_judge":
+            trial.update(expected_available=False, expected_answer=None, expected_checks=None)
         if source_context:
             _, _, digest = _source_helpers()
             source_sha256 = digest(source_context)
@@ -300,7 +312,7 @@ def _usage_summary(trials: list[dict]) -> dict:
 def _prompt_evidence(raw: dict, config: dict | None, groups: list[dict], source_bundles: dict | None = None) -> list[dict]:
     """Describe saved prompt outcomes without changing grading or selection."""
     assessment = _assessment(config)
-    source_mode = assessment["mode"] == "source_judge"
+    source_mode = assessment["mode"] in ("source_judge", "reference_and_source")
     by_id = {group["id"]: group for group in groups}
     original = by_id.get("target_original")
     evidence = []
@@ -318,6 +330,9 @@ def _prompt_evidence(raw: dict, config: dict | None, groups: list[dict], source_
         issues = item["issues"]
         if config is None:
             issues.append("Verified frozen evaluation criteria are unavailable.")
+            continue
+        if assessment["mode"] == "unverified_source_judge":
+            issues.append("Source grading configuration could not be verified.")
             continue
         definitions = config.get("document", {}).get("checks")
         if (not isinstance(definitions, list) or not definitions or
@@ -414,7 +429,7 @@ def _prompt_evidence(raw: dict, config: dict | None, groups: list[dict], source_
                                     citation["source_id"] not in sources or not isinstance(citation.get("quote"), str) or
                                     not citation["quote"].strip() or citation["quote"] not in sources[citation["source_id"]] for citation in citations)):
                             issues.append("Source judgment evidence does not match the frozen sources: " + ident + ".")
-            elif (not before.get("expected_available") or not after.get("expected_available") or
+            if assessment["mode"] != "source_judge" and (not before.get("expected_available") or not after.get("expected_available") or
                     before.get("expected_answer") != after.get("expected_answer")):
                 issues.append("Matching frozen reference answers are unavailable.")
                 break
@@ -501,6 +516,30 @@ def _prompt_evidence(raw: dict, config: dict | None, groups: list[dict], source_
     return evidence
 
 
+def _model_roles(raw: dict) -> list[dict]:
+    """Describe observed optimizer/judge calls separately from application rows."""
+    roles = []
+    for role, key in (("optimizer", "optimizer_requests"), ("judge", "judge_requests")):
+        requests = raw.get(key)
+        if not isinstance(requests, list) or not requests:
+            continue
+        models, efforts = set(), set()
+        for request in requests:
+            if not isinstance(request, dict):
+                continue
+            model = request.get("model_requested") or request.get("model_returned")
+            if isinstance(model, str) and model:
+                models.add(model)
+            params = request.get("effective_parameters") or {}
+            reasoning = params.get("reasoning") if isinstance(params, dict) else None
+            effort = reasoning.get("effort") if isinstance(reasoning, dict) else None
+            if isinstance(effort, str) and effort:
+                efforts.add(effort)
+        roles.append({"role": role, "model": ", ".join(sorted(models)) or "Model identity unavailable",
+                      "reasoning": ", ".join(sorted(efforts)) or None, "requests": len(requests)})
+    return roles
+
+
 def _report(path: Path, index: int) -> dict:
     raw = read_json(path)
     if not isinstance(raw, dict) or not isinstance(raw.get("holdout"), dict):
@@ -516,7 +555,7 @@ def _report(path: Path, index: int) -> dict:
     groups = []
     input_bundles = {}
     source_bundles, contexts = {}, {}
-    if assessment["mode"] == "source_judge":
+    if assessment["mode"] in ("source_judge", "reference_and_source"):
         context_builder, _, _ = _source_helpers()
         for ident, case in cases.items():
             try:
@@ -572,6 +611,7 @@ def _report(path: Path, index: int) -> dict:
         "cost_metric_source": cost_metric_source,
         "model_costs": raw.get("model_costs") or {},
         "assessment": assessment,
+        "model_roles": _model_roles(raw),
         # An absent ledger means unknown coverage, not zero unresolved attempts.
         "unresolved_attempts": raw.get("unresolved_attempts"),
         "grading_error_records": raw.get("grading_error_records"),

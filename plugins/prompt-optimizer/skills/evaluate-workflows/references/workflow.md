@@ -82,9 +82,12 @@ keys in the connection's `models` object.
   output schema; see [complex text studies](complex-text.md) for the contract.
 - `quality.reference_file`: optional mapping of case IDs to expected answers in
   reference-based modes; omit it for source judging.
-- `judge_model`: a separately chosen connection key for source judging. Use
-  `quality.checks` with named `id`, `rubric`, `description` and `required` fields;
-  add `quality.schema` for deterministic output validation. See [source judging](source-judging.md).
+- `quality.source_checks`: optional source-based explanation rubrics alongside
+  `json_checks`; see [mixed assessment](reference-and-source.md).
+- `judge_model`: a separately chosen connection key for source judging, including
+  optional source checks alongside reference checks. Source-only mode puts named
+  rubrics in `quality.checks`; mixed mode puts them in `quality.source_checks`.
+  Add `quality.schema` for deterministic output validation. See [source judging](source-judging.md).
 - `quality.rules`: supplied general business rules, kept separate from
   case-specific expected answers.
 - `provenance`: `"synthetic"`, `"customer"` or `"public"`. Supplied labels stay unreviewed until a scoped human review is recorded; source-judged datasets use `not_provided` because expected answers are absent; see [label review](label-review.md).
