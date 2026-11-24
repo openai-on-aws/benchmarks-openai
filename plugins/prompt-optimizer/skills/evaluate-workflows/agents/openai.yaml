@@ -1,0 +1,4 @@
+interface:
+  display_name: "Evaluate Workflows"
+  short_description: "Compare models or optimize text-task prompts"
+  default_prompt: "Use $evaluate-workflows to evaluate my application from available text logs, define correctness, and decide whether to compare models or optimize the prompt."

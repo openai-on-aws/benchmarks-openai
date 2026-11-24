@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import secrets
 import threading
 import time
@@ -76,13 +77,140 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
         raise ValueError('Provider redirects are not permitted')
 
 
+_ERROR_BODY_LIMIT = 16384
+_ERROR_CODES = frozenset({
+    'AccessDeniedException', 'UnauthorizedException', 'UnrecognizedClientException',
+    'InvalidSignatureException', 'SignatureDoesNotMatch', 'ExpiredTokenException',
+    'IncompleteSignatureException', 'ValidationException', 'ThrottlingException',
+    'ServiceQuotaExceededException', 'ResourceNotFoundException', 'ModelNotReadyException',
+    'ModelTimeoutException', 'ModelErrorException', 'InternalServerException',
+    'ServiceUnavailableException', 'BadGatewayException',
+    'invalid_api_key', 'permission_denied', 'insufficient_quota', 'rate_limit_exceeded',
+    'model_not_found', 'employee_api_key_requires_corporate_network',
+})
+_AWS_DENIED_ACTIONS = frozenset({
+    'bedrock:InvokeModel', 'bedrock:InvokeModelWithResponseStream', 'bedrock:GetInferenceProfile',
+    'bedrock:CallWithBearerToken', 'bedrock:ListFoundationModels', 'bedrock:GetFoundationModel',
+    'bedrock-agentcore:InvokeAgentRuntime', 'aws-marketplace:Subscribe',
+    'aws-marketplace:ViewSubscriptions', 'aws-marketplace:Unsubscribe',
+})
+
+
+def _known_error_code(value):
+    if not isinstance(value, str) or len(value) > 256:
+        return None
+    code = value.rsplit('#', 1)[-1].split(':', 1)[0]
+    return code if code in _ERROR_CODES else None
+
+
+def _safe_request_id(headers):
+    value = headers.get('x-amzn-requestid') or headers.get('x-request-id')
+    if isinstance(value, str) and re.fullmatch(
+            r'(?:[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}|req_[0-9a-fA-F]{32})', value):
+        return value
+    return None
+
+
+def provider_error_diagnostics(status, headers, raw, route):
+    """Emit only fixed categories and matched AWS identifiers, never error text.
+
+    Error messages can echo credentials or customer input. Parse a bounded JSON
+    body in memory; unknown codes, arbitrary ARNs/headers and messages are omitted.
+    Identifiers describe provider error evidence, not an effective-IAM verdict.
+    """
+    headers = headers or {}
+    result = {'http_status': status, 'body_omitted': True}
+    request_id = _safe_request_id(headers)
+    if request_id:
+        result['request_id'] = request_id
+    header_code = _known_error_code(headers.get('x-amzn-errortype'))
+    body_code, message = None, ''
+    if isinstance(raw, bytes) and len(raw) <= _ERROR_BODY_LIMIT:
+        try:
+            def unique(pairs):
+                value = {}
+                for key, item in pairs:
+                    if key in value:
+                        raise ValueError('duplicate error field')
+                    value[key] = item
+                return value
+            parsed = json.loads(raw, object_pairs_hook=unique)
+            if isinstance(parsed, dict):
+                error = parsed.get('error') if isinstance(parsed.get('error'), dict) else parsed
+                body_code = next((code for key in ('code', '__type', 'type')
+                                  if (code := _known_error_code(error.get(key)))), None)
+                message = error.get('message', error.get('Message', ''))
+                if not isinstance(message, str):
+                    message = ''
+        except (ValueError, UnicodeError, RecursionError):
+            pass
+    elif isinstance(raw, bytes):
+        result['body_exceeded_limit'] = True
+    code = header_code or body_code
+    if code:
+        result['error_code'] = code
+    # Do not interpret arbitrary validation/model text as an authorization error.
+    if status not in (401, 403):
+        return result
+    lower = message.casefold()
+    category = 'unauthenticated' if status == 401 else 'authorization_unspecified'
+    if code == 'employee_api_key_requires_corporate_network':
+        category = 'network_restriction'
+    elif 'explicit deny' in lower:
+        category = 'explicit_deny'
+    elif any(p in lower for p in ('no identity-based policy allows', 'no resource-based policy allows',
+                                  'no permissions boundary allows', 'no service control policy allows')):
+        category = 'missing_permission'
+    elif any(p in lower for p in ('not subscribed to', 'subscription is required',
+                                  'model access has not been granted', 'model agreement has not been accepted',
+                                  'model is not enabled for your account')):
+        category = 'model_entitlement'
+    result['authorization_category'] = category
+    for phrase, policy in (('service control policy', 'service_control_policy'),
+                           ('permissions boundary', 'permissions_boundary'),
+                           ('identity-based policy', 'identity_policy'),
+                           ('resource-based policy', 'resource_policy'),
+                           ('session policy', 'session_policy')):
+        if phrase in lower:
+            result['policy_type'] = policy
+            break
+    actions = re.findall(r'not authorized to perform\s*:?\s*[\'\"]?([A-Za-z-]+:[A-Za-z]+)', message, re.I)
+    allowed_actions = sorted({a for a in actions if a in _AWS_DENIED_ACTIONS})
+    if allowed_actions:
+        result['denied_actions'] = allowed_actions
+    model = route.get('model_id', '')
+    base_model = re.sub(r'^(?:us|eu|apac|global)\.', '', model)
+    resources = {'project/default', 'foundation-model/' + base_model, 'inference-profile/' + model}
+    resource_arns = []
+    # Only resource IDs derived from the configured route are retained. In
+    # particular, never copy arbitrary IAM principal/session names from a body.
+    for arn in re.findall(r'arn:aws(?:-us-gov|-cn)?:bedrock:[a-z0-9-]+:[0-9]*:[A-Za-z0-9./_-]+', message):
+        parts = arn.split(':', 5)
+        if (re.fullmatch(r'[a-z]{2}(?:-gov)?-[a-z]+-\d', parts[3]) and
+                (not parts[4] or re.fullmatch(r'\d{12}', parts[4])) and parts[5] in resources):
+            resource_arns.append(arn)
+    if resource_arns:
+        result['resource_arns'] = sorted(set(resource_arns))[:8]
+    return result
+
+
+def _sanitized_http_error(url, status, headers, raw, route):
+    diagnostics = provider_error_diagnostics(status, headers, raw, route)
+    safe_headers = {}
+    if diagnostics.get('request_id'):
+        safe_headers['x-request-id'] = diagnostics['request_id']
+    error = urllib.error.HTTPError(url, status, 'Provider request failed', safe_headers, None)
+    error.provider_diagnostics = diagnostics
+    return error
+
+
 class ProviderConnection:
     """A run-scoped HTTP pool; no redirect or automatic paid-request replay."""
     def __init__(self):
         self.pool = None
         self.lock = threading.Lock()
 
-    def open(self, url, data, headers, timeout):
+    def open(self, url, data, headers, timeout, *, route=None):
         import urllib3
         with self.lock:
             if self.pool is None:
@@ -94,8 +222,13 @@ class ProviderConnection:
             preload_content=False, redirect=False, retries=False,
             timeout=urllib3.Timeout(connect=min(10, timeout), read=timeout), pool_timeout=timeout)
         if response.status >= 300:
-            response.close(); response.release_conn()
-            raise urllib.error.HTTPError(url, response.status, 'Provider request failed', response.headers, None)
+            try:
+                raw = response.read(_ERROR_BODY_LIMIT + 1)
+            except Exception:
+                raw = b''
+            finally:
+                response.close(); response.release_conn()
+            raise _sanitized_http_error(url, response.status, response.headers, raw, route or {})
         return PooledResponse(response)
 
     def close(self):
@@ -139,9 +272,20 @@ def request(route, payload, timeout=60, *, timing=None, connection=None):
     sent = time.monotonic_ns()
     if timing is not None:
         timing.update(auth_ms=(sent-auth_started)/1e6, sent_ns=sent)
-    response = (connection.open(url, data, headers, timeout) if connection else
-        urllib.request.build_opener(NoRedirect).open(
-            urllib.request.Request(url, data=data, headers=headers), timeout=timeout))
+    try:
+        response = (connection.open(url, data, headers, timeout, route=route) if connection else
+            urllib.request.build_opener(NoRedirect).open(
+                urllib.request.Request(url, data=data, headers=headers), timeout=timeout))
+    except urllib.error.HTTPError as exc:
+        if getattr(exc, 'provider_diagnostics', None) is not None:
+            raise
+        try:
+            raw = exc.read(_ERROR_BODY_LIMIT + 1)
+        except Exception:
+            raw = b''
+        finally:
+            exc.close()
+        raise _sanitized_http_error(url, exc.code, exc.headers, raw, route) from None
     if timing is not None:
         timing['headers_ms'] = (time.monotonic_ns()-sent)/1e6
     return response
@@ -220,6 +364,7 @@ def relay(route, limits):
                     if len(calls) >= limits['max_requests']:
                         raise ValueError('Model request limit reached; no retry or fallback')
                     record = {'status': 'started', 'model_requested': route['model_id'], 'usage': None,
+                              'request_timeout_seconds': limits.get('request_timeout_seconds', 60),
                               'started_at': datetime.now(timezone.utc).isoformat(),
                               'timing': {'first_event_ms': None, 'first_output_ms': None, 'provider_ms': None},
                               'effective_parameters': {key: body.get(key) for key in ('reasoning', 'text', 'max_output_tokens')},
@@ -229,7 +374,8 @@ def relay(route, limits):
                                   **({'functions': [f.get('name') for f in t.get('tools', [])]}
                                      if t.get('type') == 'namespace' else {})) for t in body.get('tools', [])]}
                     calls.append(record)
-                with request(route, body, timing=record['timing'], connection=connection) as response:
+                with request(route, body, timeout=limits.get('request_timeout_seconds', 60),
+                             timing=record['timing'], connection=connection) as response:
                     record['request_id'] = response.headers.get('x-amzn-requestid') or response.headers.get('x-request-id')
                     self.send_response(200)
                     self.send_header('Content-Type', response.headers.get('Content-Type', 'application/json'))
@@ -292,7 +438,9 @@ def relay(route, limits):
                 if 'record' in locals(): record['status'] = type(exc).__name__
                 if 'record' in locals() and isinstance(exc, urllib.error.HTTPError):
                     record['http_status'] = exc.code
-                    record['request_id'] = exc.headers.get('x-amzn-requestid') or exc.headers.get('x-request-id')
+                    record['request_id'] = _safe_request_id(exc.headers or {})
+                    if getattr(exc, 'provider_diagnostics', None) is not None:
+                        record['provider_error'] = exc.provider_diagnostics
                 # Never return provider exception bodies, which may contain credentials or data.
                 try: self.send_error(502, 'Evaluation route failed: ' + type(exc).__name__)
                 except (BrokenPipeError, ConnectionResetError): pass
@@ -318,10 +466,18 @@ def relay(route, limits):
 def complete(route, text, limits, *, receipt=None):
     """Return text and usage; optionally populate provider metadata after success."""
     body = constrain({'input': text, 'stream': False}, route, limits)
-    with request(route, body) as response:
-        result = json.load(response)
-        headers = getattr(response, 'headers', {})
-        request_id = headers.get('x-amzn-requestid') or headers.get('x-request-id')
+    try:
+        with request(route, body, timeout=limits.get('request_timeout_seconds', 60)) as response:
+            result = json.load(response)
+            headers = getattr(response, 'headers', {})
+            request_id = headers.get('x-amzn-requestid') or headers.get('x-request-id')
+    except urllib.error.HTTPError as exc:
+        if receipt is not None:
+            receipt.update(status='provider_error', model_requested=body['model'], usage=None,
+                           http_status=exc.code, request_timeout_seconds=limits.get('request_timeout_seconds', 60))
+            if getattr(exc, 'provider_diagnostics', None) is not None:
+                receipt['provider_error'] = exc.provider_diagnostics
+        raise
     if result.get('status') != 'completed':
         raise ValueError('Incomplete model response')
     output = ''.join(c.get('text', '') for item in result.get('output', [])
@@ -330,6 +486,7 @@ def complete(route, text, limits, *, receipt=None):
         raise ValueError('Empty model response')
     if receipt is not None:
         receipt.update(status='completed', model_requested=body['model'], model_returned=result.get('model'),
+                       request_timeout_seconds=limits.get('request_timeout_seconds', 60),
                        request_id=request_id, response_id=result.get('id'),
                        effective_parameters={key: body[key] for key in
                            ('reasoning', 'text', 'temperature', 'top_p', 'service_tier',

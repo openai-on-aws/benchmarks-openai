@@ -1,5 +1,11 @@
 # Guided evaluation in the Model Upgrade package
 
+**Bundled Prompt Optimizer plugin:** use the [public workflow](../../../../../skills/evaluate-workflows/references/workflow.md)
+with Python 3.12, the plugin root's `requirements.txt`, and
+`scripts/workflow_eval.py`. It exposes compare/optimize mode and local/AgentCore
+backends. The commands below are the compatibility path for existing standalone
+Model Upgrade callers, whose default includes optimization.
+
 Use this path when the customer supplies text logs or examples and wants an evaluation. The executable helper is scripts/customer_eval.py at the Model Upgrade module root. It reuses the existing importer, contract, qualifier, Runner and AgentCore coordinator. It does not provision a second runtime or replace an application with a demo agent. A standalone installation without the module should still produce the ordinary intake handoff.
 
 ## Work from the customer's answers

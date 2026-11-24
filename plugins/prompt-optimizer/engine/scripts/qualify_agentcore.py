@@ -1,4 +1,4 @@
-"""Qualify the configured source and target with one development case on AgentCore."""
+"""Qualify source and target on one non-holdout case before an AgentCore study."""
 import argparse
 import json
 import sys
@@ -14,10 +14,15 @@ from customer_eval.runner import Runner
 def qualification_config(full):
     cfg = deepcopy(full)
     cfg['qualification_of'] = cfg.pop('fingerprint')
-    first = next((key for key in cfg['splits']['development'] if cfg['datasets'][key]), None)
+    source_split = 'development' if cfg['document']['optimization']['enabled'] else 'validation'
+    first = next((key for key in cfg['splits'].get(source_split, []) if cfg['datasets'].get(key)), None)
     if first is None:
-        raise ValueError('Qualification needs one development case')
+        raise ValueError('Qualification needs one ' + source_split + ' case; holdout cases are never used')
     cfg['datasets'] = {first: cfg['datasets'][first][:1]}
+    # The qualification runner uses its own development alias. Preserve where
+    # the case came from; this neither moves a study case nor opens holdout.
+    cfg['qualification_source_split'] = source_split
+    cfg['qualification_case_id'] = cfg['datasets'][first][0]['id']
     cfg['splits'] = {'development': [first]}
     cfg['document']['execution']['repetitions'] = 1
     cfg['fingerprint'] = digest(cfg)
@@ -59,6 +64,8 @@ def main():
                    'run_id': runner.store.execution_id,
                    'parent_fingerprint': cfg['qualification_of'],
                    'qualification_fingerprint': cfg['fingerprint'],
+                   'source_split': cfg['qualification_source_split'],
+                   'case_id': cfg['qualification_case_id'],
                    'models': [{k: v for k, v in r.items() if k != 'row'} for r in records]}
         print(json.dumps(summary, indent=2))
         (output / 'qualification-summary.json').write_text(json.dumps(summary, indent=2) + '\n')

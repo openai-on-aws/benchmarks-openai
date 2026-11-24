@@ -1,0 +1,6527 @@
+[
+  {
+    "id": "CASE-001",
+    "scenario": "threshold_boundary",
+    "size_band": "small",
+    "input_characters": 17501,
+    "request_text_characters": 24780,
+    "estimated_tokens_at_four_chars": 6195,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-001",
+      "contract_id": "CASE-001-BASE",
+      "eligible_fee_cents": 27974,
+      "eligible_outage_minutes": 29,
+      "credit_rate_percent": 0,
+      "credit_cents": 0,
+      "disposition": "no_eligible_credit",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-001-ACCOUNT",
+        "CASE-001-CLAIM",
+        "CASE-001-CONTRACT_BASE",
+        "CASE-001-CREDIT_LEDGER",
+        "CASE-001-INCIDENTS",
+        "CASE-001-INVOICE",
+        "CASE-001-OPERATIONS",
+        "CASE-001-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-002",
+    "scenario": "overlapping_monitors",
+    "size_band": "medium",
+    "input_characters": 62233,
+    "request_text_characters": 69512,
+    "estimated_tokens_at_four_chars": 17378,
+    "invoice_lines": 50,
+    "incident_rows": 62,
+    "expected": {
+      "case_id": "CASE-002",
+      "contract_id": "CASE-002-BASE",
+      "eligible_fee_cents": 66117,
+      "eligible_outage_minutes": 360,
+      "credit_rate_percent": 15,
+      "credit_cents": 6564,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-002-ACCOUNT",
+        "CASE-002-CLAIM",
+        "CASE-002-CONTRACT_BASE",
+        "CASE-002-CREDIT_LEDGER",
+        "CASE-002-INCIDENTS",
+        "CASE-002-INVOICE",
+        "CASE-002-MAINTENANCE_NOTICES",
+        "CASE-002-OPERATIONS",
+        "CASE-002-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-003",
+    "scenario": "late_claim",
+    "size_band": "large",
+    "input_characters": 118252,
+    "request_text_characters": 125531,
+    "estimated_tokens_at_four_chars": 31383,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-003",
+      "contract_id": "CASE-003-BASE",
+      "eligible_fee_cents": 162011,
+      "eligible_outage_minutes": 552,
+      "credit_rate_percent": 15,
+      "credit_cents": 0,
+      "disposition": "late_claim",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-003-ACCOUNT",
+        "CASE-003-CLAIM",
+        "CASE-003-CONTRACT_BASE",
+        "CASE-003-CREDIT_LEDGER",
+        "CASE-003-INCIDENTS",
+        "CASE-003-INVOICE",
+        "CASE-003-MAINTENANCE_NOTICES",
+        "CASE-003-OPERATIONS",
+        "CASE-003-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-004",
+    "scenario": "deadline_correction",
+    "size_band": "small",
+    "input_characters": 17558,
+    "request_text_characters": 24837,
+    "estimated_tokens_at_four_chars": 6209,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-004",
+      "contract_id": "CASE-004-BASE",
+      "eligible_fee_cents": 27550,
+      "eligible_outage_minutes": 188,
+      "credit_rate_percent": 15,
+      "credit_cents": 2580,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-004-ACCOUNT",
+        "CASE-004-CLAIM",
+        "CASE-004-CONTRACT_BASE",
+        "CASE-004-CREDIT_LEDGER",
+        "CASE-004-INCIDENTS",
+        "CASE-004-INVOICE",
+        "CASE-004-MAINTENANCE_NOTICES",
+        "CASE-004-OPERATIONS",
+        "CASE-004-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-005",
+    "scenario": "active_security",
+    "size_band": "medium",
+    "input_characters": 61888,
+    "request_text_characters": 69167,
+    "estimated_tokens_at_four_chars": 17292,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-005",
+      "contract_id": "CASE-005-BASE",
+      "eligible_fee_cents": 81742,
+      "eligible_outage_minutes": 343,
+      "credit_rate_percent": 15,
+      "credit_cents": 7914,
+      "disposition": "eligible",
+      "priority": "urgent",
+      "queue": "security",
+      "requires_human_review": true,
+      "required_actions": [
+        "open_security_escalation",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-005-ACCOUNT",
+        "CASE-005-CLAIM",
+        "CASE-005-CONTRACT_BASE",
+        "CASE-005-CREDIT_LEDGER",
+        "CASE-005-INCIDENTS",
+        "CASE-005-INVOICE",
+        "CASE-005-MAINTENANCE_NOTICES",
+        "CASE-005-OPERATIONS",
+        "CASE-005-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-006",
+    "scenario": "contained_security",
+    "size_band": "large",
+    "input_characters": 118155,
+    "request_text_characters": 125434,
+    "estimated_tokens_at_four_chars": 31358,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-006",
+      "contract_id": "CASE-006-BASE",
+      "eligible_fee_cents": 137816,
+      "eligible_outage_minutes": 580,
+      "credit_rate_percent": 15,
+      "credit_cents": 13677,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-006-ACCOUNT",
+        "CASE-006-CLAIM",
+        "CASE-006-CONTRACT_BASE",
+        "CASE-006-CREDIT_LEDGER",
+        "CASE-006-INCIDENTS",
+        "CASE-006-INVOICE",
+        "CASE-006-MAINTENANCE_NOTICES",
+        "CASE-006-OPERATIONS",
+        "CASE-006-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-007",
+    "scenario": "pending_evidence",
+    "size_band": "small",
+    "input_characters": 18026,
+    "request_text_characters": 25305,
+    "estimated_tokens_at_four_chars": 6326,
+    "invoice_lines": 12,
+    "incident_rows": 14,
+    "expected": {
+      "case_id": "CASE-007",
+      "contract_id": "CASE-007-BASE",
+      "eligible_fee_cents": 31046,
+      "eligible_outage_minutes": 168,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "CASE-007-ACCOUNT",
+        "CASE-007-CLAIM",
+        "CASE-007-CONTRACT_BASE",
+        "CASE-007-CREDIT_LEDGER",
+        "CASE-007-INCIDENTS",
+        "CASE-007-INVOICE",
+        "CASE-007-MAINTENANCE_NOTICES",
+        "CASE-007-OPERATIONS",
+        "CASE-007-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-008",
+    "scenario": "claim_conflict",
+    "size_band": "medium",
+    "input_characters": 61487,
+    "request_text_characters": 68766,
+    "estimated_tokens_at_four_chars": 17192,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-008",
+      "contract_id": "CASE-008-BASE",
+      "eligible_fee_cents": 93616,
+      "eligible_outage_minutes": 366,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "CASE-008-ACCOUNT",
+        "CASE-008-CLAIM",
+        "CASE-008-CONTRACT_BASE",
+        "CASE-008-CREDIT_LEDGER",
+        "CASE-008-INCIDENTS",
+        "CASE-008-INVOICE",
+        "CASE-008-MAINTENANCE_NOTICES",
+        "CASE-008-OPERATIONS",
+        "CASE-008-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-009",
+    "scenario": "cap_exhausted",
+    "size_band": "large",
+    "input_characters": 117432,
+    "request_text_characters": 124711,
+    "estimated_tokens_at_four_chars": 31178,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-009",
+      "contract_id": "CASE-009-BASE",
+      "eligible_fee_cents": 150659,
+      "eligible_outage_minutes": 514,
+      "credit_rate_percent": 15,
+      "credit_cents": 0,
+      "disposition": "cap_exhausted",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-009-ACCOUNT",
+        "CASE-009-CLAIM",
+        "CASE-009-CONTRACT_BASE",
+        "CASE-009-CREDIT_LEDGER",
+        "CASE-009-INCIDENTS",
+        "CASE-009-INVOICE",
+        "CASE-009-MAINTENANCE_NOTICES",
+        "CASE-009-OPERATIONS",
+        "CASE-009-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-010",
+    "scenario": "already_credited",
+    "size_band": "small",
+    "input_characters": 17553,
+    "request_text_characters": 24832,
+    "estimated_tokens_at_four_chars": 6208,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-010",
+      "contract_id": "CASE-010-BASE",
+      "eligible_fee_cents": 20190,
+      "eligible_outage_minutes": 170,
+      "credit_rate_percent": 15,
+      "credit_cents": 0,
+      "disposition": "already_credited",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-010-ACCOUNT",
+        "CASE-010-CLAIM",
+        "CASE-010-CONTRACT_BASE",
+        "CASE-010-CREDIT_LEDGER",
+        "CASE-010-INCIDENTS",
+        "CASE-010-INVOICE",
+        "CASE-010-MAINTENANCE_NOTICES",
+        "CASE-010-OPERATIONS",
+        "CASE-010-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-011",
+    "scenario": "ineligible_plan",
+    "size_band": "medium",
+    "input_characters": 61962,
+    "request_text_characters": 69241,
+    "estimated_tokens_at_four_chars": 17310,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-011",
+      "contract_id": "CASE-011-BASE",
+      "eligible_fee_cents": 74046,
+      "eligible_outage_minutes": 340,
+      "credit_rate_percent": 15,
+      "credit_cents": 0,
+      "disposition": "ineligible_plan",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-011-ACCOUNT",
+        "CASE-011-CLAIM",
+        "CASE-011-CONTRACT_BASE",
+        "CASE-011-CREDIT_LEDGER",
+        "CASE-011-INCIDENTS",
+        "CASE-011-INVOICE",
+        "CASE-011-MAINTENANCE_NOTICES",
+        "CASE-011-OPERATIONS",
+        "CASE-011-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-012",
+    "scenario": "ongoing_outage",
+    "size_band": "large",
+    "input_characters": 117928,
+    "request_text_characters": 125207,
+    "estimated_tokens_at_four_chars": 31302,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-012",
+      "contract_id": "CASE-012-BASE",
+      "eligible_fee_cents": 131693,
+      "eligible_outage_minutes": 522,
+      "credit_rate_percent": 15,
+      "credit_cents": 12930,
+      "disposition": "eligible",
+      "priority": "high",
+      "queue": "technical",
+      "requires_human_review": false,
+      "required_actions": [
+        "investigate_service_incident",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-012-ACCOUNT",
+        "CASE-012-CLAIM",
+        "CASE-012-CONTRACT_BASE",
+        "CASE-012-CREDIT_LEDGER",
+        "CASE-012-INCIDENTS",
+        "CASE-012-INVOICE",
+        "CASE-012-MAINTENANCE_NOTICES",
+        "CASE-012-OPERATIONS",
+        "CASE-012-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-013",
+    "scenario": "threshold_boundary",
+    "size_band": "medium",
+    "input_characters": 61286,
+    "request_text_characters": 68565,
+    "estimated_tokens_at_four_chars": 17141,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-013",
+      "contract_id": "CASE-013-AMENDMENT",
+      "eligible_fee_cents": 65446,
+      "eligible_outage_minutes": 30,
+      "credit_rate_percent": 5,
+      "credit_cents": 3272,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-013-ACCOUNT",
+        "CASE-013-CLAIM",
+        "CASE-013-CONTRACT_AMENDMENT",
+        "CASE-013-CREDIT_LEDGER",
+        "CASE-013-INCIDENTS",
+        "CASE-013-INVOICE",
+        "CASE-013-OPERATIONS",
+        "CASE-013-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-014",
+    "scenario": "overlapping_monitors",
+    "size_band": "large",
+    "input_characters": 117734,
+    "request_text_characters": 125013,
+    "estimated_tokens_at_four_chars": 31253,
+    "invoice_lines": 100,
+    "incident_rows": 122,
+    "expected": {
+      "case_id": "CASE-014",
+      "contract_id": "CASE-014-AMENDMENT",
+      "eligible_fee_cents": 144963,
+      "eligible_outage_minutes": 530,
+      "credit_rate_percent": 20,
+      "credit_cents": 21511,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-014-ACCOUNT",
+        "CASE-014-CLAIM",
+        "CASE-014-CONTRACT_AMENDMENT",
+        "CASE-014-CREDIT_LEDGER",
+        "CASE-014-INCIDENTS",
+        "CASE-014-INVOICE",
+        "CASE-014-MAINTENANCE_NOTICES",
+        "CASE-014-OPERATIONS",
+        "CASE-014-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-015",
+    "scenario": "late_claim",
+    "size_band": "small",
+    "input_characters": 17564,
+    "request_text_characters": 24843,
+    "estimated_tokens_at_four_chars": 6211,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-015",
+      "contract_id": "CASE-015-AMENDMENT",
+      "eligible_fee_cents": 22624,
+      "eligible_outage_minutes": 156,
+      "credit_rate_percent": 10,
+      "credit_cents": 0,
+      "disposition": "late_claim",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-015-ACCOUNT",
+        "CASE-015-CLAIM",
+        "CASE-015-CONTRACT_AMENDMENT",
+        "CASE-015-CREDIT_LEDGER",
+        "CASE-015-INCIDENTS",
+        "CASE-015-INVOICE",
+        "CASE-015-MAINTENANCE_NOTICES",
+        "CASE-015-OPERATIONS",
+        "CASE-015-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-016",
+    "scenario": "deadline_correction",
+    "size_band": "medium",
+    "input_characters": 61549,
+    "request_text_characters": 68828,
+    "estimated_tokens_at_four_chars": 17207,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-016",
+      "contract_id": "CASE-016-AMENDMENT",
+      "eligible_fee_cents": 78587,
+      "eligible_outage_minutes": 364,
+      "credit_rate_percent": 20,
+      "credit_cents": 15620,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-016-ACCOUNT",
+        "CASE-016-CLAIM",
+        "CASE-016-CONTRACT_AMENDMENT",
+        "CASE-016-CREDIT_LEDGER",
+        "CASE-016-INCIDENTS",
+        "CASE-016-INVOICE",
+        "CASE-016-MAINTENANCE_NOTICES",
+        "CASE-016-OPERATIONS",
+        "CASE-016-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-017",
+    "scenario": "active_security",
+    "size_band": "large",
+    "input_characters": 118136,
+    "request_text_characters": 125415,
+    "estimated_tokens_at_four_chars": 31354,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-017",
+      "contract_id": "CASE-017-AMENDMENT",
+      "eligible_fee_cents": 142664,
+      "eligible_outage_minutes": 536,
+      "credit_rate_percent": 20,
+      "credit_cents": 21384,
+      "disposition": "eligible",
+      "priority": "urgent",
+      "queue": "security",
+      "requires_human_review": true,
+      "required_actions": [
+        "open_security_escalation",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-017-ACCOUNT",
+        "CASE-017-CLAIM",
+        "CASE-017-CONTRACT_AMENDMENT",
+        "CASE-017-CREDIT_LEDGER",
+        "CASE-017-INCIDENTS",
+        "CASE-017-INVOICE",
+        "CASE-017-MAINTENANCE_NOTICES",
+        "CASE-017-OPERATIONS",
+        "CASE-017-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-018",
+    "scenario": "contained_security",
+    "size_band": "small",
+    "input_characters": 17568,
+    "request_text_characters": 24847,
+    "estimated_tokens_at_four_chars": 6212,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-018",
+      "contract_id": "CASE-018-AMENDMENT",
+      "eligible_fee_cents": 33932,
+      "eligible_outage_minutes": 160,
+      "credit_rate_percent": 10,
+      "credit_cents": 3393,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-018-ACCOUNT",
+        "CASE-018-CLAIM",
+        "CASE-018-CONTRACT_AMENDMENT",
+        "CASE-018-CREDIT_LEDGER",
+        "CASE-018-INCIDENTS",
+        "CASE-018-INVOICE",
+        "CASE-018-MAINTENANCE_NOTICES",
+        "CASE-018-OPERATIONS",
+        "CASE-018-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-019",
+    "scenario": "pending_evidence",
+    "size_band": "medium",
+    "input_characters": 62270,
+    "request_text_characters": 69549,
+    "estimated_tokens_at_four_chars": 17387,
+    "invoice_lines": 50,
+    "incident_rows": 62,
+    "expected": {
+      "case_id": "CASE-019",
+      "contract_id": "CASE-019-AMENDMENT",
+      "eligible_fee_cents": 85568,
+      "eligible_outage_minutes": 425,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "CASE-019-ACCOUNT",
+        "CASE-019-CLAIM",
+        "CASE-019-CONTRACT_AMENDMENT",
+        "CASE-019-CREDIT_LEDGER",
+        "CASE-019-INCIDENTS",
+        "CASE-019-INVOICE",
+        "CASE-019-MAINTENANCE_NOTICES",
+        "CASE-019-OPERATIONS",
+        "CASE-019-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-020",
+    "scenario": "claim_conflict",
+    "size_band": "large",
+    "input_characters": 118269,
+    "request_text_characters": 125548,
+    "estimated_tokens_at_four_chars": 31387,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-020",
+      "contract_id": "CASE-020-AMENDMENT",
+      "eligible_fee_cents": 147805,
+      "eligible_outage_minutes": 588,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "CASE-020-ACCOUNT",
+        "CASE-020-CLAIM",
+        "CASE-020-CONTRACT_AMENDMENT",
+        "CASE-020-CREDIT_LEDGER",
+        "CASE-020-INCIDENTS",
+        "CASE-020-INVOICE",
+        "CASE-020-MAINTENANCE_NOTICES",
+        "CASE-020-OPERATIONS",
+        "CASE-020-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-021",
+    "scenario": "cap_exhausted",
+    "size_band": "small",
+    "input_characters": 17561,
+    "request_text_characters": 24840,
+    "estimated_tokens_at_four_chars": 6210,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-021",
+      "contract_id": "CASE-021-AMENDMENT",
+      "eligible_fee_cents": 15030,
+      "eligible_outage_minutes": 184,
+      "credit_rate_percent": 20,
+      "credit_cents": 0,
+      "disposition": "cap_exhausted",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-021-ACCOUNT",
+        "CASE-021-CLAIM",
+        "CASE-021-CONTRACT_AMENDMENT",
+        "CASE-021-CREDIT_LEDGER",
+        "CASE-021-INCIDENTS",
+        "CASE-021-INVOICE",
+        "CASE-021-MAINTENANCE_NOTICES",
+        "CASE-021-OPERATIONS",
+        "CASE-021-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-022",
+    "scenario": "already_credited",
+    "size_band": "medium",
+    "input_characters": 61971,
+    "request_text_characters": 69250,
+    "estimated_tokens_at_four_chars": 17312,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-022",
+      "contract_id": "CASE-022-AMENDMENT",
+      "eligible_fee_cents": 88433,
+      "eligible_outage_minutes": 375,
+      "credit_rate_percent": 20,
+      "credit_cents": 0,
+      "disposition": "already_credited",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-022-ACCOUNT",
+        "CASE-022-CLAIM",
+        "CASE-022-CONTRACT_AMENDMENT",
+        "CASE-022-CREDIT_LEDGER",
+        "CASE-022-INCIDENTS",
+        "CASE-022-INVOICE",
+        "CASE-022-MAINTENANCE_NOTICES",
+        "CASE-022-OPERATIONS",
+        "CASE-022-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-023",
+    "scenario": "ineligible_plan",
+    "size_band": "large",
+    "input_characters": 117924,
+    "request_text_characters": 125203,
+    "estimated_tokens_at_four_chars": 31301,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-023",
+      "contract_id": "CASE-023-AMENDMENT",
+      "eligible_fee_cents": 132411,
+      "eligible_outage_minutes": 572,
+      "credit_rate_percent": 20,
+      "credit_cents": 0,
+      "disposition": "ineligible_plan",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-023-ACCOUNT",
+        "CASE-023-CLAIM",
+        "CASE-023-CONTRACT_AMENDMENT",
+        "CASE-023-CREDIT_LEDGER",
+        "CASE-023-INCIDENTS",
+        "CASE-023-INVOICE",
+        "CASE-023-MAINTENANCE_NOTICES",
+        "CASE-023-OPERATIONS",
+        "CASE-023-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-024",
+    "scenario": "ongoing_outage",
+    "size_band": "small",
+    "input_characters": 17536,
+    "request_text_characters": 24815,
+    "estimated_tokens_at_four_chars": 6204,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-024",
+      "contract_id": "CASE-024-AMENDMENT",
+      "eligible_fee_cents": 23123,
+      "eligible_outage_minutes": 174,
+      "credit_rate_percent": 10,
+      "credit_cents": 2312,
+      "disposition": "eligible",
+      "priority": "urgent",
+      "queue": "technical",
+      "requires_human_review": false,
+      "required_actions": [
+        "investigate_service_incident",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-024-ACCOUNT",
+        "CASE-024-CLAIM",
+        "CASE-024-CONTRACT_AMENDMENT",
+        "CASE-024-CREDIT_LEDGER",
+        "CASE-024-INCIDENTS",
+        "CASE-024-INVOICE",
+        "CASE-024-MAINTENANCE_NOTICES",
+        "CASE-024-OPERATIONS",
+        "CASE-024-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-025",
+    "scenario": "threshold_boundary",
+    "size_band": "large",
+    "input_characters": 117719,
+    "request_text_characters": 124998,
+    "estimated_tokens_at_four_chars": 31250,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-025",
+      "contract_id": "CASE-025-AMENDMENT",
+      "eligible_fee_cents": 139853,
+      "eligible_outage_minutes": 89,
+      "credit_rate_percent": 5,
+      "credit_cents": 6993,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-025-ACCOUNT",
+        "CASE-025-CLAIM",
+        "CASE-025-CONTRACT_AMENDMENT",
+        "CASE-025-CREDIT_LEDGER",
+        "CASE-025-INCIDENTS",
+        "CASE-025-INVOICE",
+        "CASE-025-OPERATIONS",
+        "CASE-025-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-026",
+    "scenario": "overlapping_monitors",
+    "size_band": "small",
+    "input_characters": 18008,
+    "request_text_characters": 25287,
+    "estimated_tokens_at_four_chars": 6322,
+    "invoice_lines": 12,
+    "incident_rows": 14,
+    "expected": {
+      "case_id": "CASE-026",
+      "contract_id": "CASE-026-AMENDMENT",
+      "eligible_fee_cents": 17938,
+      "eligible_outage_minutes": 164,
+      "credit_rate_percent": 10,
+      "credit_cents": 1794,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-026-ACCOUNT",
+        "CASE-026-CLAIM",
+        "CASE-026-CONTRACT_AMENDMENT",
+        "CASE-026-CREDIT_LEDGER",
+        "CASE-026-INCIDENTS",
+        "CASE-026-INVOICE",
+        "CASE-026-MAINTENANCE_NOTICES",
+        "CASE-026-OPERATIONS",
+        "CASE-026-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-027",
+    "scenario": "late_claim",
+    "size_band": "medium",
+    "input_characters": 61798,
+    "request_text_characters": 69077,
+    "estimated_tokens_at_four_chars": 17269,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-027",
+      "contract_id": "CASE-027-AMENDMENT",
+      "eligible_fee_cents": 90355,
+      "eligible_outage_minutes": 379,
+      "credit_rate_percent": 20,
+      "credit_cents": 0,
+      "disposition": "late_claim",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-027-ACCOUNT",
+        "CASE-027-CLAIM",
+        "CASE-027-CONTRACT_AMENDMENT",
+        "CASE-027-CREDIT_LEDGER",
+        "CASE-027-INCIDENTS",
+        "CASE-027-INVOICE",
+        "CASE-027-MAINTENANCE_NOTICES",
+        "CASE-027-OPERATIONS",
+        "CASE-027-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-028",
+    "scenario": "deadline_correction",
+    "size_band": "large",
+    "input_characters": 117430,
+    "request_text_characters": 124709,
+    "estimated_tokens_at_four_chars": 31177,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-028",
+      "contract_id": "CASE-028-AMENDMENT",
+      "eligible_fee_cents": 142254,
+      "eligible_outage_minutes": 532,
+      "credit_rate_percent": 20,
+      "credit_cents": 21302,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-028-ACCOUNT",
+        "CASE-028-CLAIM",
+        "CASE-028-CONTRACT_AMENDMENT",
+        "CASE-028-CREDIT_LEDGER",
+        "CASE-028-INCIDENTS",
+        "CASE-028-INVOICE",
+        "CASE-028-MAINTENANCE_NOTICES",
+        "CASE-028-OPERATIONS",
+        "CASE-028-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-029",
+    "scenario": "active_security",
+    "size_band": "small",
+    "input_characters": 17486,
+    "request_text_characters": 24765,
+    "estimated_tokens_at_four_chars": 6191,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-029",
+      "contract_id": "CASE-029-AMENDMENT",
+      "eligible_fee_cents": 7043,
+      "eligible_outage_minutes": 168,
+      "credit_rate_percent": 10,
+      "credit_cents": 704,
+      "disposition": "eligible",
+      "priority": "urgent",
+      "queue": "security",
+      "requires_human_review": true,
+      "required_actions": [
+        "open_security_escalation",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-029-ACCOUNT",
+        "CASE-029-CLAIM",
+        "CASE-029-CONTRACT_AMENDMENT",
+        "CASE-029-CREDIT_LEDGER",
+        "CASE-029-INCIDENTS",
+        "CASE-029-INVOICE",
+        "CASE-029-MAINTENANCE_NOTICES",
+        "CASE-029-OPERATIONS",
+        "CASE-029-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-030",
+    "scenario": "contained_security",
+    "size_band": "medium",
+    "input_characters": 61906,
+    "request_text_characters": 69185,
+    "estimated_tokens_at_four_chars": 17296,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-030",
+      "contract_id": "CASE-030-AMENDMENT",
+      "eligible_fee_cents": 98112,
+      "eligible_outage_minutes": 335,
+      "credit_rate_percent": 20,
+      "credit_cents": 14577,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-030-ACCOUNT",
+        "CASE-030-CLAIM",
+        "CASE-030-CONTRACT_AMENDMENT",
+        "CASE-030-CREDIT_LEDGER",
+        "CASE-030-INCIDENTS",
+        "CASE-030-INVOICE",
+        "CASE-030-MAINTENANCE_NOTICES",
+        "CASE-030-OPERATIONS",
+        "CASE-030-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-031",
+    "scenario": "pending_evidence",
+    "size_band": "large",
+    "input_characters": 118401,
+    "request_text_characters": 125680,
+    "estimated_tokens_at_four_chars": 31420,
+    "invoice_lines": 100,
+    "incident_rows": 122,
+    "expected": {
+      "case_id": "CASE-031",
+      "contract_id": "CASE-031-AMENDMENT",
+      "eligible_fee_cents": 100818,
+      "eligible_outage_minutes": 494,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "CASE-031-ACCOUNT",
+        "CASE-031-CLAIM",
+        "CASE-031-CONTRACT_AMENDMENT",
+        "CASE-031-CREDIT_LEDGER",
+        "CASE-031-INCIDENTS",
+        "CASE-031-INVOICE",
+        "CASE-031-MAINTENANCE_NOTICES",
+        "CASE-031-OPERATIONS",
+        "CASE-031-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-032",
+    "scenario": "claim_conflict",
+    "size_band": "small",
+    "input_characters": 17455,
+    "request_text_characters": 24734,
+    "estimated_tokens_at_four_chars": 6184,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-032",
+      "contract_id": "CASE-032-AMENDMENT",
+      "eligible_fee_cents": 19511,
+      "eligible_outage_minutes": 150,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "CASE-032-ACCOUNT",
+        "CASE-032-CLAIM",
+        "CASE-032-CONTRACT_AMENDMENT",
+        "CASE-032-CREDIT_LEDGER",
+        "CASE-032-INCIDENTS",
+        "CASE-032-INVOICE",
+        "CASE-032-MAINTENANCE_NOTICES",
+        "CASE-032-OPERATIONS",
+        "CASE-032-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-033",
+    "scenario": "cap_exhausted",
+    "size_band": "medium",
+    "input_characters": 61804,
+    "request_text_characters": 69083,
+    "estimated_tokens_at_four_chars": 17271,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-033",
+      "contract_id": "CASE-033-AMENDMENT",
+      "eligible_fee_cents": 110037,
+      "eligible_outage_minutes": 359,
+      "credit_rate_percent": 20,
+      "credit_cents": 0,
+      "disposition": "cap_exhausted",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-033-ACCOUNT",
+        "CASE-033-CLAIM",
+        "CASE-033-CONTRACT_AMENDMENT",
+        "CASE-033-CREDIT_LEDGER",
+        "CASE-033-INCIDENTS",
+        "CASE-033-INVOICE",
+        "CASE-033-MAINTENANCE_NOTICES",
+        "CASE-033-OPERATIONS",
+        "CASE-033-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-034",
+    "scenario": "already_credited",
+    "size_band": "large",
+    "input_characters": 118123,
+    "request_text_characters": 125402,
+    "estimated_tokens_at_four_chars": 31350,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-034",
+      "contract_id": "CASE-034-AMENDMENT",
+      "eligible_fee_cents": 154375,
+      "eligible_outage_minutes": 526,
+      "credit_rate_percent": 20,
+      "credit_cents": 0,
+      "disposition": "already_credited",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-034-ACCOUNT",
+        "CASE-034-CLAIM",
+        "CASE-034-CONTRACT_AMENDMENT",
+        "CASE-034-CREDIT_LEDGER",
+        "CASE-034-INCIDENTS",
+        "CASE-034-INVOICE",
+        "CASE-034-MAINTENANCE_NOTICES",
+        "CASE-034-OPERATIONS",
+        "CASE-034-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-035",
+    "scenario": "ineligible_plan",
+    "size_band": "small",
+    "input_characters": 17552,
+    "request_text_characters": 24831,
+    "estimated_tokens_at_four_chars": 6208,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-035",
+      "contract_id": "CASE-035-AMENDMENT",
+      "eligible_fee_cents": 29510,
+      "eligible_outage_minutes": 176,
+      "credit_rate_percent": 10,
+      "credit_cents": 0,
+      "disposition": "ineligible_plan",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-035-ACCOUNT",
+        "CASE-035-CLAIM",
+        "CASE-035-CONTRACT_AMENDMENT",
+        "CASE-035-CREDIT_LEDGER",
+        "CASE-035-INCIDENTS",
+        "CASE-035-INVOICE",
+        "CASE-035-MAINTENANCE_NOTICES",
+        "CASE-035-OPERATIONS",
+        "CASE-035-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-036",
+    "scenario": "ongoing_outage",
+    "size_band": "medium",
+    "input_characters": 61551,
+    "request_text_characters": 68830,
+    "estimated_tokens_at_four_chars": 17208,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-036",
+      "contract_id": "CASE-036-AMENDMENT",
+      "eligible_fee_cents": 85565,
+      "eligible_outage_minutes": 381,
+      "credit_rate_percent": 20,
+      "credit_cents": 12829,
+      "disposition": "eligible",
+      "priority": "high",
+      "queue": "technical",
+      "requires_human_review": false,
+      "required_actions": [
+        "investigate_service_incident",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-036-ACCOUNT",
+        "CASE-036-CLAIM",
+        "CASE-036-CONTRACT_AMENDMENT",
+        "CASE-036-CREDIT_LEDGER",
+        "CASE-036-INCIDENTS",
+        "CASE-036-INVOICE",
+        "CASE-036-MAINTENANCE_NOTICES",
+        "CASE-036-OPERATIONS",
+        "CASE-036-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-037",
+    "scenario": "threshold_boundary",
+    "size_band": "small",
+    "input_characters": 17520,
+    "request_text_characters": 24799,
+    "estimated_tokens_at_four_chars": 6200,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-037",
+      "contract_id": "CASE-037-BASE",
+      "eligible_fee_cents": 23135,
+      "eligible_outage_minutes": 90,
+      "credit_rate_percent": 8,
+      "credit_cents": 1851,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-037-ACCOUNT",
+        "CASE-037-CLAIM",
+        "CASE-037-CONTRACT_BASE",
+        "CASE-037-CREDIT_LEDGER",
+        "CASE-037-INCIDENTS",
+        "CASE-037-INVOICE",
+        "CASE-037-OPERATIONS",
+        "CASE-037-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-038",
+    "scenario": "overlapping_monitors",
+    "size_band": "medium",
+    "input_characters": 61940,
+    "request_text_characters": 69219,
+    "estimated_tokens_at_four_chars": 17305,
+    "invoice_lines": 50,
+    "incident_rows": 62,
+    "expected": {
+      "case_id": "CASE-038",
+      "contract_id": "CASE-038-BASE",
+      "eligible_fee_cents": 65940,
+      "eligible_outage_minutes": 353,
+      "credit_rate_percent": 15,
+      "credit_cents": 6346,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-038-ACCOUNT",
+        "CASE-038-CLAIM",
+        "CASE-038-CONTRACT_BASE",
+        "CASE-038-CREDIT_LEDGER",
+        "CASE-038-INCIDENTS",
+        "CASE-038-INVOICE",
+        "CASE-038-MAINTENANCE_NOTICES",
+        "CASE-038-OPERATIONS",
+        "CASE-038-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-039",
+    "scenario": "late_claim",
+    "size_band": "large",
+    "input_characters": 118137,
+    "request_text_characters": 125416,
+    "estimated_tokens_at_four_chars": 31354,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-039",
+      "contract_id": "CASE-039-BASE",
+      "eligible_fee_cents": 149751,
+      "eligible_outage_minutes": 544,
+      "credit_rate_percent": 15,
+      "credit_cents": 0,
+      "disposition": "late_claim",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-039-ACCOUNT",
+        "CASE-039-CLAIM",
+        "CASE-039-CONTRACT_BASE",
+        "CASE-039-CREDIT_LEDGER",
+        "CASE-039-INCIDENTS",
+        "CASE-039-INVOICE",
+        "CASE-039-MAINTENANCE_NOTICES",
+        "CASE-039-OPERATIONS",
+        "CASE-039-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-040",
+    "scenario": "deadline_correction",
+    "size_band": "small",
+    "input_characters": 17460,
+    "request_text_characters": 24739,
+    "estimated_tokens_at_four_chars": 6185,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-040",
+      "contract_id": "CASE-040-BASE",
+      "eligible_fee_cents": 15969,
+      "eligible_outage_minutes": 160,
+      "credit_rate_percent": 15,
+      "credit_cents": 1437,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-040-ACCOUNT",
+        "CASE-040-CLAIM",
+        "CASE-040-CONTRACT_BASE",
+        "CASE-040-CREDIT_LEDGER",
+        "CASE-040-INCIDENTS",
+        "CASE-040-INVOICE",
+        "CASE-040-MAINTENANCE_NOTICES",
+        "CASE-040-OPERATIONS",
+        "CASE-040-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-041",
+    "scenario": "active_security",
+    "size_band": "medium",
+    "input_characters": 61874,
+    "request_text_characters": 69153,
+    "estimated_tokens_at_four_chars": 17288,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-041",
+      "contract_id": "CASE-041-BASE",
+      "eligible_fee_cents": 88696,
+      "eligible_outage_minutes": 347,
+      "credit_rate_percent": 15,
+      "credit_cents": 8595,
+      "disposition": "eligible",
+      "priority": "urgent",
+      "queue": "security",
+      "requires_human_review": true,
+      "required_actions": [
+        "open_security_escalation",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-041-ACCOUNT",
+        "CASE-041-CLAIM",
+        "CASE-041-CONTRACT_BASE",
+        "CASE-041-CREDIT_LEDGER",
+        "CASE-041-INCIDENTS",
+        "CASE-041-INVOICE",
+        "CASE-041-MAINTENANCE_NOTICES",
+        "CASE-041-OPERATIONS",
+        "CASE-041-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-042",
+    "scenario": "contained_security",
+    "size_band": "large",
+    "input_characters": 118050,
+    "request_text_characters": 125329,
+    "estimated_tokens_at_four_chars": 31332,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-042",
+      "contract_id": "CASE-042-BASE",
+      "eligible_fee_cents": 163433,
+      "eligible_outage_minutes": 540,
+      "credit_rate_percent": 15,
+      "credit_cents": 16192,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-042-ACCOUNT",
+        "CASE-042-CLAIM",
+        "CASE-042-CONTRACT_BASE",
+        "CASE-042-CREDIT_LEDGER",
+        "CASE-042-INCIDENTS",
+        "CASE-042-INVOICE",
+        "CASE-042-MAINTENANCE_NOTICES",
+        "CASE-042-OPERATIONS",
+        "CASE-042-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-043",
+    "scenario": "pending_evidence",
+    "size_band": "small",
+    "input_characters": 18015,
+    "request_text_characters": 25294,
+    "estimated_tokens_at_four_chars": 6324,
+    "invoice_lines": 12,
+    "incident_rows": 14,
+    "expected": {
+      "case_id": "CASE-043",
+      "contract_id": "CASE-043-BASE",
+      "eligible_fee_cents": 16936,
+      "eligible_outage_minutes": 208,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "CASE-043-ACCOUNT",
+        "CASE-043-CLAIM",
+        "CASE-043-CONTRACT_BASE",
+        "CASE-043-CREDIT_LEDGER",
+        "CASE-043-INCIDENTS",
+        "CASE-043-INVOICE",
+        "CASE-043-MAINTENANCE_NOTICES",
+        "CASE-043-OPERATIONS",
+        "CASE-043-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-044",
+    "scenario": "claim_conflict",
+    "size_band": "medium",
+    "input_characters": 61907,
+    "request_text_characters": 69186,
+    "estimated_tokens_at_four_chars": 17296,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-044",
+      "contract_id": "CASE-044-BASE",
+      "eligible_fee_cents": 75831,
+      "eligible_outage_minutes": 395,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "CASE-044-ACCOUNT",
+        "CASE-044-CLAIM",
+        "CASE-044-CONTRACT_BASE",
+        "CASE-044-CREDIT_LEDGER",
+        "CASE-044-INCIDENTS",
+        "CASE-044-INVOICE",
+        "CASE-044-MAINTENANCE_NOTICES",
+        "CASE-044-OPERATIONS",
+        "CASE-044-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-045",
+    "scenario": "cap_exhausted",
+    "size_band": "large",
+    "input_characters": 118118,
+    "request_text_characters": 125397,
+    "estimated_tokens_at_four_chars": 31349,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-045",
+      "contract_id": "CASE-045-BASE",
+      "eligible_fee_cents": 143231,
+      "eligible_outage_minutes": 504,
+      "credit_rate_percent": 15,
+      "credit_cents": 0,
+      "disposition": "cap_exhausted",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-045-ACCOUNT",
+        "CASE-045-CLAIM",
+        "CASE-045-CONTRACT_BASE",
+        "CASE-045-CREDIT_LEDGER",
+        "CASE-045-INCIDENTS",
+        "CASE-045-INVOICE",
+        "CASE-045-MAINTENANCE_NOTICES",
+        "CASE-045-OPERATIONS",
+        "CASE-045-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-046",
+    "scenario": "already_credited",
+    "size_band": "small",
+    "input_characters": 17543,
+    "request_text_characters": 24822,
+    "estimated_tokens_at_four_chars": 6206,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-046",
+      "contract_id": "CASE-046-BASE",
+      "eligible_fee_cents": 24300,
+      "eligible_outage_minutes": 154,
+      "credit_rate_percent": 15,
+      "credit_cents": 0,
+      "disposition": "already_credited",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-046-ACCOUNT",
+        "CASE-046-CLAIM",
+        "CASE-046-CONTRACT_BASE",
+        "CASE-046-CREDIT_LEDGER",
+        "CASE-046-INCIDENTS",
+        "CASE-046-INVOICE",
+        "CASE-046-MAINTENANCE_NOTICES",
+        "CASE-046-OPERATIONS",
+        "CASE-046-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-047",
+    "scenario": "ineligible_plan",
+    "size_band": "medium",
+    "input_characters": 61958,
+    "request_text_characters": 69237,
+    "estimated_tokens_at_four_chars": 17309,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-047",
+      "contract_id": "CASE-047-BASE",
+      "eligible_fee_cents": 91995,
+      "eligible_outage_minutes": 359,
+      "credit_rate_percent": 15,
+      "credit_cents": 0,
+      "disposition": "ineligible_plan",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-047-ACCOUNT",
+        "CASE-047-CLAIM",
+        "CASE-047-CONTRACT_BASE",
+        "CASE-047-CREDIT_LEDGER",
+        "CASE-047-INCIDENTS",
+        "CASE-047-INVOICE",
+        "CASE-047-MAINTENANCE_NOTICES",
+        "CASE-047-OPERATIONS",
+        "CASE-047-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-048",
+    "scenario": "ongoing_outage",
+    "size_band": "large",
+    "input_characters": 117923,
+    "request_text_characters": 125202,
+    "estimated_tokens_at_four_chars": 31300,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-048",
+      "contract_id": "CASE-048-BASE",
+      "eligible_fee_cents": 143539,
+      "eligible_outage_minutes": 612,
+      "credit_rate_percent": 15,
+      "credit_cents": 14264,
+      "disposition": "eligible",
+      "priority": "urgent",
+      "queue": "technical",
+      "requires_human_review": false,
+      "required_actions": [
+        "investigate_service_incident",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-048-ACCOUNT",
+        "CASE-048-CLAIM",
+        "CASE-048-CONTRACT_BASE",
+        "CASE-048-CREDIT_LEDGER",
+        "CASE-048-INCIDENTS",
+        "CASE-048-INVOICE",
+        "CASE-048-MAINTENANCE_NOTICES",
+        "CASE-048-OPERATIONS",
+        "CASE-048-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-049",
+    "scenario": "threshold_boundary",
+    "size_band": "medium",
+    "input_characters": 61342,
+    "request_text_characters": 68621,
+    "estimated_tokens_at_four_chars": 17155,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-049",
+      "contract_id": "CASE-049-AMENDMENT",
+      "eligible_fee_cents": 81737,
+      "eligible_outage_minutes": 179,
+      "credit_rate_percent": 10,
+      "credit_cents": 8174,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-049-ACCOUNT",
+        "CASE-049-CLAIM",
+        "CASE-049-CONTRACT_AMENDMENT",
+        "CASE-049-CREDIT_LEDGER",
+        "CASE-049-INCIDENTS",
+        "CASE-049-INVOICE",
+        "CASE-049-OPERATIONS",
+        "CASE-049-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-050",
+    "scenario": "overlapping_monitors",
+    "size_band": "large",
+    "input_characters": 117752,
+    "request_text_characters": 125031,
+    "estimated_tokens_at_four_chars": 31258,
+    "invoice_lines": 100,
+    "incident_rows": 122,
+    "expected": {
+      "case_id": "CASE-050",
+      "contract_id": "CASE-050-AMENDMENT",
+      "eligible_fee_cents": 88271,
+      "eligible_outage_minutes": 554,
+      "credit_rate_percent": 20,
+      "credit_cents": 12856,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-050-ACCOUNT",
+        "CASE-050-CLAIM",
+        "CASE-050-CONTRACT_AMENDMENT",
+        "CASE-050-CREDIT_LEDGER",
+        "CASE-050-INCIDENTS",
+        "CASE-050-INVOICE",
+        "CASE-050-MAINTENANCE_NOTICES",
+        "CASE-050-OPERATIONS",
+        "CASE-050-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-051",
+    "scenario": "late_claim",
+    "size_band": "small",
+    "input_characters": 17533,
+    "request_text_characters": 24812,
+    "estimated_tokens_at_four_chars": 6203,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-051",
+      "contract_id": "CASE-051-AMENDMENT",
+      "eligible_fee_cents": 19607,
+      "eligible_outage_minutes": 176,
+      "credit_rate_percent": 10,
+      "credit_cents": 0,
+      "disposition": "late_claim",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-051-ACCOUNT",
+        "CASE-051-CLAIM",
+        "CASE-051-CONTRACT_AMENDMENT",
+        "CASE-051-CREDIT_LEDGER",
+        "CASE-051-INCIDENTS",
+        "CASE-051-INVOICE",
+        "CASE-051-MAINTENANCE_NOTICES",
+        "CASE-051-OPERATIONS",
+        "CASE-051-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-052",
+    "scenario": "deadline_correction",
+    "size_band": "medium",
+    "input_characters": 61855,
+    "request_text_characters": 69134,
+    "estimated_tokens_at_four_chars": 17284,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-052",
+      "contract_id": "CASE-052-AMENDMENT",
+      "eligible_fee_cents": 81472,
+      "eligible_outage_minutes": 349,
+      "credit_rate_percent": 20,
+      "credit_cents": 16294,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-052-ACCOUNT",
+        "CASE-052-CLAIM",
+        "CASE-052-CONTRACT_AMENDMENT",
+        "CASE-052-CREDIT_LEDGER",
+        "CASE-052-INCIDENTS",
+        "CASE-052-INVOICE",
+        "CASE-052-MAINTENANCE_NOTICES",
+        "CASE-052-OPERATIONS",
+        "CASE-052-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-053",
+    "scenario": "active_security",
+    "size_band": "large",
+    "input_characters": 117945,
+    "request_text_characters": 125224,
+    "estimated_tokens_at_four_chars": 31306,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-053",
+      "contract_id": "CASE-053-AMENDMENT",
+      "eligible_fee_cents": 126496,
+      "eligible_outage_minutes": 550,
+      "credit_rate_percent": 20,
+      "credit_cents": 25299,
+      "disposition": "eligible",
+      "priority": "urgent",
+      "queue": "security",
+      "requires_human_review": true,
+      "required_actions": [
+        "open_security_escalation",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-053-ACCOUNT",
+        "CASE-053-CLAIM",
+        "CASE-053-CONTRACT_AMENDMENT",
+        "CASE-053-CREDIT_LEDGER",
+        "CASE-053-INCIDENTS",
+        "CASE-053-INVOICE",
+        "CASE-053-MAINTENANCE_NOTICES",
+        "CASE-053-OPERATIONS",
+        "CASE-053-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-054",
+    "scenario": "contained_security",
+    "size_band": "small",
+    "input_characters": 17590,
+    "request_text_characters": 24869,
+    "estimated_tokens_at_four_chars": 6217,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-054",
+      "contract_id": "CASE-054-AMENDMENT",
+      "eligible_fee_cents": 18587,
+      "eligible_outage_minutes": 178,
+      "credit_rate_percent": 10,
+      "credit_cents": 1859,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-054-ACCOUNT",
+        "CASE-054-CLAIM",
+        "CASE-054-CONTRACT_AMENDMENT",
+        "CASE-054-CREDIT_LEDGER",
+        "CASE-054-INCIDENTS",
+        "CASE-054-INVOICE",
+        "CASE-054-MAINTENANCE_NOTICES",
+        "CASE-054-OPERATIONS",
+        "CASE-054-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-055",
+    "scenario": "pending_evidence",
+    "size_band": "medium",
+    "input_characters": 62323,
+    "request_text_characters": 69602,
+    "estimated_tokens_at_four_chars": 17400,
+    "invoice_lines": 50,
+    "incident_rows": 62,
+    "expected": {
+      "case_id": "CASE-055",
+      "contract_id": "CASE-055-AMENDMENT",
+      "eligible_fee_cents": 86297,
+      "eligible_outage_minutes": 327,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "CASE-055-ACCOUNT",
+        "CASE-055-CLAIM",
+        "CASE-055-CONTRACT_AMENDMENT",
+        "CASE-055-CREDIT_LEDGER",
+        "CASE-055-INCIDENTS",
+        "CASE-055-INVOICE",
+        "CASE-055-MAINTENANCE_NOTICES",
+        "CASE-055-OPERATIONS",
+        "CASE-055-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-056",
+    "scenario": "claim_conflict",
+    "size_band": "large",
+    "input_characters": 118138,
+    "request_text_characters": 125417,
+    "estimated_tokens_at_four_chars": 31354,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-056",
+      "contract_id": "CASE-056-AMENDMENT",
+      "eligible_fee_cents": 131036,
+      "eligible_outage_minutes": 490,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "CASE-056-ACCOUNT",
+        "CASE-056-CLAIM",
+        "CASE-056-CONTRACT_AMENDMENT",
+        "CASE-056-CREDIT_LEDGER",
+        "CASE-056-INCIDENTS",
+        "CASE-056-INVOICE",
+        "CASE-056-MAINTENANCE_NOTICES",
+        "CASE-056-OPERATIONS",
+        "CASE-056-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-057",
+    "scenario": "cap_exhausted",
+    "size_band": "small",
+    "input_characters": 17536,
+    "request_text_characters": 24815,
+    "estimated_tokens_at_four_chars": 6204,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-057",
+      "contract_id": "CASE-057-AMENDMENT",
+      "eligible_fee_cents": 22606,
+      "eligible_outage_minutes": 178,
+      "credit_rate_percent": 10,
+      "credit_cents": 0,
+      "disposition": "cap_exhausted",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-057-ACCOUNT",
+        "CASE-057-CLAIM",
+        "CASE-057-CONTRACT_AMENDMENT",
+        "CASE-057-CREDIT_LEDGER",
+        "CASE-057-INCIDENTS",
+        "CASE-057-INVOICE",
+        "CASE-057-MAINTENANCE_NOTICES",
+        "CASE-057-OPERATIONS",
+        "CASE-057-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-058",
+    "scenario": "already_credited",
+    "size_band": "medium",
+    "input_characters": 61911,
+    "request_text_characters": 69190,
+    "estimated_tokens_at_four_chars": 17298,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-058",
+      "contract_id": "CASE-058-AMENDMENT",
+      "eligible_fee_cents": 64704,
+      "eligible_outage_minutes": 367,
+      "credit_rate_percent": 20,
+      "credit_cents": 0,
+      "disposition": "already_credited",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-058-ACCOUNT",
+        "CASE-058-CLAIM",
+        "CASE-058-CONTRACT_AMENDMENT",
+        "CASE-058-CREDIT_LEDGER",
+        "CASE-058-INCIDENTS",
+        "CASE-058-INVOICE",
+        "CASE-058-MAINTENANCE_NOTICES",
+        "CASE-058-OPERATIONS",
+        "CASE-058-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-059",
+    "scenario": "ineligible_plan",
+    "size_band": "large",
+    "input_characters": 117313,
+    "request_text_characters": 124592,
+    "estimated_tokens_at_four_chars": 31148,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-059",
+      "contract_id": "CASE-059-AMENDMENT",
+      "eligible_fee_cents": 178093,
+      "eligible_outage_minutes": 528,
+      "credit_rate_percent": 20,
+      "credit_cents": 0,
+      "disposition": "ineligible_plan",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-059-ACCOUNT",
+        "CASE-059-CLAIM",
+        "CASE-059-CONTRACT_AMENDMENT",
+        "CASE-059-CREDIT_LEDGER",
+        "CASE-059-INCIDENTS",
+        "CASE-059-INVOICE",
+        "CASE-059-MAINTENANCE_NOTICES",
+        "CASE-059-OPERATIONS",
+        "CASE-059-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-060",
+    "scenario": "ongoing_outage",
+    "size_band": "small",
+    "input_characters": 17558,
+    "request_text_characters": 24837,
+    "estimated_tokens_at_four_chars": 6209,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-060",
+      "contract_id": "CASE-060-AMENDMENT",
+      "eligible_fee_cents": 22743,
+      "eligible_outage_minutes": 182,
+      "credit_rate_percent": 20,
+      "credit_cents": 3006,
+      "disposition": "eligible",
+      "priority": "high",
+      "queue": "technical",
+      "requires_human_review": false,
+      "required_actions": [
+        "investigate_service_incident",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-060-ACCOUNT",
+        "CASE-060-CLAIM",
+        "CASE-060-CONTRACT_AMENDMENT",
+        "CASE-060-CREDIT_LEDGER",
+        "CASE-060-INCIDENTS",
+        "CASE-060-INVOICE",
+        "CASE-060-MAINTENANCE_NOTICES",
+        "CASE-060-OPERATIONS",
+        "CASE-060-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-061",
+    "scenario": "threshold_boundary",
+    "size_band": "large",
+    "input_characters": 117639,
+    "request_text_characters": 124918,
+    "estimated_tokens_at_four_chars": 31230,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-061",
+      "contract_id": "CASE-061-AMENDMENT",
+      "eligible_fee_cents": 157206,
+      "eligible_outage_minutes": 180,
+      "credit_rate_percent": 20,
+      "credit_cents": 31441,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-061-ACCOUNT",
+        "CASE-061-CLAIM",
+        "CASE-061-CONTRACT_AMENDMENT",
+        "CASE-061-CREDIT_LEDGER",
+        "CASE-061-INCIDENTS",
+        "CASE-061-INVOICE",
+        "CASE-061-OPERATIONS",
+        "CASE-061-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-062",
+    "scenario": "overlapping_monitors",
+    "size_band": "small",
+    "input_characters": 17981,
+    "request_text_characters": 25260,
+    "estimated_tokens_at_four_chars": 6315,
+    "invoice_lines": 12,
+    "incident_rows": 14,
+    "expected": {
+      "case_id": "CASE-062",
+      "contract_id": "CASE-062-AMENDMENT",
+      "eligible_fee_cents": 15344,
+      "eligible_outage_minutes": 206,
+      "credit_rate_percent": 20,
+      "credit_cents": 3069,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-062-ACCOUNT",
+        "CASE-062-CLAIM",
+        "CASE-062-CONTRACT_AMENDMENT",
+        "CASE-062-CREDIT_LEDGER",
+        "CASE-062-INCIDENTS",
+        "CASE-062-INVOICE",
+        "CASE-062-MAINTENANCE_NOTICES",
+        "CASE-062-OPERATIONS",
+        "CASE-062-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-063",
+    "scenario": "late_claim",
+    "size_band": "medium",
+    "input_characters": 61794,
+    "request_text_characters": 69073,
+    "estimated_tokens_at_four_chars": 17268,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-063",
+      "contract_id": "CASE-063-AMENDMENT",
+      "eligible_fee_cents": 78680,
+      "eligible_outage_minutes": 355,
+      "credit_rate_percent": 20,
+      "credit_cents": 0,
+      "disposition": "late_claim",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-063-ACCOUNT",
+        "CASE-063-CLAIM",
+        "CASE-063-CONTRACT_AMENDMENT",
+        "CASE-063-CREDIT_LEDGER",
+        "CASE-063-INCIDENTS",
+        "CASE-063-INVOICE",
+        "CASE-063-MAINTENANCE_NOTICES",
+        "CASE-063-OPERATIONS",
+        "CASE-063-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-064",
+    "scenario": "deadline_correction",
+    "size_band": "large",
+    "input_characters": 118123,
+    "request_text_characters": 125402,
+    "estimated_tokens_at_four_chars": 31350,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-064",
+      "contract_id": "CASE-064-AMENDMENT",
+      "eligible_fee_cents": 124484,
+      "eligible_outage_minutes": 600,
+      "credit_rate_percent": 20,
+      "credit_cents": 24783,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-064-ACCOUNT",
+        "CASE-064-CLAIM",
+        "CASE-064-CONTRACT_AMENDMENT",
+        "CASE-064-CREDIT_LEDGER",
+        "CASE-064-INCIDENTS",
+        "CASE-064-INVOICE",
+        "CASE-064-MAINTENANCE_NOTICES",
+        "CASE-064-OPERATIONS",
+        "CASE-064-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-065",
+    "scenario": "active_security",
+    "size_band": "small",
+    "input_characters": 17479,
+    "request_text_characters": 24758,
+    "estimated_tokens_at_four_chars": 6190,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-065",
+      "contract_id": "CASE-065-AMENDMENT",
+      "eligible_fee_cents": 20499,
+      "eligible_outage_minutes": 172,
+      "credit_rate_percent": 10,
+      "credit_cents": 2050,
+      "disposition": "eligible",
+      "priority": "urgent",
+      "queue": "security",
+      "requires_human_review": true,
+      "required_actions": [
+        "open_security_escalation",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-065-ACCOUNT",
+        "CASE-065-CLAIM",
+        "CASE-065-CONTRACT_AMENDMENT",
+        "CASE-065-CREDIT_LEDGER",
+        "CASE-065-INCIDENTS",
+        "CASE-065-INVOICE",
+        "CASE-065-MAINTENANCE_NOTICES",
+        "CASE-065-OPERATIONS",
+        "CASE-065-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-066",
+    "scenario": "contained_security",
+    "size_band": "medium",
+    "input_characters": 61917,
+    "request_text_characters": 69196,
+    "estimated_tokens_at_four_chars": 17299,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-066",
+      "contract_id": "CASE-066-AMENDMENT",
+      "eligible_fee_cents": 74499,
+      "eligible_outage_minutes": 383,
+      "credit_rate_percent": 20,
+      "credit_cents": 10825,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-066-ACCOUNT",
+        "CASE-066-CLAIM",
+        "CASE-066-CONTRACT_AMENDMENT",
+        "CASE-066-CREDIT_LEDGER",
+        "CASE-066-INCIDENTS",
+        "CASE-066-INVOICE",
+        "CASE-066-MAINTENANCE_NOTICES",
+        "CASE-066-OPERATIONS",
+        "CASE-066-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-067",
+    "scenario": "pending_evidence",
+    "size_band": "large",
+    "input_characters": 118579,
+    "request_text_characters": 125858,
+    "estimated_tokens_at_four_chars": 31464,
+    "invoice_lines": 100,
+    "incident_rows": 122,
+    "expected": {
+      "case_id": "CASE-067",
+      "contract_id": "CASE-067-AMENDMENT",
+      "eligible_fee_cents": 120204,
+      "eligible_outage_minutes": 544,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "CASE-067-ACCOUNT",
+        "CASE-067-CLAIM",
+        "CASE-067-CONTRACT_AMENDMENT",
+        "CASE-067-CREDIT_LEDGER",
+        "CASE-067-INCIDENTS",
+        "CASE-067-INVOICE",
+        "CASE-067-MAINTENANCE_NOTICES",
+        "CASE-067-OPERATIONS",
+        "CASE-067-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-068",
+    "scenario": "claim_conflict",
+    "size_band": "small",
+    "input_characters": 17466,
+    "request_text_characters": 24745,
+    "estimated_tokens_at_four_chars": 6186,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-068",
+      "contract_id": "CASE-068-AMENDMENT",
+      "eligible_fee_cents": 18616,
+      "eligible_outage_minutes": 190,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "CASE-068-ACCOUNT",
+        "CASE-068-CLAIM",
+        "CASE-068-CONTRACT_AMENDMENT",
+        "CASE-068-CREDIT_LEDGER",
+        "CASE-068-INCIDENTS",
+        "CASE-068-INVOICE",
+        "CASE-068-MAINTENANCE_NOTICES",
+        "CASE-068-OPERATIONS",
+        "CASE-068-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-069",
+    "scenario": "cap_exhausted",
+    "size_band": "medium",
+    "input_characters": 61917,
+    "request_text_characters": 69196,
+    "estimated_tokens_at_four_chars": 17299,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-069",
+      "contract_id": "CASE-069-AMENDMENT",
+      "eligible_fee_cents": 90140,
+      "eligible_outage_minutes": 366,
+      "credit_rate_percent": 20,
+      "credit_cents": 0,
+      "disposition": "cap_exhausted",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-069-ACCOUNT",
+        "CASE-069-CLAIM",
+        "CASE-069-CONTRACT_AMENDMENT",
+        "CASE-069-CREDIT_LEDGER",
+        "CASE-069-INCIDENTS",
+        "CASE-069-INVOICE",
+        "CASE-069-MAINTENANCE_NOTICES",
+        "CASE-069-OPERATIONS",
+        "CASE-069-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-070",
+    "scenario": "already_credited",
+    "size_band": "large",
+    "input_characters": 117316,
+    "request_text_characters": 124595,
+    "estimated_tokens_at_four_chars": 31149,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-070",
+      "contract_id": "CASE-070-AMENDMENT",
+      "eligible_fee_cents": 163044,
+      "eligible_outage_minutes": 526,
+      "credit_rate_percent": 20,
+      "credit_cents": 0,
+      "disposition": "already_credited",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-070-ACCOUNT",
+        "CASE-070-CLAIM",
+        "CASE-070-CONTRACT_AMENDMENT",
+        "CASE-070-CREDIT_LEDGER",
+        "CASE-070-INCIDENTS",
+        "CASE-070-INVOICE",
+        "CASE-070-MAINTENANCE_NOTICES",
+        "CASE-070-OPERATIONS",
+        "CASE-070-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-071",
+    "scenario": "ineligible_plan",
+    "size_band": "small",
+    "input_characters": 17481,
+    "request_text_characters": 24760,
+    "estimated_tokens_at_four_chars": 6190,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-071",
+      "contract_id": "CASE-071-AMENDMENT",
+      "eligible_fee_cents": 25037,
+      "eligible_outage_minutes": 160,
+      "credit_rate_percent": 10,
+      "credit_cents": 0,
+      "disposition": "ineligible_plan",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-071-ACCOUNT",
+        "CASE-071-CLAIM",
+        "CASE-071-CONTRACT_AMENDMENT",
+        "CASE-071-CREDIT_LEDGER",
+        "CASE-071-INCIDENTS",
+        "CASE-071-INVOICE",
+        "CASE-071-MAINTENANCE_NOTICES",
+        "CASE-071-OPERATIONS",
+        "CASE-071-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-072",
+    "scenario": "ongoing_outage",
+    "size_band": "medium",
+    "input_characters": 61857,
+    "request_text_characters": 69136,
+    "estimated_tokens_at_four_chars": 17284,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-072",
+      "contract_id": "CASE-072-AMENDMENT",
+      "eligible_fee_cents": 73929,
+      "eligible_outage_minutes": 382,
+      "credit_rate_percent": 20,
+      "credit_cents": 14786,
+      "disposition": "eligible",
+      "priority": "urgent",
+      "queue": "technical",
+      "requires_human_review": false,
+      "required_actions": [
+        "investigate_service_incident",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-072-ACCOUNT",
+        "CASE-072-CLAIM",
+        "CASE-072-CONTRACT_AMENDMENT",
+        "CASE-072-CREDIT_LEDGER",
+        "CASE-072-INCIDENTS",
+        "CASE-072-INVOICE",
+        "CASE-072-MAINTENANCE_NOTICES",
+        "CASE-072-OPERATIONS",
+        "CASE-072-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-073",
+    "scenario": "threshold_boundary",
+    "size_band": "small",
+    "input_characters": 17494,
+    "request_text_characters": 24773,
+    "estimated_tokens_at_four_chars": 6193,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-073",
+      "contract_id": "CASE-073-BASE",
+      "eligible_fee_cents": 16122,
+      "eligible_outage_minutes": 0,
+      "credit_rate_percent": 0,
+      "credit_cents": 0,
+      "disposition": "no_eligible_credit",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-073-ACCOUNT",
+        "CASE-073-CLAIM",
+        "CASE-073-CONTRACT_BASE",
+        "CASE-073-CREDIT_LEDGER",
+        "CASE-073-INCIDENTS",
+        "CASE-073-INVOICE",
+        "CASE-073-OPERATIONS",
+        "CASE-073-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-074",
+    "scenario": "overlapping_monitors",
+    "size_band": "medium",
+    "input_characters": 62314,
+    "request_text_characters": 69593,
+    "estimated_tokens_at_four_chars": 17398,
+    "invoice_lines": 50,
+    "incident_rows": 62,
+    "expected": {
+      "case_id": "CASE-074",
+      "contract_id": "CASE-074-BASE",
+      "eligible_fee_cents": 80109,
+      "eligible_outage_minutes": 374,
+      "credit_rate_percent": 15,
+      "credit_cents": 7820,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-074-ACCOUNT",
+        "CASE-074-CLAIM",
+        "CASE-074-CONTRACT_BASE",
+        "CASE-074-CREDIT_LEDGER",
+        "CASE-074-INCIDENTS",
+        "CASE-074-INVOICE",
+        "CASE-074-MAINTENANCE_NOTICES",
+        "CASE-074-OPERATIONS",
+        "CASE-074-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-075",
+    "scenario": "late_claim",
+    "size_band": "large",
+    "input_characters": 117317,
+    "request_text_characters": 124596,
+    "estimated_tokens_at_four_chars": 31149,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-075",
+      "contract_id": "CASE-075-BASE",
+      "eligible_fee_cents": 156869,
+      "eligible_outage_minutes": 544,
+      "credit_rate_percent": 15,
+      "credit_cents": 0,
+      "disposition": "late_claim",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-075-ACCOUNT",
+        "CASE-075-CLAIM",
+        "CASE-075-CONTRACT_BASE",
+        "CASE-075-CREDIT_LEDGER",
+        "CASE-075-INCIDENTS",
+        "CASE-075-INVOICE",
+        "CASE-075-MAINTENANCE_NOTICES",
+        "CASE-075-OPERATIONS",
+        "CASE-075-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-076",
+    "scenario": "deadline_correction",
+    "size_band": "small",
+    "input_characters": 17548,
+    "request_text_characters": 24827,
+    "estimated_tokens_at_four_chars": 6207,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-076",
+      "contract_id": "CASE-076-BASE",
+      "eligible_fee_cents": 26439,
+      "eligible_outage_minutes": 172,
+      "credit_rate_percent": 15,
+      "credit_cents": 2276,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-076-ACCOUNT",
+        "CASE-076-CLAIM",
+        "CASE-076-CONTRACT_BASE",
+        "CASE-076-CREDIT_LEDGER",
+        "CASE-076-INCIDENTS",
+        "CASE-076-INVOICE",
+        "CASE-076-MAINTENANCE_NOTICES",
+        "CASE-076-OPERATIONS",
+        "CASE-076-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-077",
+    "scenario": "active_security",
+    "size_band": "medium",
+    "input_characters": 61828,
+    "request_text_characters": 69107,
+    "estimated_tokens_at_four_chars": 17277,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-077",
+      "contract_id": "CASE-077-BASE",
+      "eligible_fee_cents": 98987,
+      "eligible_outage_minutes": 355,
+      "credit_rate_percent": 15,
+      "credit_cents": 9719,
+      "disposition": "eligible",
+      "priority": "urgent",
+      "queue": "security",
+      "requires_human_review": true,
+      "required_actions": [
+        "open_security_escalation",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-077-ACCOUNT",
+        "CASE-077-CLAIM",
+        "CASE-077-CONTRACT_BASE",
+        "CASE-077-CREDIT_LEDGER",
+        "CASE-077-INCIDENTS",
+        "CASE-077-INVOICE",
+        "CASE-077-MAINTENANCE_NOTICES",
+        "CASE-077-OPERATIONS",
+        "CASE-077-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-078",
+    "scenario": "contained_security",
+    "size_band": "large",
+    "input_characters": 117954,
+    "request_text_characters": 125233,
+    "estimated_tokens_at_four_chars": 31308,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-078",
+      "contract_id": "CASE-078-BASE",
+      "eligible_fee_cents": 152978,
+      "eligible_outage_minutes": 622,
+      "credit_rate_percent": 15,
+      "credit_cents": 15095,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-078-ACCOUNT",
+        "CASE-078-CLAIM",
+        "CASE-078-CONTRACT_BASE",
+        "CASE-078-CREDIT_LEDGER",
+        "CASE-078-INCIDENTS",
+        "CASE-078-INVOICE",
+        "CASE-078-MAINTENANCE_NOTICES",
+        "CASE-078-OPERATIONS",
+        "CASE-078-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-079",
+    "scenario": "pending_evidence",
+    "size_band": "small",
+    "input_characters": 18029,
+    "request_text_characters": 25308,
+    "estimated_tokens_at_four_chars": 6327,
+    "invoice_lines": 12,
+    "incident_rows": 14,
+    "expected": {
+      "case_id": "CASE-079",
+      "contract_id": "CASE-079-BASE",
+      "eligible_fee_cents": 9642,
+      "eligible_outage_minutes": 150,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "CASE-079-ACCOUNT",
+        "CASE-079-CLAIM",
+        "CASE-079-CONTRACT_BASE",
+        "CASE-079-CREDIT_LEDGER",
+        "CASE-079-INCIDENTS",
+        "CASE-079-INVOICE",
+        "CASE-079-MAINTENANCE_NOTICES",
+        "CASE-079-OPERATIONS",
+        "CASE-079-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-080",
+    "scenario": "claim_conflict",
+    "size_band": "medium",
+    "input_characters": 61894,
+    "request_text_characters": 69173,
+    "estimated_tokens_at_four_chars": 17293,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-080",
+      "contract_id": "CASE-080-BASE",
+      "eligible_fee_cents": 79859,
+      "eligible_outage_minutes": 386,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "CASE-080-ACCOUNT",
+        "CASE-080-CLAIM",
+        "CASE-080-CONTRACT_BASE",
+        "CASE-080-CREDIT_LEDGER",
+        "CASE-080-INCIDENTS",
+        "CASE-080-INVOICE",
+        "CASE-080-MAINTENANCE_NOTICES",
+        "CASE-080-OPERATIONS",
+        "CASE-080-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-081",
+    "scenario": "cap_exhausted",
+    "size_band": "large",
+    "input_characters": 117317,
+    "request_text_characters": 124596,
+    "estimated_tokens_at_four_chars": 31149,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-081",
+      "contract_id": "CASE-081-BASE",
+      "eligible_fee_cents": 142692,
+      "eligible_outage_minutes": 532,
+      "credit_rate_percent": 15,
+      "credit_cents": 0,
+      "disposition": "cap_exhausted",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-081-ACCOUNT",
+        "CASE-081-CLAIM",
+        "CASE-081-CONTRACT_BASE",
+        "CASE-081-CREDIT_LEDGER",
+        "CASE-081-INCIDENTS",
+        "CASE-081-INVOICE",
+        "CASE-081-MAINTENANCE_NOTICES",
+        "CASE-081-OPERATIONS",
+        "CASE-081-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-082",
+    "scenario": "already_credited",
+    "size_band": "small",
+    "input_characters": 17532,
+    "request_text_characters": 24811,
+    "estimated_tokens_at_four_chars": 6203,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-082",
+      "contract_id": "CASE-082-BASE",
+      "eligible_fee_cents": 26626,
+      "eligible_outage_minutes": 174,
+      "credit_rate_percent": 15,
+      "credit_cents": 0,
+      "disposition": "already_credited",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-082-ACCOUNT",
+        "CASE-082-CLAIM",
+        "CASE-082-CONTRACT_BASE",
+        "CASE-082-CREDIT_LEDGER",
+        "CASE-082-INCIDENTS",
+        "CASE-082-INVOICE",
+        "CASE-082-MAINTENANCE_NOTICES",
+        "CASE-082-OPERATIONS",
+        "CASE-082-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-083",
+    "scenario": "ineligible_plan",
+    "size_band": "medium",
+    "input_characters": 61480,
+    "request_text_characters": 68759,
+    "estimated_tokens_at_four_chars": 17190,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-083",
+      "contract_id": "CASE-083-BASE",
+      "eligible_fee_cents": 87047,
+      "eligible_outage_minutes": 347,
+      "credit_rate_percent": 15,
+      "credit_cents": 0,
+      "disposition": "ineligible_plan",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-083-ACCOUNT",
+        "CASE-083-CLAIM",
+        "CASE-083-CONTRACT_BASE",
+        "CASE-083-CREDIT_LEDGER",
+        "CASE-083-INCIDENTS",
+        "CASE-083-INVOICE",
+        "CASE-083-MAINTENANCE_NOTICES",
+        "CASE-083-OPERATIONS",
+        "CASE-083-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-084",
+    "scenario": "ongoing_outage",
+    "size_band": "large",
+    "input_characters": 117432,
+    "request_text_characters": 124711,
+    "estimated_tokens_at_four_chars": 31178,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-084",
+      "contract_id": "CASE-084-BASE",
+      "eligible_fee_cents": 140158,
+      "eligible_outage_minutes": 548,
+      "credit_rate_percent": 15,
+      "credit_cents": 13597,
+      "disposition": "eligible",
+      "priority": "high",
+      "queue": "technical",
+      "requires_human_review": false,
+      "required_actions": [
+        "investigate_service_incident",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-084-ACCOUNT",
+        "CASE-084-CLAIM",
+        "CASE-084-CONTRACT_BASE",
+        "CASE-084-CREDIT_LEDGER",
+        "CASE-084-INCIDENTS",
+        "CASE-084-INVOICE",
+        "CASE-084-MAINTENANCE_NOTICES",
+        "CASE-084-OPERATIONS",
+        "CASE-084-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-085",
+    "scenario": "threshold_boundary",
+    "size_band": "medium",
+    "input_characters": 61577,
+    "request_text_characters": 68856,
+    "estimated_tokens_at_four_chars": 17214,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-085",
+      "contract_id": "CASE-085-AMENDMENT",
+      "eligible_fee_cents": 75165,
+      "eligible_outage_minutes": 29,
+      "credit_rate_percent": 0,
+      "credit_cents": 0,
+      "disposition": "no_eligible_credit",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-085-ACCOUNT",
+        "CASE-085-CLAIM",
+        "CASE-085-CONTRACT_AMENDMENT",
+        "CASE-085-CREDIT_LEDGER",
+        "CASE-085-INCIDENTS",
+        "CASE-085-INVOICE",
+        "CASE-085-OPERATIONS",
+        "CASE-085-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-086",
+    "scenario": "overlapping_monitors",
+    "size_band": "large",
+    "input_characters": 118710,
+    "request_text_characters": 125989,
+    "estimated_tokens_at_four_chars": 31497,
+    "invoice_lines": 100,
+    "incident_rows": 122,
+    "expected": {
+      "case_id": "CASE-086",
+      "contract_id": "CASE-086-AMENDMENT",
+      "eligible_fee_cents": 165103,
+      "eligible_outage_minutes": 514,
+      "credit_rate_percent": 20,
+      "credit_cents": 24296,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-086-ACCOUNT",
+        "CASE-086-CLAIM",
+        "CASE-086-CONTRACT_AMENDMENT",
+        "CASE-086-CREDIT_LEDGER",
+        "CASE-086-INCIDENTS",
+        "CASE-086-INVOICE",
+        "CASE-086-MAINTENANCE_NOTICES",
+        "CASE-086-OPERATIONS",
+        "CASE-086-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-087",
+    "scenario": "late_claim",
+    "size_band": "small",
+    "input_characters": 17461,
+    "request_text_characters": 24740,
+    "estimated_tokens_at_four_chars": 6185,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-087",
+      "contract_id": "CASE-087-AMENDMENT",
+      "eligible_fee_cents": 20896,
+      "eligible_outage_minutes": 204,
+      "credit_rate_percent": 20,
+      "credit_cents": 0,
+      "disposition": "late_claim",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-087-ACCOUNT",
+        "CASE-087-CLAIM",
+        "CASE-087-CONTRACT_AMENDMENT",
+        "CASE-087-CREDIT_LEDGER",
+        "CASE-087-INCIDENTS",
+        "CASE-087-INVOICE",
+        "CASE-087-MAINTENANCE_NOTICES",
+        "CASE-087-OPERATIONS",
+        "CASE-087-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-088",
+    "scenario": "deadline_correction",
+    "size_band": "medium",
+    "input_characters": 61797,
+    "request_text_characters": 69076,
+    "estimated_tokens_at_four_chars": 17269,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-088",
+      "contract_id": "CASE-088-AMENDMENT",
+      "eligible_fee_cents": 72971,
+      "eligible_outage_minutes": 329,
+      "credit_rate_percent": 20,
+      "credit_cents": 14594,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-088-ACCOUNT",
+        "CASE-088-CLAIM",
+        "CASE-088-CONTRACT_AMENDMENT",
+        "CASE-088-CREDIT_LEDGER",
+        "CASE-088-INCIDENTS",
+        "CASE-088-INVOICE",
+        "CASE-088-MAINTENANCE_NOTICES",
+        "CASE-088-OPERATIONS",
+        "CASE-088-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-089",
+    "scenario": "active_security",
+    "size_band": "large",
+    "input_characters": 117944,
+    "request_text_characters": 125223,
+    "estimated_tokens_at_four_chars": 31306,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-089",
+      "contract_id": "CASE-089-AMENDMENT",
+      "eligible_fee_cents": 155947,
+      "eligible_outage_minutes": 552,
+      "credit_rate_percent": 20,
+      "credit_cents": 31178,
+      "disposition": "eligible",
+      "priority": "urgent",
+      "queue": "security",
+      "requires_human_review": true,
+      "required_actions": [
+        "open_security_escalation",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-089-ACCOUNT",
+        "CASE-089-CLAIM",
+        "CASE-089-CONTRACT_AMENDMENT",
+        "CASE-089-CREDIT_LEDGER",
+        "CASE-089-INCIDENTS",
+        "CASE-089-INVOICE",
+        "CASE-089-MAINTENANCE_NOTICES",
+        "CASE-089-OPERATIONS",
+        "CASE-089-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-090",
+    "scenario": "contained_security",
+    "size_band": "small",
+    "input_characters": 17547,
+    "request_text_characters": 24826,
+    "estimated_tokens_at_four_chars": 6206,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-090",
+      "contract_id": "CASE-090-AMENDMENT",
+      "eligible_fee_cents": 29164,
+      "eligible_outage_minutes": 164,
+      "credit_rate_percent": 10,
+      "credit_cents": 2916,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-090-ACCOUNT",
+        "CASE-090-CLAIM",
+        "CASE-090-CONTRACT_AMENDMENT",
+        "CASE-090-CREDIT_LEDGER",
+        "CASE-090-INCIDENTS",
+        "CASE-090-INVOICE",
+        "CASE-090-MAINTENANCE_NOTICES",
+        "CASE-090-OPERATIONS",
+        "CASE-090-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-091",
+    "scenario": "pending_evidence",
+    "size_band": "medium",
+    "input_characters": 62334,
+    "request_text_characters": 69613,
+    "estimated_tokens_at_four_chars": 17403,
+    "invoice_lines": 50,
+    "incident_rows": 62,
+    "expected": {
+      "case_id": "CASE-091",
+      "contract_id": "CASE-091-AMENDMENT",
+      "eligible_fee_cents": 83936,
+      "eligible_outage_minutes": 408,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "CASE-091-ACCOUNT",
+        "CASE-091-CLAIM",
+        "CASE-091-CONTRACT_AMENDMENT",
+        "CASE-091-CREDIT_LEDGER",
+        "CASE-091-INCIDENTS",
+        "CASE-091-INVOICE",
+        "CASE-091-MAINTENANCE_NOTICES",
+        "CASE-091-OPERATIONS",
+        "CASE-091-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-092",
+    "scenario": "claim_conflict",
+    "size_band": "large",
+    "input_characters": 118232,
+    "request_text_characters": 125511,
+    "estimated_tokens_at_four_chars": 31378,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-092",
+      "contract_id": "CASE-092-AMENDMENT",
+      "eligible_fee_cents": 129263,
+      "eligible_outage_minutes": 552,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "CASE-092-ACCOUNT",
+        "CASE-092-CLAIM",
+        "CASE-092-CONTRACT_AMENDMENT",
+        "CASE-092-CREDIT_LEDGER",
+        "CASE-092-INCIDENTS",
+        "CASE-092-INVOICE",
+        "CASE-092-MAINTENANCE_NOTICES",
+        "CASE-092-OPERATIONS",
+        "CASE-092-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-093",
+    "scenario": "cap_exhausted",
+    "size_band": "small",
+    "input_characters": 17570,
+    "request_text_characters": 24849,
+    "estimated_tokens_at_four_chars": 6212,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-093",
+      "contract_id": "CASE-093-AMENDMENT",
+      "eligible_fee_cents": 13904,
+      "eligible_outage_minutes": 158,
+      "credit_rate_percent": 10,
+      "credit_cents": 0,
+      "disposition": "cap_exhausted",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-093-ACCOUNT",
+        "CASE-093-CLAIM",
+        "CASE-093-CONTRACT_AMENDMENT",
+        "CASE-093-CREDIT_LEDGER",
+        "CASE-093-INCIDENTS",
+        "CASE-093-INVOICE",
+        "CASE-093-MAINTENANCE_NOTICES",
+        "CASE-093-OPERATIONS",
+        "CASE-093-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-094",
+    "scenario": "already_credited",
+    "size_band": "medium",
+    "input_characters": 61911,
+    "request_text_characters": 69190,
+    "estimated_tokens_at_four_chars": 17298,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-094",
+      "contract_id": "CASE-094-AMENDMENT",
+      "eligible_fee_cents": 67203,
+      "eligible_outage_minutes": 333,
+      "credit_rate_percent": 20,
+      "credit_cents": 0,
+      "disposition": "already_credited",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-094-ACCOUNT",
+        "CASE-094-CLAIM",
+        "CASE-094-CONTRACT_AMENDMENT",
+        "CASE-094-CREDIT_LEDGER",
+        "CASE-094-INCIDENTS",
+        "CASE-094-INVOICE",
+        "CASE-094-MAINTENANCE_NOTICES",
+        "CASE-094-OPERATIONS",
+        "CASE-094-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-095",
+    "scenario": "ineligible_plan",
+    "size_band": "large",
+    "input_characters": 117308,
+    "request_text_characters": 124587,
+    "estimated_tokens_at_four_chars": 31147,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-095",
+      "contract_id": "CASE-095-AMENDMENT",
+      "eligible_fee_cents": 154293,
+      "eligible_outage_minutes": 506,
+      "credit_rate_percent": 20,
+      "credit_cents": 0,
+      "disposition": "ineligible_plan",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-095-ACCOUNT",
+        "CASE-095-CLAIM",
+        "CASE-095-CONTRACT_AMENDMENT",
+        "CASE-095-CREDIT_LEDGER",
+        "CASE-095-INCIDENTS",
+        "CASE-095-INVOICE",
+        "CASE-095-MAINTENANCE_NOTICES",
+        "CASE-095-OPERATIONS",
+        "CASE-095-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-096",
+    "scenario": "ongoing_outage",
+    "size_band": "small",
+    "input_characters": 17459,
+    "request_text_characters": 24738,
+    "estimated_tokens_at_four_chars": 6184,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-096",
+      "contract_id": "CASE-096-AMENDMENT",
+      "eligible_fee_cents": 27231,
+      "eligible_outage_minutes": 156,
+      "credit_rate_percent": 10,
+      "credit_cents": 2723,
+      "disposition": "eligible",
+      "priority": "urgent",
+      "queue": "technical",
+      "requires_human_review": false,
+      "required_actions": [
+        "investigate_service_incident",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-096-ACCOUNT",
+        "CASE-096-CLAIM",
+        "CASE-096-CONTRACT_AMENDMENT",
+        "CASE-096-CREDIT_LEDGER",
+        "CASE-096-INCIDENTS",
+        "CASE-096-INVOICE",
+        "CASE-096-MAINTENANCE_NOTICES",
+        "CASE-096-OPERATIONS",
+        "CASE-096-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-097",
+    "scenario": "threshold_boundary",
+    "size_band": "large",
+    "input_characters": 117520,
+    "request_text_characters": 124799,
+    "estimated_tokens_at_four_chars": 31200,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-097",
+      "contract_id": "CASE-097-AMENDMENT",
+      "eligible_fee_cents": 137258,
+      "eligible_outage_minutes": 30,
+      "credit_rate_percent": 5,
+      "credit_cents": 6863,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-097-ACCOUNT",
+        "CASE-097-CLAIM",
+        "CASE-097-CONTRACT_AMENDMENT",
+        "CASE-097-CREDIT_LEDGER",
+        "CASE-097-INCIDENTS",
+        "CASE-097-INVOICE",
+        "CASE-097-OPERATIONS",
+        "CASE-097-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-098",
+    "scenario": "overlapping_monitors",
+    "size_band": "small",
+    "input_characters": 17907,
+    "request_text_characters": 25186,
+    "estimated_tokens_at_four_chars": 6296,
+    "invoice_lines": 12,
+    "incident_rows": 14,
+    "expected": {
+      "case_id": "CASE-098",
+      "contract_id": "CASE-098-AMENDMENT",
+      "eligible_fee_cents": 21025,
+      "eligible_outage_minutes": 164,
+      "credit_rate_percent": 10,
+      "credit_cents": 2103,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-098-ACCOUNT",
+        "CASE-098-CLAIM",
+        "CASE-098-CONTRACT_AMENDMENT",
+        "CASE-098-CREDIT_LEDGER",
+        "CASE-098-INCIDENTS",
+        "CASE-098-INVOICE",
+        "CASE-098-MAINTENANCE_NOTICES",
+        "CASE-098-OPERATIONS",
+        "CASE-098-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-099",
+    "scenario": "late_claim",
+    "size_band": "medium",
+    "input_characters": 61477,
+    "request_text_characters": 68756,
+    "estimated_tokens_at_four_chars": 17189,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-099",
+      "contract_id": "CASE-099-AMENDMENT",
+      "eligible_fee_cents": 59269,
+      "eligible_outage_minutes": 400,
+      "credit_rate_percent": 20,
+      "credit_cents": 0,
+      "disposition": "late_claim",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-099-ACCOUNT",
+        "CASE-099-CLAIM",
+        "CASE-099-CONTRACT_AMENDMENT",
+        "CASE-099-CREDIT_LEDGER",
+        "CASE-099-INCIDENTS",
+        "CASE-099-INVOICE",
+        "CASE-099-MAINTENANCE_NOTICES",
+        "CASE-099-OPERATIONS",
+        "CASE-099-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-100",
+    "scenario": "deadline_correction",
+    "size_band": "large",
+    "input_characters": 118235,
+    "request_text_characters": 125514,
+    "estimated_tokens_at_four_chars": 31378,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-100",
+      "contract_id": "CASE-100-AMENDMENT",
+      "eligible_fee_cents": 160092,
+      "eligible_outage_minutes": 568,
+      "credit_rate_percent": 20,
+      "credit_cents": 31935,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-100-ACCOUNT",
+        "CASE-100-CLAIM",
+        "CASE-100-CONTRACT_AMENDMENT",
+        "CASE-100-CREDIT_LEDGER",
+        "CASE-100-INCIDENTS",
+        "CASE-100-INVOICE",
+        "CASE-100-MAINTENANCE_NOTICES",
+        "CASE-100-OPERATIONS",
+        "CASE-100-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-101",
+    "scenario": "active_security",
+    "size_band": "small",
+    "input_characters": 17479,
+    "request_text_characters": 24758,
+    "estimated_tokens_at_four_chars": 6190,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-101",
+      "contract_id": "CASE-101-AMENDMENT",
+      "eligible_fee_cents": 31245,
+      "eligible_outage_minutes": 184,
+      "credit_rate_percent": 20,
+      "credit_cents": 4272,
+      "disposition": "eligible",
+      "priority": "urgent",
+      "queue": "security",
+      "requires_human_review": true,
+      "required_actions": [
+        "open_security_escalation",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-101-ACCOUNT",
+        "CASE-101-CLAIM",
+        "CASE-101-CONTRACT_AMENDMENT",
+        "CASE-101-CREDIT_LEDGER",
+        "CASE-101-INCIDENTS",
+        "CASE-101-INVOICE",
+        "CASE-101-MAINTENANCE_NOTICES",
+        "CASE-101-OPERATIONS",
+        "CASE-101-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-102",
+    "scenario": "contained_security",
+    "size_band": "medium",
+    "input_characters": 61496,
+    "request_text_characters": 68775,
+    "estimated_tokens_at_four_chars": 17194,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-102",
+      "contract_id": "CASE-102-AMENDMENT",
+      "eligible_fee_cents": 79936,
+      "eligible_outage_minutes": 369,
+      "credit_rate_percent": 20,
+      "credit_cents": 11758,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-102-ACCOUNT",
+        "CASE-102-CLAIM",
+        "CASE-102-CONTRACT_AMENDMENT",
+        "CASE-102-CREDIT_LEDGER",
+        "CASE-102-INCIDENTS",
+        "CASE-102-INVOICE",
+        "CASE-102-MAINTENANCE_NOTICES",
+        "CASE-102-OPERATIONS",
+        "CASE-102-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-103",
+    "scenario": "pending_evidence",
+    "size_band": "large",
+    "input_characters": 118390,
+    "request_text_characters": 125669,
+    "estimated_tokens_at_four_chars": 31417,
+    "invoice_lines": 100,
+    "incident_rows": 122,
+    "expected": {
+      "case_id": "CASE-103",
+      "contract_id": "CASE-103-AMENDMENT",
+      "eligible_fee_cents": 131132,
+      "eligible_outage_minutes": 548,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "CASE-103-ACCOUNT",
+        "CASE-103-CLAIM",
+        "CASE-103-CONTRACT_AMENDMENT",
+        "CASE-103-CREDIT_LEDGER",
+        "CASE-103-INCIDENTS",
+        "CASE-103-INVOICE",
+        "CASE-103-MAINTENANCE_NOTICES",
+        "CASE-103-OPERATIONS",
+        "CASE-103-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-104",
+    "scenario": "claim_conflict",
+    "size_band": "small",
+    "input_characters": 17559,
+    "request_text_characters": 24838,
+    "estimated_tokens_at_four_chars": 6210,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-104",
+      "contract_id": "CASE-104-AMENDMENT",
+      "eligible_fee_cents": 19813,
+      "eligible_outage_minutes": 184,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "CASE-104-ACCOUNT",
+        "CASE-104-CLAIM",
+        "CASE-104-CONTRACT_AMENDMENT",
+        "CASE-104-CREDIT_LEDGER",
+        "CASE-104-INCIDENTS",
+        "CASE-104-INVOICE",
+        "CASE-104-MAINTENANCE_NOTICES",
+        "CASE-104-OPERATIONS",
+        "CASE-104-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-105",
+    "scenario": "cap_exhausted",
+    "size_band": "medium",
+    "input_characters": 61481,
+    "request_text_characters": 68760,
+    "estimated_tokens_at_four_chars": 17190,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-105",
+      "contract_id": "CASE-105-AMENDMENT",
+      "eligible_fee_cents": 91368,
+      "eligible_outage_minutes": 359,
+      "credit_rate_percent": 20,
+      "credit_cents": 0,
+      "disposition": "cap_exhausted",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-105-ACCOUNT",
+        "CASE-105-CLAIM",
+        "CASE-105-CONTRACT_AMENDMENT",
+        "CASE-105-CREDIT_LEDGER",
+        "CASE-105-INCIDENTS",
+        "CASE-105-INVOICE",
+        "CASE-105-MAINTENANCE_NOTICES",
+        "CASE-105-OPERATIONS",
+        "CASE-105-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-106",
+    "scenario": "already_credited",
+    "size_band": "large",
+    "input_characters": 118242,
+    "request_text_characters": 125521,
+    "estimated_tokens_at_four_chars": 31380,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-106",
+      "contract_id": "CASE-106-AMENDMENT",
+      "eligible_fee_cents": 144175,
+      "eligible_outage_minutes": 558,
+      "credit_rate_percent": 20,
+      "credit_cents": 0,
+      "disposition": "already_credited",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-106-ACCOUNT",
+        "CASE-106-CLAIM",
+        "CASE-106-CONTRACT_AMENDMENT",
+        "CASE-106-CREDIT_LEDGER",
+        "CASE-106-INCIDENTS",
+        "CASE-106-INVOICE",
+        "CASE-106-MAINTENANCE_NOTICES",
+        "CASE-106-OPERATIONS",
+        "CASE-106-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-107",
+    "scenario": "ineligible_plan",
+    "size_band": "small",
+    "input_characters": 17452,
+    "request_text_characters": 24731,
+    "estimated_tokens_at_four_chars": 6183,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-107",
+      "contract_id": "CASE-107-AMENDMENT",
+      "eligible_fee_cents": 14466,
+      "eligible_outage_minutes": 184,
+      "credit_rate_percent": 20,
+      "credit_cents": 0,
+      "disposition": "ineligible_plan",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-107-ACCOUNT",
+        "CASE-107-CLAIM",
+        "CASE-107-CONTRACT_AMENDMENT",
+        "CASE-107-CREDIT_LEDGER",
+        "CASE-107-INCIDENTS",
+        "CASE-107-INVOICE",
+        "CASE-107-MAINTENANCE_NOTICES",
+        "CASE-107-OPERATIONS",
+        "CASE-107-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-108",
+    "scenario": "ongoing_outage",
+    "size_band": "medium",
+    "input_characters": 61860,
+    "request_text_characters": 69139,
+    "estimated_tokens_at_four_chars": 17285,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-108",
+      "contract_id": "CASE-108-AMENDMENT",
+      "eligible_fee_cents": 99630,
+      "eligible_outage_minutes": 375,
+      "credit_rate_percent": 20,
+      "credit_cents": 19721,
+      "disposition": "eligible",
+      "priority": "high",
+      "queue": "technical",
+      "requires_human_review": false,
+      "required_actions": [
+        "investigate_service_incident",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-108-ACCOUNT",
+        "CASE-108-CLAIM",
+        "CASE-108-CONTRACT_AMENDMENT",
+        "CASE-108-CREDIT_LEDGER",
+        "CASE-108-INCIDENTS",
+        "CASE-108-INVOICE",
+        "CASE-108-MAINTENANCE_NOTICES",
+        "CASE-108-OPERATIONS",
+        "CASE-108-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-109",
+    "scenario": "threshold_boundary",
+    "size_band": "small",
+    "input_characters": 17405,
+    "request_text_characters": 24684,
+    "estimated_tokens_at_four_chars": 6171,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-109",
+      "contract_id": "CASE-109-BASE",
+      "eligible_fee_cents": 17675,
+      "eligible_outage_minutes": 89,
+      "credit_rate_percent": 8,
+      "credit_cents": 1414,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-109-ACCOUNT",
+        "CASE-109-CLAIM",
+        "CASE-109-CONTRACT_BASE",
+        "CASE-109-CREDIT_LEDGER",
+        "CASE-109-INCIDENTS",
+        "CASE-109-INVOICE",
+        "CASE-109-OPERATIONS",
+        "CASE-109-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-110",
+    "scenario": "overlapping_monitors",
+    "size_band": "medium",
+    "input_characters": 61996,
+    "request_text_characters": 69275,
+    "estimated_tokens_at_four_chars": 17319,
+    "invoice_lines": 50,
+    "incident_rows": 62,
+    "expected": {
+      "case_id": "CASE-110",
+      "contract_id": "CASE-110-BASE",
+      "eligible_fee_cents": 73456,
+      "eligible_outage_minutes": 347,
+      "credit_rate_percent": 15,
+      "credit_cents": 7275,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-110-ACCOUNT",
+        "CASE-110-CLAIM",
+        "CASE-110-CONTRACT_BASE",
+        "CASE-110-CREDIT_LEDGER",
+        "CASE-110-INCIDENTS",
+        "CASE-110-INVOICE",
+        "CASE-110-MAINTENANCE_NOTICES",
+        "CASE-110-OPERATIONS",
+        "CASE-110-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-111",
+    "scenario": "late_claim",
+    "size_band": "large",
+    "input_characters": 118124,
+    "request_text_characters": 125403,
+    "estimated_tokens_at_four_chars": 31351,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-111",
+      "contract_id": "CASE-111-BASE",
+      "eligible_fee_cents": 142164,
+      "eligible_outage_minutes": 542,
+      "credit_rate_percent": 15,
+      "credit_cents": 0,
+      "disposition": "late_claim",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-111-ACCOUNT",
+        "CASE-111-CLAIM",
+        "CASE-111-CONTRACT_BASE",
+        "CASE-111-CREDIT_LEDGER",
+        "CASE-111-INCIDENTS",
+        "CASE-111-INVOICE",
+        "CASE-111-MAINTENANCE_NOTICES",
+        "CASE-111-OPERATIONS",
+        "CASE-111-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-112",
+    "scenario": "deadline_correction",
+    "size_band": "small",
+    "input_characters": 17470,
+    "request_text_characters": 24749,
+    "estimated_tokens_at_four_chars": 6187,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-112",
+      "contract_id": "CASE-112-BASE",
+      "eligible_fee_cents": 13371,
+      "eligible_outage_minutes": 184,
+      "credit_rate_percent": 15,
+      "credit_cents": 1063,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-112-ACCOUNT",
+        "CASE-112-CLAIM",
+        "CASE-112-CONTRACT_BASE",
+        "CASE-112-CREDIT_LEDGER",
+        "CASE-112-INCIDENTS",
+        "CASE-112-INVOICE",
+        "CASE-112-MAINTENANCE_NOTICES",
+        "CASE-112-OPERATIONS",
+        "CASE-112-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-113",
+    "scenario": "active_security",
+    "size_band": "medium",
+    "input_characters": 61808,
+    "request_text_characters": 69087,
+    "estimated_tokens_at_four_chars": 17272,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-113",
+      "contract_id": "CASE-113-BASE",
+      "eligible_fee_cents": 79875,
+      "eligible_outage_minutes": 327,
+      "credit_rate_percent": 15,
+      "credit_cents": 7491,
+      "disposition": "eligible",
+      "priority": "urgent",
+      "queue": "security",
+      "requires_human_review": true,
+      "required_actions": [
+        "open_security_escalation",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-113-ACCOUNT",
+        "CASE-113-CLAIM",
+        "CASE-113-CONTRACT_BASE",
+        "CASE-113-CREDIT_LEDGER",
+        "CASE-113-INCIDENTS",
+        "CASE-113-INVOICE",
+        "CASE-113-MAINTENANCE_NOTICES",
+        "CASE-113-OPERATIONS",
+        "CASE-113-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-114",
+    "scenario": "contained_security",
+    "size_band": "large",
+    "input_characters": 117941,
+    "request_text_characters": 125220,
+    "estimated_tokens_at_four_chars": 31305,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-114",
+      "contract_id": "CASE-114-BASE",
+      "eligible_fee_cents": 134442,
+      "eligible_outage_minutes": 558,
+      "credit_rate_percent": 15,
+      "credit_cents": 13124,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-114-ACCOUNT",
+        "CASE-114-CLAIM",
+        "CASE-114-CONTRACT_BASE",
+        "CASE-114-CREDIT_LEDGER",
+        "CASE-114-INCIDENTS",
+        "CASE-114-INVOICE",
+        "CASE-114-MAINTENANCE_NOTICES",
+        "CASE-114-OPERATIONS",
+        "CASE-114-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-115",
+    "scenario": "pending_evidence",
+    "size_band": "small",
+    "input_characters": 17999,
+    "request_text_characters": 25278,
+    "estimated_tokens_at_four_chars": 6320,
+    "invoice_lines": 12,
+    "incident_rows": 14,
+    "expected": {
+      "case_id": "CASE-115",
+      "contract_id": "CASE-115-BASE",
+      "eligible_fee_cents": 32055,
+      "eligible_outage_minutes": 190,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "CASE-115-ACCOUNT",
+        "CASE-115-CLAIM",
+        "CASE-115-CONTRACT_BASE",
+        "CASE-115-CREDIT_LEDGER",
+        "CASE-115-INCIDENTS",
+        "CASE-115-INVOICE",
+        "CASE-115-MAINTENANCE_NOTICES",
+        "CASE-115-OPERATIONS",
+        "CASE-115-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-116",
+    "scenario": "claim_conflict",
+    "size_band": "medium",
+    "input_characters": 61475,
+    "request_text_characters": 68754,
+    "estimated_tokens_at_four_chars": 17188,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-116",
+      "contract_id": "CASE-116-BASE",
+      "eligible_fee_cents": 97939,
+      "eligible_outage_minutes": 339,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "CASE-116-ACCOUNT",
+        "CASE-116-CLAIM",
+        "CASE-116-CONTRACT_BASE",
+        "CASE-116-CREDIT_LEDGER",
+        "CASE-116-INCIDENTS",
+        "CASE-116-INVOICE",
+        "CASE-116-MAINTENANCE_NOTICES",
+        "CASE-116-OPERATIONS",
+        "CASE-116-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-117",
+    "scenario": "cap_exhausted",
+    "size_band": "large",
+    "input_characters": 117915,
+    "request_text_characters": 125194,
+    "estimated_tokens_at_four_chars": 31298,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-117",
+      "contract_id": "CASE-117-BASE",
+      "eligible_fee_cents": 143035,
+      "eligible_outage_minutes": 546,
+      "credit_rate_percent": 15,
+      "credit_cents": 0,
+      "disposition": "cap_exhausted",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-117-ACCOUNT",
+        "CASE-117-CLAIM",
+        "CASE-117-CONTRACT_BASE",
+        "CASE-117-CREDIT_LEDGER",
+        "CASE-117-INCIDENTS",
+        "CASE-117-INVOICE",
+        "CASE-117-MAINTENANCE_NOTICES",
+        "CASE-117-OPERATIONS",
+        "CASE-117-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-118",
+    "scenario": "already_credited",
+    "size_band": "small",
+    "input_characters": 17542,
+    "request_text_characters": 24821,
+    "estimated_tokens_at_four_chars": 6205,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-118",
+      "contract_id": "CASE-118-BASE",
+      "eligible_fee_cents": 22871,
+      "eligible_outage_minutes": 174,
+      "credit_rate_percent": 15,
+      "credit_cents": 0,
+      "disposition": "already_credited",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-118-ACCOUNT",
+        "CASE-118-CLAIM",
+        "CASE-118-CONTRACT_BASE",
+        "CASE-118-CREDIT_LEDGER",
+        "CASE-118-INCIDENTS",
+        "CASE-118-INVOICE",
+        "CASE-118-MAINTENANCE_NOTICES",
+        "CASE-118-OPERATIONS",
+        "CASE-118-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-119",
+    "scenario": "ineligible_plan",
+    "size_band": "medium",
+    "input_characters": 61793,
+    "request_text_characters": 69072,
+    "estimated_tokens_at_four_chars": 17268,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-119",
+      "contract_id": "CASE-119-BASE",
+      "eligible_fee_cents": 86415,
+      "eligible_outage_minutes": 398,
+      "credit_rate_percent": 15,
+      "credit_cents": 0,
+      "disposition": "ineligible_plan",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-119-ACCOUNT",
+        "CASE-119-CLAIM",
+        "CASE-119-CONTRACT_BASE",
+        "CASE-119-CREDIT_LEDGER",
+        "CASE-119-INCIDENTS",
+        "CASE-119-INVOICE",
+        "CASE-119-MAINTENANCE_NOTICES",
+        "CASE-119-OPERATIONS",
+        "CASE-119-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-120",
+    "scenario": "ongoing_outage",
+    "size_band": "large",
+    "input_characters": 117910,
+    "request_text_characters": 125189,
+    "estimated_tokens_at_four_chars": 31297,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-120",
+      "contract_id": "CASE-120-BASE",
+      "eligible_fee_cents": 163311,
+      "eligible_outage_minutes": 570,
+      "credit_rate_percent": 15,
+      "credit_cents": 16234,
+      "disposition": "eligible",
+      "priority": "urgent",
+      "queue": "technical",
+      "requires_human_review": false,
+      "required_actions": [
+        "investigate_service_incident",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-120-ACCOUNT",
+        "CASE-120-CLAIM",
+        "CASE-120-CONTRACT_BASE",
+        "CASE-120-CREDIT_LEDGER",
+        "CASE-120-INCIDENTS",
+        "CASE-120-INVOICE",
+        "CASE-120-MAINTENANCE_NOTICES",
+        "CASE-120-OPERATIONS",
+        "CASE-120-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-121",
+    "scenario": "threshold_boundary",
+    "size_band": "medium",
+    "input_characters": 61692,
+    "request_text_characters": 68971,
+    "estimated_tokens_at_four_chars": 17243,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-121",
+      "contract_id": "CASE-121-AMENDMENT",
+      "eligible_fee_cents": 78376,
+      "eligible_outage_minutes": 90,
+      "credit_rate_percent": 10,
+      "credit_cents": 7838,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-121-ACCOUNT",
+        "CASE-121-CLAIM",
+        "CASE-121-CONTRACT_AMENDMENT",
+        "CASE-121-CREDIT_LEDGER",
+        "CASE-121-INCIDENTS",
+        "CASE-121-INVOICE",
+        "CASE-121-OPERATIONS",
+        "CASE-121-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-122",
+    "scenario": "overlapping_monitors",
+    "size_band": "large",
+    "input_characters": 117738,
+    "request_text_characters": 125017,
+    "estimated_tokens_at_four_chars": 31254,
+    "invoice_lines": 100,
+    "incident_rows": 122,
+    "expected": {
+      "case_id": "CASE-122",
+      "contract_id": "CASE-122-AMENDMENT",
+      "eligible_fee_cents": 130905,
+      "eligible_outage_minutes": 574,
+      "credit_rate_percent": 20,
+      "credit_cents": 26181,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-122-ACCOUNT",
+        "CASE-122-CLAIM",
+        "CASE-122-CONTRACT_AMENDMENT",
+        "CASE-122-CREDIT_LEDGER",
+        "CASE-122-INCIDENTS",
+        "CASE-122-INVOICE",
+        "CASE-122-MAINTENANCE_NOTICES",
+        "CASE-122-OPERATIONS",
+        "CASE-122-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-123",
+    "scenario": "late_claim",
+    "size_band": "small",
+    "input_characters": 17457,
+    "request_text_characters": 24736,
+    "estimated_tokens_at_four_chars": 6184,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-123",
+      "contract_id": "CASE-123-AMENDMENT",
+      "eligible_fee_cents": 27969,
+      "eligible_outage_minutes": 190,
+      "credit_rate_percent": 20,
+      "credit_cents": 0,
+      "disposition": "late_claim",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-123-ACCOUNT",
+        "CASE-123-CLAIM",
+        "CASE-123-CONTRACT_AMENDMENT",
+        "CASE-123-CREDIT_LEDGER",
+        "CASE-123-INCIDENTS",
+        "CASE-123-INVOICE",
+        "CASE-123-MAINTENANCE_NOTICES",
+        "CASE-123-OPERATIONS",
+        "CASE-123-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-124",
+    "scenario": "deadline_correction",
+    "size_band": "medium",
+    "input_characters": 61798,
+    "request_text_characters": 69077,
+    "estimated_tokens_at_four_chars": 17269,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-124",
+      "contract_id": "CASE-124-AMENDMENT",
+      "eligible_fee_cents": 99721,
+      "eligible_outage_minutes": 349,
+      "credit_rate_percent": 20,
+      "credit_cents": 14772,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-124-ACCOUNT",
+        "CASE-124-CLAIM",
+        "CASE-124-CONTRACT_AMENDMENT",
+        "CASE-124-CREDIT_LEDGER",
+        "CASE-124-INCIDENTS",
+        "CASE-124-INVOICE",
+        "CASE-124-MAINTENANCE_NOTICES",
+        "CASE-124-OPERATIONS",
+        "CASE-124-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-125",
+    "scenario": "active_security",
+    "size_band": "large",
+    "input_characters": 118148,
+    "request_text_characters": 125427,
+    "estimated_tokens_at_four_chars": 31357,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-125",
+      "contract_id": "CASE-125-AMENDMENT",
+      "eligible_fee_cents": 167101,
+      "eligible_outage_minutes": 534,
+      "credit_rate_percent": 20,
+      "credit_cents": 33385,
+      "disposition": "eligible",
+      "priority": "urgent",
+      "queue": "security",
+      "requires_human_review": true,
+      "required_actions": [
+        "open_security_escalation",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-125-ACCOUNT",
+        "CASE-125-CLAIM",
+        "CASE-125-CONTRACT_AMENDMENT",
+        "CASE-125-CREDIT_LEDGER",
+        "CASE-125-INCIDENTS",
+        "CASE-125-INVOICE",
+        "CASE-125-MAINTENANCE_NOTICES",
+        "CASE-125-OPERATIONS",
+        "CASE-125-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-126",
+    "scenario": "contained_security",
+    "size_band": "small",
+    "input_characters": 17469,
+    "request_text_characters": 24748,
+    "estimated_tokens_at_four_chars": 6187,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-126",
+      "contract_id": "CASE-126-AMENDMENT",
+      "eligible_fee_cents": 19155,
+      "eligible_outage_minutes": 164,
+      "credit_rate_percent": 10,
+      "credit_cents": 1916,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-126-ACCOUNT",
+        "CASE-126-CLAIM",
+        "CASE-126-CONTRACT_AMENDMENT",
+        "CASE-126-CREDIT_LEDGER",
+        "CASE-126-INCIDENTS",
+        "CASE-126-INVOICE",
+        "CASE-126-MAINTENANCE_NOTICES",
+        "CASE-126-OPERATIONS",
+        "CASE-126-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-127",
+    "scenario": "pending_evidence",
+    "size_band": "medium",
+    "input_characters": 61951,
+    "request_text_characters": 69230,
+    "estimated_tokens_at_four_chars": 17308,
+    "invoice_lines": 50,
+    "incident_rows": 62,
+    "expected": {
+      "case_id": "CASE-127",
+      "contract_id": "CASE-127-AMENDMENT",
+      "eligible_fee_cents": 77468,
+      "eligible_outage_minutes": 360,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "CASE-127-ACCOUNT",
+        "CASE-127-CLAIM",
+        "CASE-127-CONTRACT_AMENDMENT",
+        "CASE-127-CREDIT_LEDGER",
+        "CASE-127-INCIDENTS",
+        "CASE-127-INVOICE",
+        "CASE-127-MAINTENANCE_NOTICES",
+        "CASE-127-OPERATIONS",
+        "CASE-127-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-128",
+    "scenario": "claim_conflict",
+    "size_band": "large",
+    "input_characters": 118251,
+    "request_text_characters": 125530,
+    "estimated_tokens_at_four_chars": 31382,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-128",
+      "contract_id": "CASE-128-AMENDMENT",
+      "eligible_fee_cents": 135065,
+      "eligible_outage_minutes": 508,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "CASE-128-ACCOUNT",
+        "CASE-128-CLAIM",
+        "CASE-128-CONTRACT_AMENDMENT",
+        "CASE-128-CREDIT_LEDGER",
+        "CASE-128-INCIDENTS",
+        "CASE-128-INVOICE",
+        "CASE-128-MAINTENANCE_NOTICES",
+        "CASE-128-OPERATIONS",
+        "CASE-128-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-129",
+    "scenario": "cap_exhausted",
+    "size_band": "small",
+    "input_characters": 17469,
+    "request_text_characters": 24748,
+    "estimated_tokens_at_four_chars": 6187,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-129",
+      "contract_id": "CASE-129-AMENDMENT",
+      "eligible_fee_cents": 13809,
+      "eligible_outage_minutes": 186,
+      "credit_rate_percent": 20,
+      "credit_cents": 0,
+      "disposition": "cap_exhausted",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-129-ACCOUNT",
+        "CASE-129-CLAIM",
+        "CASE-129-CONTRACT_AMENDMENT",
+        "CASE-129-CREDIT_LEDGER",
+        "CASE-129-INCIDENTS",
+        "CASE-129-INVOICE",
+        "CASE-129-MAINTENANCE_NOTICES",
+        "CASE-129-OPERATIONS",
+        "CASE-129-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-130",
+    "scenario": "already_credited",
+    "size_band": "medium",
+    "input_characters": 61895,
+    "request_text_characters": 69174,
+    "estimated_tokens_at_four_chars": 17294,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-130",
+      "contract_id": "CASE-130-AMENDMENT",
+      "eligible_fee_cents": 74776,
+      "eligible_outage_minutes": 381,
+      "credit_rate_percent": 20,
+      "credit_cents": 0,
+      "disposition": "already_credited",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-130-ACCOUNT",
+        "CASE-130-CLAIM",
+        "CASE-130-CONTRACT_AMENDMENT",
+        "CASE-130-CREDIT_LEDGER",
+        "CASE-130-INCIDENTS",
+        "CASE-130-INVOICE",
+        "CASE-130-MAINTENANCE_NOTICES",
+        "CASE-130-OPERATIONS",
+        "CASE-130-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-131",
+    "scenario": "ineligible_plan",
+    "size_band": "large",
+    "input_characters": 118267,
+    "request_text_characters": 125546,
+    "estimated_tokens_at_four_chars": 31386,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-131",
+      "contract_id": "CASE-131-AMENDMENT",
+      "eligible_fee_cents": 135495,
+      "eligible_outage_minutes": 544,
+      "credit_rate_percent": 20,
+      "credit_cents": 0,
+      "disposition": "ineligible_plan",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-131-ACCOUNT",
+        "CASE-131-CLAIM",
+        "CASE-131-CONTRACT_AMENDMENT",
+        "CASE-131-CREDIT_LEDGER",
+        "CASE-131-INCIDENTS",
+        "CASE-131-INVOICE",
+        "CASE-131-MAINTENANCE_NOTICES",
+        "CASE-131-OPERATIONS",
+        "CASE-131-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-132",
+    "scenario": "ongoing_outage",
+    "size_band": "small",
+    "input_characters": 17531,
+    "request_text_characters": 24810,
+    "estimated_tokens_at_four_chars": 6202,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-132",
+      "contract_id": "CASE-132-AMENDMENT",
+      "eligible_fee_cents": 21810,
+      "eligible_outage_minutes": 194,
+      "credit_rate_percent": 20,
+      "credit_cents": 2811,
+      "disposition": "eligible",
+      "priority": "high",
+      "queue": "technical",
+      "requires_human_review": false,
+      "required_actions": [
+        "investigate_service_incident",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-132-ACCOUNT",
+        "CASE-132-CLAIM",
+        "CASE-132-CONTRACT_AMENDMENT",
+        "CASE-132-CREDIT_LEDGER",
+        "CASE-132-INCIDENTS",
+        "CASE-132-INVOICE",
+        "CASE-132-MAINTENANCE_NOTICES",
+        "CASE-132-OPERATIONS",
+        "CASE-132-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-133",
+    "scenario": "threshold_boundary",
+    "size_band": "large",
+    "input_characters": 117824,
+    "request_text_characters": 125103,
+    "estimated_tokens_at_four_chars": 31276,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-133",
+      "contract_id": "CASE-133-AMENDMENT",
+      "eligible_fee_cents": 111069,
+      "eligible_outage_minutes": 179,
+      "credit_rate_percent": 10,
+      "credit_cents": 11107,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-133-ACCOUNT",
+        "CASE-133-CLAIM",
+        "CASE-133-CONTRACT_AMENDMENT",
+        "CASE-133-CREDIT_LEDGER",
+        "CASE-133-INCIDENTS",
+        "CASE-133-INVOICE",
+        "CASE-133-OPERATIONS",
+        "CASE-133-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-134",
+    "scenario": "overlapping_monitors",
+    "size_band": "small",
+    "input_characters": 17979,
+    "request_text_characters": 25258,
+    "estimated_tokens_at_four_chars": 6314,
+    "invoice_lines": 12,
+    "incident_rows": 14,
+    "expected": {
+      "case_id": "CASE-134",
+      "contract_id": "CASE-134-AMENDMENT",
+      "eligible_fee_cents": 22116,
+      "eligible_outage_minutes": 176,
+      "credit_rate_percent": 10,
+      "credit_cents": 2212,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-134-ACCOUNT",
+        "CASE-134-CLAIM",
+        "CASE-134-CONTRACT_AMENDMENT",
+        "CASE-134-CREDIT_LEDGER",
+        "CASE-134-INCIDENTS",
+        "CASE-134-INVOICE",
+        "CASE-134-MAINTENANCE_NOTICES",
+        "CASE-134-OPERATIONS",
+        "CASE-134-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-135",
+    "scenario": "late_claim",
+    "size_band": "medium",
+    "input_characters": 61962,
+    "request_text_characters": 69241,
+    "estimated_tokens_at_four_chars": 17310,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-135",
+      "contract_id": "CASE-135-AMENDMENT",
+      "eligible_fee_cents": 77993,
+      "eligible_outage_minutes": 389,
+      "credit_rate_percent": 20,
+      "credit_cents": 0,
+      "disposition": "late_claim",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-135-ACCOUNT",
+        "CASE-135-CLAIM",
+        "CASE-135-CONTRACT_AMENDMENT",
+        "CASE-135-CREDIT_LEDGER",
+        "CASE-135-INCIDENTS",
+        "CASE-135-INVOICE",
+        "CASE-135-MAINTENANCE_NOTICES",
+        "CASE-135-OPERATIONS",
+        "CASE-135-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-136",
+    "scenario": "deadline_correction",
+    "size_band": "large",
+    "input_characters": 118136,
+    "request_text_characters": 125415,
+    "estimated_tokens_at_four_chars": 31354,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-136",
+      "contract_id": "CASE-136-AMENDMENT",
+      "eligible_fee_cents": 123156,
+      "eligible_outage_minutes": 514,
+      "credit_rate_percent": 20,
+      "credit_cents": 24462,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-136-ACCOUNT",
+        "CASE-136-CLAIM",
+        "CASE-136-CONTRACT_AMENDMENT",
+        "CASE-136-CREDIT_LEDGER",
+        "CASE-136-INCIDENTS",
+        "CASE-136-INVOICE",
+        "CASE-136-MAINTENANCE_NOTICES",
+        "CASE-136-OPERATIONS",
+        "CASE-136-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-137",
+    "scenario": "active_security",
+    "size_band": "small",
+    "input_characters": 17545,
+    "request_text_characters": 24824,
+    "estimated_tokens_at_four_chars": 6206,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-137",
+      "contract_id": "CASE-137-AMENDMENT",
+      "eligible_fee_cents": 9036,
+      "eligible_outage_minutes": 172,
+      "credit_rate_percent": 10,
+      "credit_cents": 904,
+      "disposition": "eligible",
+      "priority": "urgent",
+      "queue": "security",
+      "requires_human_review": true,
+      "required_actions": [
+        "open_security_escalation",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-137-ACCOUNT",
+        "CASE-137-CLAIM",
+        "CASE-137-CONTRACT_AMENDMENT",
+        "CASE-137-CREDIT_LEDGER",
+        "CASE-137-INCIDENTS",
+        "CASE-137-INVOICE",
+        "CASE-137-MAINTENANCE_NOTICES",
+        "CASE-137-OPERATIONS",
+        "CASE-137-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-138",
+    "scenario": "contained_security",
+    "size_band": "medium",
+    "input_characters": 61512,
+    "request_text_characters": 68791,
+    "estimated_tokens_at_four_chars": 17198,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-138",
+      "contract_id": "CASE-138-AMENDMENT",
+      "eligible_fee_cents": 92593,
+      "eligible_outage_minutes": 397,
+      "credit_rate_percent": 20,
+      "credit_cents": 13675,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-138-ACCOUNT",
+        "CASE-138-CLAIM",
+        "CASE-138-CONTRACT_AMENDMENT",
+        "CASE-138-CREDIT_LEDGER",
+        "CASE-138-INCIDENTS",
+        "CASE-138-INVOICE",
+        "CASE-138-MAINTENANCE_NOTICES",
+        "CASE-138-OPERATIONS",
+        "CASE-138-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-139",
+    "scenario": "pending_evidence",
+    "size_band": "large",
+    "input_characters": 118578,
+    "request_text_characters": 125857,
+    "estimated_tokens_at_four_chars": 31464,
+    "invoice_lines": 100,
+    "incident_rows": 122,
+    "expected": {
+      "case_id": "CASE-139",
+      "contract_id": "CASE-139-AMENDMENT",
+      "eligible_fee_cents": 145932,
+      "eligible_outage_minutes": 504,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "CASE-139-ACCOUNT",
+        "CASE-139-CLAIM",
+        "CASE-139-CONTRACT_AMENDMENT",
+        "CASE-139-CREDIT_LEDGER",
+        "CASE-139-INCIDENTS",
+        "CASE-139-INVOICE",
+        "CASE-139-MAINTENANCE_NOTICES",
+        "CASE-139-OPERATIONS",
+        "CASE-139-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-140",
+    "scenario": "claim_conflict",
+    "size_band": "small",
+    "input_characters": 17538,
+    "request_text_characters": 24817,
+    "estimated_tokens_at_four_chars": 6204,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-140",
+      "contract_id": "CASE-140-AMENDMENT",
+      "eligible_fee_cents": 27091,
+      "eligible_outage_minutes": 178,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "CASE-140-ACCOUNT",
+        "CASE-140-CLAIM",
+        "CASE-140-CONTRACT_AMENDMENT",
+        "CASE-140-CREDIT_LEDGER",
+        "CASE-140-INCIDENTS",
+        "CASE-140-INVOICE",
+        "CASE-140-MAINTENANCE_NOTICES",
+        "CASE-140-OPERATIONS",
+        "CASE-140-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-141",
+    "scenario": "cap_exhausted",
+    "size_band": "medium",
+    "input_characters": 61802,
+    "request_text_characters": 69081,
+    "estimated_tokens_at_four_chars": 17270,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-141",
+      "contract_id": "CASE-141-AMENDMENT",
+      "eligible_fee_cents": 67001,
+      "eligible_outage_minutes": 333,
+      "credit_rate_percent": 20,
+      "credit_cents": 0,
+      "disposition": "cap_exhausted",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-141-ACCOUNT",
+        "CASE-141-CLAIM",
+        "CASE-141-CONTRACT_AMENDMENT",
+        "CASE-141-CREDIT_LEDGER",
+        "CASE-141-INCIDENTS",
+        "CASE-141-INVOICE",
+        "CASE-141-MAINTENANCE_NOTICES",
+        "CASE-141-OPERATIONS",
+        "CASE-141-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-142",
+    "scenario": "already_credited",
+    "size_band": "large",
+    "input_characters": 118134,
+    "request_text_characters": 125413,
+    "estimated_tokens_at_four_chars": 31353,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-142",
+      "contract_id": "CASE-142-AMENDMENT",
+      "eligible_fee_cents": 142874,
+      "eligible_outage_minutes": 522,
+      "credit_rate_percent": 20,
+      "credit_cents": 0,
+      "disposition": "already_credited",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-142-ACCOUNT",
+        "CASE-142-CLAIM",
+        "CASE-142-CONTRACT_AMENDMENT",
+        "CASE-142-CREDIT_LEDGER",
+        "CASE-142-INCIDENTS",
+        "CASE-142-INVOICE",
+        "CASE-142-MAINTENANCE_NOTICES",
+        "CASE-142-OPERATIONS",
+        "CASE-142-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-143",
+    "scenario": "ineligible_plan",
+    "size_band": "small",
+    "input_characters": 17566,
+    "request_text_characters": 24845,
+    "estimated_tokens_at_four_chars": 6211,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-143",
+      "contract_id": "CASE-143-AMENDMENT",
+      "eligible_fee_cents": 15769,
+      "eligible_outage_minutes": 160,
+      "credit_rate_percent": 10,
+      "credit_cents": 0,
+      "disposition": "ineligible_plan",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-143-ACCOUNT",
+        "CASE-143-CLAIM",
+        "CASE-143-CONTRACT_AMENDMENT",
+        "CASE-143-CREDIT_LEDGER",
+        "CASE-143-INCIDENTS",
+        "CASE-143-INVOICE",
+        "CASE-143-MAINTENANCE_NOTICES",
+        "CASE-143-OPERATIONS",
+        "CASE-143-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-144",
+    "scenario": "ongoing_outage",
+    "size_band": "medium",
+    "input_characters": 61524,
+    "request_text_characters": 68803,
+    "estimated_tokens_at_four_chars": 17201,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-144",
+      "contract_id": "CASE-144-AMENDMENT",
+      "eligible_fee_cents": 65454,
+      "eligible_outage_minutes": 339,
+      "credit_rate_percent": 20,
+      "credit_cents": 12699,
+      "disposition": "eligible",
+      "priority": "urgent",
+      "queue": "technical",
+      "requires_human_review": false,
+      "required_actions": [
+        "investigate_service_incident",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-144-ACCOUNT",
+        "CASE-144-CLAIM",
+        "CASE-144-CONTRACT_AMENDMENT",
+        "CASE-144-CREDIT_LEDGER",
+        "CASE-144-INCIDENTS",
+        "CASE-144-INVOICE",
+        "CASE-144-MAINTENANCE_NOTICES",
+        "CASE-144-OPERATIONS",
+        "CASE-144-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-145",
+    "scenario": "threshold_boundary",
+    "size_band": "small",
+    "input_characters": 17486,
+    "request_text_characters": 24765,
+    "estimated_tokens_at_four_chars": 6191,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-145",
+      "contract_id": "CASE-145-BASE",
+      "eligible_fee_cents": 21763,
+      "eligible_outage_minutes": 180,
+      "credit_rate_percent": 15,
+      "credit_cents": 2093,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-145-ACCOUNT",
+        "CASE-145-CLAIM",
+        "CASE-145-CONTRACT_BASE",
+        "CASE-145-CREDIT_LEDGER",
+        "CASE-145-INCIDENTS",
+        "CASE-145-INVOICE",
+        "CASE-145-OPERATIONS",
+        "CASE-145-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-146",
+    "scenario": "overlapping_monitors",
+    "size_band": "medium",
+    "input_characters": 62354,
+    "request_text_characters": 69633,
+    "estimated_tokens_at_four_chars": 17408,
+    "invoice_lines": 50,
+    "incident_rows": 62,
+    "expected": {
+      "case_id": "CASE-146",
+      "contract_id": "CASE-146-BASE",
+      "eligible_fee_cents": 49977,
+      "eligible_outage_minutes": 385,
+      "credit_rate_percent": 15,
+      "credit_cents": 4906,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-146-ACCOUNT",
+        "CASE-146-CLAIM",
+        "CASE-146-CONTRACT_BASE",
+        "CASE-146-CREDIT_LEDGER",
+        "CASE-146-INCIDENTS",
+        "CASE-146-INVOICE",
+        "CASE-146-MAINTENANCE_NOTICES",
+        "CASE-146-OPERATIONS",
+        "CASE-146-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-147",
+    "scenario": "late_claim",
+    "size_band": "large",
+    "input_characters": 118134,
+    "request_text_characters": 125413,
+    "estimated_tokens_at_four_chars": 31353,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-147",
+      "contract_id": "CASE-147-BASE",
+      "eligible_fee_cents": 138583,
+      "eligible_outage_minutes": 554,
+      "credit_rate_percent": 15,
+      "credit_cents": 0,
+      "disposition": "late_claim",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-147-ACCOUNT",
+        "CASE-147-CLAIM",
+        "CASE-147-CONTRACT_BASE",
+        "CASE-147-CREDIT_LEDGER",
+        "CASE-147-INCIDENTS",
+        "CASE-147-INVOICE",
+        "CASE-147-MAINTENANCE_NOTICES",
+        "CASE-147-OPERATIONS",
+        "CASE-147-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-148",
+    "scenario": "deadline_correction",
+    "size_band": "small",
+    "input_characters": 17534,
+    "request_text_characters": 24813,
+    "estimated_tokens_at_four_chars": 6203,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-148",
+      "contract_id": "CASE-148-BASE",
+      "eligible_fee_cents": 15809,
+      "eligible_outage_minutes": 188,
+      "credit_rate_percent": 15,
+      "credit_cents": 1226,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-148-ACCOUNT",
+        "CASE-148-CLAIM",
+        "CASE-148-CONTRACT_BASE",
+        "CASE-148-CREDIT_LEDGER",
+        "CASE-148-INCIDENTS",
+        "CASE-148-INVOICE",
+        "CASE-148-MAINTENANCE_NOTICES",
+        "CASE-148-OPERATIONS",
+        "CASE-148-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-149",
+    "scenario": "active_security",
+    "size_band": "medium",
+    "input_characters": 61888,
+    "request_text_characters": 69167,
+    "estimated_tokens_at_four_chars": 17292,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-149",
+      "contract_id": "CASE-149-BASE",
+      "eligible_fee_cents": 81349,
+      "eligible_outage_minutes": 339,
+      "credit_rate_percent": 15,
+      "credit_cents": 7702,
+      "disposition": "eligible",
+      "priority": "urgent",
+      "queue": "security",
+      "requires_human_review": true,
+      "required_actions": [
+        "open_security_escalation",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-149-ACCOUNT",
+        "CASE-149-CLAIM",
+        "CASE-149-CONTRACT_BASE",
+        "CASE-149-CREDIT_LEDGER",
+        "CASE-149-INCIDENTS",
+        "CASE-149-INVOICE",
+        "CASE-149-MAINTENANCE_NOTICES",
+        "CASE-149-OPERATIONS",
+        "CASE-149-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-150",
+    "scenario": "contained_security",
+    "size_band": "large",
+    "input_characters": 117938,
+    "request_text_characters": 125217,
+    "estimated_tokens_at_four_chars": 31304,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-150",
+      "contract_id": "CASE-150-BASE",
+      "eligible_fee_cents": 144098,
+      "eligible_outage_minutes": 564,
+      "credit_rate_percent": 15,
+      "credit_cents": 14376,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-150-ACCOUNT",
+        "CASE-150-CLAIM",
+        "CASE-150-CONTRACT_BASE",
+        "CASE-150-CREDIT_LEDGER",
+        "CASE-150-INCIDENTS",
+        "CASE-150-INVOICE",
+        "CASE-150-MAINTENANCE_NOTICES",
+        "CASE-150-OPERATIONS",
+        "CASE-150-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-151",
+    "scenario": "pending_evidence",
+    "size_band": "small",
+    "input_characters": 17993,
+    "request_text_characters": 25272,
+    "estimated_tokens_at_four_chars": 6318,
+    "invoice_lines": 12,
+    "incident_rows": 14,
+    "expected": {
+      "case_id": "CASE-151",
+      "contract_id": "CASE-151-BASE",
+      "eligible_fee_cents": 10559,
+      "eligible_outage_minutes": 164,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "CASE-151-ACCOUNT",
+        "CASE-151-CLAIM",
+        "CASE-151-CONTRACT_BASE",
+        "CASE-151-CREDIT_LEDGER",
+        "CASE-151-INCIDENTS",
+        "CASE-151-INVOICE",
+        "CASE-151-MAINTENANCE_NOTICES",
+        "CASE-151-OPERATIONS",
+        "CASE-151-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-152",
+    "scenario": "claim_conflict",
+    "size_band": "medium",
+    "input_characters": 61802,
+    "request_text_characters": 69081,
+    "estimated_tokens_at_four_chars": 17270,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-152",
+      "contract_id": "CASE-152-BASE",
+      "eligible_fee_cents": 58116,
+      "eligible_outage_minutes": 361,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "CASE-152-ACCOUNT",
+        "CASE-152-CLAIM",
+        "CASE-152-CONTRACT_BASE",
+        "CASE-152-CREDIT_LEDGER",
+        "CASE-152-INCIDENTS",
+        "CASE-152-INVOICE",
+        "CASE-152-MAINTENANCE_NOTICES",
+        "CASE-152-OPERATIONS",
+        "CASE-152-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-153",
+    "scenario": "cap_exhausted",
+    "size_band": "large",
+    "input_characters": 117318,
+    "request_text_characters": 124597,
+    "estimated_tokens_at_four_chars": 31149,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-153",
+      "contract_id": "CASE-153-BASE",
+      "eligible_fee_cents": 116969,
+      "eligible_outage_minutes": 582,
+      "credit_rate_percent": 15,
+      "credit_cents": 0,
+      "disposition": "cap_exhausted",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-153-ACCOUNT",
+        "CASE-153-CLAIM",
+        "CASE-153-CONTRACT_BASE",
+        "CASE-153-CREDIT_LEDGER",
+        "CASE-153-INCIDENTS",
+        "CASE-153-INVOICE",
+        "CASE-153-MAINTENANCE_NOTICES",
+        "CASE-153-OPERATIONS",
+        "CASE-153-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-154",
+    "scenario": "already_credited",
+    "size_band": "small",
+    "input_characters": 17558,
+    "request_text_characters": 24837,
+    "estimated_tokens_at_four_chars": 6209,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-154",
+      "contract_id": "CASE-154-BASE",
+      "eligible_fee_cents": 21698,
+      "eligible_outage_minutes": 168,
+      "credit_rate_percent": 15,
+      "credit_cents": 0,
+      "disposition": "already_credited",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-154-ACCOUNT",
+        "CASE-154-CLAIM",
+        "CASE-154-CONTRACT_BASE",
+        "CASE-154-CREDIT_LEDGER",
+        "CASE-154-INCIDENTS",
+        "CASE-154-INVOICE",
+        "CASE-154-MAINTENANCE_NOTICES",
+        "CASE-154-OPERATIONS",
+        "CASE-154-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-155",
+    "scenario": "ineligible_plan",
+    "size_band": "medium",
+    "input_characters": 61908,
+    "request_text_characters": 69187,
+    "estimated_tokens_at_four_chars": 17297,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-155",
+      "contract_id": "CASE-155-BASE",
+      "eligible_fee_cents": 96214,
+      "eligible_outage_minutes": 373,
+      "credit_rate_percent": 15,
+      "credit_cents": 0,
+      "disposition": "ineligible_plan",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-155-ACCOUNT",
+        "CASE-155-CLAIM",
+        "CASE-155-CONTRACT_BASE",
+        "CASE-155-CREDIT_LEDGER",
+        "CASE-155-INCIDENTS",
+        "CASE-155-INVOICE",
+        "CASE-155-MAINTENANCE_NOTICES",
+        "CASE-155-OPERATIONS",
+        "CASE-155-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-156",
+    "scenario": "ongoing_outage",
+    "size_band": "large",
+    "input_characters": 117309,
+    "request_text_characters": 124588,
+    "estimated_tokens_at_four_chars": 31147,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-156",
+      "contract_id": "CASE-156-BASE",
+      "eligible_fee_cents": 141586,
+      "eligible_outage_minutes": 552,
+      "credit_rate_percent": 15,
+      "credit_cents": 13929,
+      "disposition": "eligible",
+      "priority": "high",
+      "queue": "technical",
+      "requires_human_review": false,
+      "required_actions": [
+        "investigate_service_incident",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-156-ACCOUNT",
+        "CASE-156-CLAIM",
+        "CASE-156-CONTRACT_BASE",
+        "CASE-156-CREDIT_LEDGER",
+        "CASE-156-INCIDENTS",
+        "CASE-156-INVOICE",
+        "CASE-156-MAINTENANCE_NOTICES",
+        "CASE-156-OPERATIONS",
+        "CASE-156-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-157",
+    "scenario": "threshold_boundary",
+    "size_band": "medium",
+    "input_characters": 61704,
+    "request_text_characters": 68983,
+    "estimated_tokens_at_four_chars": 17246,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-157",
+      "contract_id": "CASE-157-AMENDMENT",
+      "eligible_fee_cents": 79381,
+      "eligible_outage_minutes": 0,
+      "credit_rate_percent": 0,
+      "credit_cents": 0,
+      "disposition": "no_eligible_credit",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-157-ACCOUNT",
+        "CASE-157-CLAIM",
+        "CASE-157-CONTRACT_AMENDMENT",
+        "CASE-157-CREDIT_LEDGER",
+        "CASE-157-INCIDENTS",
+        "CASE-157-INVOICE",
+        "CASE-157-OPERATIONS",
+        "CASE-157-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-158",
+    "scenario": "overlapping_monitors",
+    "size_band": "large",
+    "input_characters": 118584,
+    "request_text_characters": 125863,
+    "estimated_tokens_at_four_chars": 31466,
+    "invoice_lines": 100,
+    "incident_rows": 122,
+    "expected": {
+      "case_id": "CASE-158",
+      "contract_id": "CASE-158-AMENDMENT",
+      "eligible_fee_cents": 160257,
+      "eligible_outage_minutes": 516,
+      "credit_rate_percent": 20,
+      "credit_cents": 32051,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-158-ACCOUNT",
+        "CASE-158-CLAIM",
+        "CASE-158-CONTRACT_AMENDMENT",
+        "CASE-158-CREDIT_LEDGER",
+        "CASE-158-INCIDENTS",
+        "CASE-158-INVOICE",
+        "CASE-158-MAINTENANCE_NOTICES",
+        "CASE-158-OPERATIONS",
+        "CASE-158-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-159",
+    "scenario": "late_claim",
+    "size_band": "small",
+    "input_characters": 17559,
+    "request_text_characters": 24838,
+    "estimated_tokens_at_four_chars": 6210,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-159",
+      "contract_id": "CASE-159-AMENDMENT",
+      "eligible_fee_cents": 15772,
+      "eligible_outage_minutes": 164,
+      "credit_rate_percent": 10,
+      "credit_cents": 0,
+      "disposition": "late_claim",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-159-ACCOUNT",
+        "CASE-159-CLAIM",
+        "CASE-159-CONTRACT_AMENDMENT",
+        "CASE-159-CREDIT_LEDGER",
+        "CASE-159-INCIDENTS",
+        "CASE-159-INVOICE",
+        "CASE-159-MAINTENANCE_NOTICES",
+        "CASE-159-OPERATIONS",
+        "CASE-159-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-160",
+    "scenario": "deadline_correction",
+    "size_band": "medium",
+    "input_characters": 61945,
+    "request_text_characters": 69224,
+    "estimated_tokens_at_four_chars": 17306,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-160",
+      "contract_id": "CASE-160-AMENDMENT",
+      "eligible_fee_cents": 79830,
+      "eligible_outage_minutes": 396,
+      "credit_rate_percent": 20,
+      "credit_cents": 15718,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-160-ACCOUNT",
+        "CASE-160-CLAIM",
+        "CASE-160-CONTRACT_AMENDMENT",
+        "CASE-160-CREDIT_LEDGER",
+        "CASE-160-INCIDENTS",
+        "CASE-160-INVOICE",
+        "CASE-160-MAINTENANCE_NOTICES",
+        "CASE-160-OPERATIONS",
+        "CASE-160-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-161",
+    "scenario": "active_security",
+    "size_band": "large",
+    "input_characters": 118273,
+    "request_text_characters": 125552,
+    "estimated_tokens_at_four_chars": 31388,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-161",
+      "contract_id": "CASE-161-AMENDMENT",
+      "eligible_fee_cents": 153517,
+      "eligible_outage_minutes": 552,
+      "credit_rate_percent": 20,
+      "credit_cents": 30279,
+      "disposition": "eligible",
+      "priority": "urgent",
+      "queue": "security",
+      "requires_human_review": true,
+      "required_actions": [
+        "open_security_escalation",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-161-ACCOUNT",
+        "CASE-161-CLAIM",
+        "CASE-161-CONTRACT_AMENDMENT",
+        "CASE-161-CREDIT_LEDGER",
+        "CASE-161-INCIDENTS",
+        "CASE-161-INVOICE",
+        "CASE-161-MAINTENANCE_NOTICES",
+        "CASE-161-OPERATIONS",
+        "CASE-161-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-162",
+    "scenario": "contained_security",
+    "size_band": "small",
+    "input_characters": 17574,
+    "request_text_characters": 24853,
+    "estimated_tokens_at_four_chars": 6213,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-162",
+      "contract_id": "CASE-162-AMENDMENT",
+      "eligible_fee_cents": 24020,
+      "eligible_outage_minutes": 178,
+      "credit_rate_percent": 10,
+      "credit_cents": 2402,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-162-ACCOUNT",
+        "CASE-162-CLAIM",
+        "CASE-162-CONTRACT_AMENDMENT",
+        "CASE-162-CREDIT_LEDGER",
+        "CASE-162-INCIDENTS",
+        "CASE-162-INVOICE",
+        "CASE-162-MAINTENANCE_NOTICES",
+        "CASE-162-OPERATIONS",
+        "CASE-162-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-163",
+    "scenario": "pending_evidence",
+    "size_band": "medium",
+    "input_characters": 62378,
+    "request_text_characters": 69657,
+    "estimated_tokens_at_four_chars": 17414,
+    "invoice_lines": 50,
+    "incident_rows": 62,
+    "expected": {
+      "case_id": "CASE-163",
+      "contract_id": "CASE-163-AMENDMENT",
+      "eligible_fee_cents": 66875,
+      "eligible_outage_minutes": 385,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "CASE-163-ACCOUNT",
+        "CASE-163-CLAIM",
+        "CASE-163-CONTRACT_AMENDMENT",
+        "CASE-163-CREDIT_LEDGER",
+        "CASE-163-INCIDENTS",
+        "CASE-163-INVOICE",
+        "CASE-163-MAINTENANCE_NOTICES",
+        "CASE-163-OPERATIONS",
+        "CASE-163-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-164",
+    "scenario": "claim_conflict",
+    "size_band": "large",
+    "input_characters": 118134,
+    "request_text_characters": 125413,
+    "estimated_tokens_at_four_chars": 31353,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-164",
+      "contract_id": "CASE-164-AMENDMENT",
+      "eligible_fee_cents": 158923,
+      "eligible_outage_minutes": 522,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "CASE-164-ACCOUNT",
+        "CASE-164-CLAIM",
+        "CASE-164-CONTRACT_AMENDMENT",
+        "CASE-164-CREDIT_LEDGER",
+        "CASE-164-INCIDENTS",
+        "CASE-164-INVOICE",
+        "CASE-164-MAINTENANCE_NOTICES",
+        "CASE-164-OPERATIONS",
+        "CASE-164-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-165",
+    "scenario": "cap_exhausted",
+    "size_band": "small",
+    "input_characters": 17462,
+    "request_text_characters": 24741,
+    "estimated_tokens_at_four_chars": 6185,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-165",
+      "contract_id": "CASE-165-AMENDMENT",
+      "eligible_fee_cents": 22868,
+      "eligible_outage_minutes": 178,
+      "credit_rate_percent": 10,
+      "credit_cents": 0,
+      "disposition": "cap_exhausted",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-165-ACCOUNT",
+        "CASE-165-CLAIM",
+        "CASE-165-CONTRACT_AMENDMENT",
+        "CASE-165-CREDIT_LEDGER",
+        "CASE-165-INCIDENTS",
+        "CASE-165-INVOICE",
+        "CASE-165-MAINTENANCE_NOTICES",
+        "CASE-165-OPERATIONS",
+        "CASE-165-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-166",
+    "scenario": "already_credited",
+    "size_band": "medium",
+    "input_characters": 61911,
+    "request_text_characters": 69190,
+    "estimated_tokens_at_four_chars": 17298,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-166",
+      "contract_id": "CASE-166-AMENDMENT",
+      "eligible_fee_cents": 92785,
+      "eligible_outage_minutes": 361,
+      "credit_rate_percent": 20,
+      "credit_cents": 0,
+      "disposition": "already_credited",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-166-ACCOUNT",
+        "CASE-166-CLAIM",
+        "CASE-166-CONTRACT_AMENDMENT",
+        "CASE-166-CREDIT_LEDGER",
+        "CASE-166-INCIDENTS",
+        "CASE-166-INVOICE",
+        "CASE-166-MAINTENANCE_NOTICES",
+        "CASE-166-OPERATIONS",
+        "CASE-166-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-167",
+    "scenario": "ineligible_plan",
+    "size_band": "large",
+    "input_characters": 117916,
+    "request_text_characters": 125195,
+    "estimated_tokens_at_four_chars": 31299,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-167",
+      "contract_id": "CASE-167-AMENDMENT",
+      "eligible_fee_cents": 129406,
+      "eligible_outage_minutes": 506,
+      "credit_rate_percent": 20,
+      "credit_cents": 0,
+      "disposition": "ineligible_plan",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-167-ACCOUNT",
+        "CASE-167-CLAIM",
+        "CASE-167-CONTRACT_AMENDMENT",
+        "CASE-167-CREDIT_LEDGER",
+        "CASE-167-INCIDENTS",
+        "CASE-167-INVOICE",
+        "CASE-167-MAINTENANCE_NOTICES",
+        "CASE-167-OPERATIONS",
+        "CASE-167-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-168",
+    "scenario": "ongoing_outage",
+    "size_band": "small",
+    "input_characters": 17454,
+    "request_text_characters": 24733,
+    "estimated_tokens_at_four_chars": 6183,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-168",
+      "contract_id": "CASE-168-AMENDMENT",
+      "eligible_fee_cents": 20691,
+      "eligible_outage_minutes": 190,
+      "credit_rate_percent": 20,
+      "credit_cents": 2653,
+      "disposition": "eligible",
+      "priority": "urgent",
+      "queue": "technical",
+      "requires_human_review": false,
+      "required_actions": [
+        "investigate_service_incident",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-168-ACCOUNT",
+        "CASE-168-CLAIM",
+        "CASE-168-CONTRACT_AMENDMENT",
+        "CASE-168-CREDIT_LEDGER",
+        "CASE-168-INCIDENTS",
+        "CASE-168-INVOICE",
+        "CASE-168-MAINTENANCE_NOTICES",
+        "CASE-168-OPERATIONS",
+        "CASE-168-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-169",
+    "scenario": "threshold_boundary",
+    "size_band": "large",
+    "input_characters": 117044,
+    "request_text_characters": 124323,
+    "estimated_tokens_at_four_chars": 31081,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-169",
+      "contract_id": "CASE-169-AMENDMENT",
+      "eligible_fee_cents": 158313,
+      "eligible_outage_minutes": 29,
+      "credit_rate_percent": 0,
+      "credit_cents": 0,
+      "disposition": "no_eligible_credit",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-169-ACCOUNT",
+        "CASE-169-CLAIM",
+        "CASE-169-CONTRACT_AMENDMENT",
+        "CASE-169-CREDIT_LEDGER",
+        "CASE-169-INCIDENTS",
+        "CASE-169-INVOICE",
+        "CASE-169-OPERATIONS",
+        "CASE-169-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-170",
+    "scenario": "overlapping_monitors",
+    "size_band": "small",
+    "input_characters": 18020,
+    "request_text_characters": 25299,
+    "estimated_tokens_at_four_chars": 6325,
+    "invoice_lines": 12,
+    "incident_rows": 14,
+    "expected": {
+      "case_id": "CASE-170",
+      "contract_id": "CASE-170-AMENDMENT",
+      "eligible_fee_cents": 15826,
+      "eligible_outage_minutes": 170,
+      "credit_rate_percent": 10,
+      "credit_cents": 1583,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-170-ACCOUNT",
+        "CASE-170-CLAIM",
+        "CASE-170-CONTRACT_AMENDMENT",
+        "CASE-170-CREDIT_LEDGER",
+        "CASE-170-INCIDENTS",
+        "CASE-170-INVOICE",
+        "CASE-170-MAINTENANCE_NOTICES",
+        "CASE-170-OPERATIONS",
+        "CASE-170-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-171",
+    "scenario": "late_claim",
+    "size_band": "medium",
+    "input_characters": 61960,
+    "request_text_characters": 69239,
+    "estimated_tokens_at_four_chars": 17310,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-171",
+      "contract_id": "CASE-171-AMENDMENT",
+      "eligible_fee_cents": 63835,
+      "eligible_outage_minutes": 335,
+      "credit_rate_percent": 20,
+      "credit_cents": 0,
+      "disposition": "late_claim",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-171-ACCOUNT",
+        "CASE-171-CLAIM",
+        "CASE-171-CONTRACT_AMENDMENT",
+        "CASE-171-CREDIT_LEDGER",
+        "CASE-171-INCIDENTS",
+        "CASE-171-INVOICE",
+        "CASE-171-MAINTENANCE_NOTICES",
+        "CASE-171-OPERATIONS",
+        "CASE-171-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-172",
+    "scenario": "deadline_correction",
+    "size_band": "large",
+    "input_characters": 117920,
+    "request_text_characters": 125199,
+    "estimated_tokens_at_four_chars": 31300,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-172",
+      "contract_id": "CASE-172-AMENDMENT",
+      "eligible_fee_cents": 134986,
+      "eligible_outage_minutes": 576,
+      "credit_rate_percent": 20,
+      "credit_cents": 26997,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-172-ACCOUNT",
+        "CASE-172-CLAIM",
+        "CASE-172-CONTRACT_AMENDMENT",
+        "CASE-172-CREDIT_LEDGER",
+        "CASE-172-INCIDENTS",
+        "CASE-172-INVOICE",
+        "CASE-172-MAINTENANCE_NOTICES",
+        "CASE-172-OPERATIONS",
+        "CASE-172-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-173",
+    "scenario": "active_security",
+    "size_band": "small",
+    "input_characters": 17590,
+    "request_text_characters": 24869,
+    "estimated_tokens_at_four_chars": 6217,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-173",
+      "contract_id": "CASE-173-AMENDMENT",
+      "eligible_fee_cents": 27033,
+      "eligible_outage_minutes": 176,
+      "credit_rate_percent": 10,
+      "credit_cents": 2703,
+      "disposition": "eligible",
+      "priority": "urgent",
+      "queue": "security",
+      "requires_human_review": true,
+      "required_actions": [
+        "open_security_escalation",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-173-ACCOUNT",
+        "CASE-173-CLAIM",
+        "CASE-173-CONTRACT_AMENDMENT",
+        "CASE-173-CREDIT_LEDGER",
+        "CASE-173-INCIDENTS",
+        "CASE-173-INVOICE",
+        "CASE-173-MAINTENANCE_NOTICES",
+        "CASE-173-OPERATIONS",
+        "CASE-173-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-174",
+    "scenario": "contained_security",
+    "size_band": "medium",
+    "input_characters": 61560,
+    "request_text_characters": 68839,
+    "estimated_tokens_at_four_chars": 17210,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-174",
+      "contract_id": "CASE-174-AMENDMENT",
+      "eligible_fee_cents": 93228,
+      "eligible_outage_minutes": 373,
+      "credit_rate_percent": 20,
+      "credit_cents": 18204,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-174-ACCOUNT",
+        "CASE-174-CLAIM",
+        "CASE-174-CONTRACT_AMENDMENT",
+        "CASE-174-CREDIT_LEDGER",
+        "CASE-174-INCIDENTS",
+        "CASE-174-INVOICE",
+        "CASE-174-MAINTENANCE_NOTICES",
+        "CASE-174-OPERATIONS",
+        "CASE-174-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-175",
+    "scenario": "pending_evidence",
+    "size_band": "large",
+    "input_characters": 118406,
+    "request_text_characters": 125685,
+    "estimated_tokens_at_four_chars": 31421,
+    "invoice_lines": 100,
+    "incident_rows": 122,
+    "expected": {
+      "case_id": "CASE-175",
+      "contract_id": "CASE-175-AMENDMENT",
+      "eligible_fee_cents": 158730,
+      "eligible_outage_minutes": 550,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "CASE-175-ACCOUNT",
+        "CASE-175-CLAIM",
+        "CASE-175-CONTRACT_AMENDMENT",
+        "CASE-175-CREDIT_LEDGER",
+        "CASE-175-INCIDENTS",
+        "CASE-175-INVOICE",
+        "CASE-175-MAINTENANCE_NOTICES",
+        "CASE-175-OPERATIONS",
+        "CASE-175-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-176",
+    "scenario": "claim_conflict",
+    "size_band": "small",
+    "input_characters": 17563,
+    "request_text_characters": 24842,
+    "estimated_tokens_at_four_chars": 6210,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-176",
+      "contract_id": "CASE-176-AMENDMENT",
+      "eligible_fee_cents": 15157,
+      "eligible_outage_minutes": 168,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "CASE-176-ACCOUNT",
+        "CASE-176-CLAIM",
+        "CASE-176-CONTRACT_AMENDMENT",
+        "CASE-176-CREDIT_LEDGER",
+        "CASE-176-INCIDENTS",
+        "CASE-176-INVOICE",
+        "CASE-176-MAINTENANCE_NOTICES",
+        "CASE-176-OPERATIONS",
+        "CASE-176-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-177",
+    "scenario": "cap_exhausted",
+    "size_band": "medium",
+    "input_characters": 61482,
+    "request_text_characters": 68761,
+    "estimated_tokens_at_four_chars": 17190,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-177",
+      "contract_id": "CASE-177-AMENDMENT",
+      "eligible_fee_cents": 85392,
+      "eligible_outage_minutes": 347,
+      "credit_rate_percent": 20,
+      "credit_cents": 0,
+      "disposition": "cap_exhausted",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-177-ACCOUNT",
+        "CASE-177-CLAIM",
+        "CASE-177-CONTRACT_AMENDMENT",
+        "CASE-177-CREDIT_LEDGER",
+        "CASE-177-INCIDENTS",
+        "CASE-177-INVOICE",
+        "CASE-177-MAINTENANCE_NOTICES",
+        "CASE-177-OPERATIONS",
+        "CASE-177-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-178",
+    "scenario": "already_credited",
+    "size_band": "large",
+    "input_characters": 117937,
+    "request_text_characters": 125216,
+    "estimated_tokens_at_four_chars": 31304,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "CASE-178",
+      "contract_id": "CASE-178-AMENDMENT",
+      "eligible_fee_cents": 149845,
+      "eligible_outage_minutes": 516,
+      "credit_rate_percent": 20,
+      "credit_cents": 0,
+      "disposition": "already_credited",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-178-ACCOUNT",
+        "CASE-178-CLAIM",
+        "CASE-178-CONTRACT_AMENDMENT",
+        "CASE-178-CREDIT_LEDGER",
+        "CASE-178-INCIDENTS",
+        "CASE-178-INVOICE",
+        "CASE-178-MAINTENANCE_NOTICES",
+        "CASE-178-OPERATIONS",
+        "CASE-178-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-179",
+    "scenario": "ineligible_plan",
+    "size_band": "small",
+    "input_characters": 17537,
+    "request_text_characters": 24816,
+    "estimated_tokens_at_four_chars": 6204,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "CASE-179",
+      "contract_id": "CASE-179-AMENDMENT",
+      "eligible_fee_cents": 18993,
+      "eligible_outage_minutes": 178,
+      "credit_rate_percent": 10,
+      "credit_cents": 0,
+      "disposition": "ineligible_plan",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "CASE-179-ACCOUNT",
+        "CASE-179-CLAIM",
+        "CASE-179-CONTRACT_AMENDMENT",
+        "CASE-179-CREDIT_LEDGER",
+        "CASE-179-INCIDENTS",
+        "CASE-179-INVOICE",
+        "CASE-179-MAINTENANCE_NOTICES",
+        "CASE-179-OPERATIONS",
+        "CASE-179-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "CASE-180",
+    "scenario": "ongoing_outage",
+    "size_band": "medium",
+    "input_characters": 61803,
+    "request_text_characters": 69082,
+    "estimated_tokens_at_four_chars": 17270,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "CASE-180",
+      "contract_id": "CASE-180-AMENDMENT",
+      "eligible_fee_cents": 73332,
+      "eligible_outage_minutes": 331,
+      "credit_rate_percent": 20,
+      "credit_cents": 10524,
+      "disposition": "eligible",
+      "priority": "high",
+      "queue": "technical",
+      "requires_human_review": false,
+      "required_actions": [
+        "investigate_service_incident",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "CASE-180-ACCOUNT",
+        "CASE-180-CLAIM",
+        "CASE-180-CONTRACT_AMENDMENT",
+        "CASE-180-CREDIT_LEDGER",
+        "CASE-180-INCIDENTS",
+        "CASE-180-INVOICE",
+        "CASE-180-MAINTENANCE_NOTICES",
+        "CASE-180-OPERATIONS",
+        "CASE-180-SECURITY"
+      ]
+    }
+  }
+]

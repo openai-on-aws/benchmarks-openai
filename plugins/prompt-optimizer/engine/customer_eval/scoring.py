@@ -31,11 +31,19 @@ def grade(config, case, result, judge):
                 if rule['type'] in TYPES:
                     checks[check['id']] = grade_turns(case, result, rule)
                     continue
-                expected = at(case['expected'], rule.get('expected_key', check['id']))
                 kind = rule['type']
+                if kind == 'json_schema':
+                    from .json_grading import grade_json_schema
+                    checks[check['id']] = grade_json_schema(result.get('outputs'), rule['schema'], at)
+                    continue
+                expected = at(case['expected'], rule.get('expected_key', check['id']))
                 if kind == 'json_equals':
                     from .json_grading import grade_json
                     checks[check['id']] = grade_json(result.get('outputs'), expected, rule['path'], at)
+                    continue
+                elif kind == 'json_set_equals':
+                    from .json_grading import grade_json_set
+                    checks[check['id']] = grade_json_set(result.get('outputs'), expected, rule['path'], at)
                     continue
                 elif kind == 'contains':
                     passed = str(expected).casefold() in result['outputs'][-1].casefold()

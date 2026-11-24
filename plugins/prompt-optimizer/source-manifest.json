@@ -808,15 +808,38 @@
     "engine/README.md",
     "engine/RUN-AGENTCORE.md",
     "engine/VERIFICATION.md",
+    "engine/customer_eval/contract.py",
+    "engine/customer_eval/feedback.py",
+    "engine/customer_eval/json_grading.py",
+    "engine/customer_eval/preflight.py",
     "engine/customer_eval/project.py",
+    "engine/customer_eval/project_cloud.py",
+    "engine/customer_eval/runner.py",
+    "engine/customer_eval/scoring.py",
+    "engine/customer_eval/transport.py",
     "engine/customer_eval/vendor/modelshift/LICENSE",
     "engine/intake/skills/eval-intake/assets/evaluation-input.schema.json",
-    "engine/model_config.py"
+    "engine/model_config.py",
+    "engine/optimizer.py",
+    "engine/runtime/coordinator.py",
+    "engine/scripts/deploy_agentcore.py",
+    "engine/tests/test_guided_customer.py",
+    "engine/tests/test_optimizer_provenance.py"
   ],
   "recorded_report_runtime_ids_redacted": 72,
   "packaging_notes": [
     "MIT-0 license verified against the recorded upstream commit.",
     "Archive-relative documentation paths adapted to the installed plugin.",
     "Trailing blank lines normalized in licenses/model_config.py; CSV uses LF line endings."
-  ]
+  ],
+  "added_engine_files": [
+    "engine/customer_eval/cloud_limits.py",
+    "engine/tests/test_complex_guided.py",
+    "engine/tests/test_feedback_budget.py",
+    "engine/tests/test_large_cloud_study.py",
+    "engine/tests/test_provider_error_diagnostics.py",
+    "engine/tests/test_provider_request_timeouts.py",
+    "engine/tests/test_feedback_actionable.py"
+  ],
+  "integration_version": "0.5.8"
 }

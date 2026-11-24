@@ -5,36 +5,45 @@ the workflow and evaluator; your studies, environments and reports live
 outside its installed cache. Follow steps **1–5** for Codex, or use the
 [terminal-only alternative](#alternative-run-the-demo-directly-from-a-terminal).
 
-## 1. Install or refresh the plugin
+## 1. Select the integration branch
 
-For a first installation:
+This guide uses `codex/prompt-optimizer-integration-20261124` in
+`openai-on-aws/benchmarks-openai`, under the marketplace name `openai-on-aws`.
+Check existing registrations first:
 
 ```bash
-codex plugin marketplace add openai-on-aws/benchmarks-openai --ref feature/customer-eval-plugin
-codex plugin add prompt-optimizer@openai-on-aws
+codex plugin marketplace list --json
 ```
 
-If the marketplace already uses this feature branch, get the current version:
+If `openai-on-aws` is not registered:
 
 ```bash
-codex plugin marketplace upgrade openai-on-aws
-codex plugin add prompt-optimizer@openai-on-aws
+codex plugin marketplace add openai-on-aws/benchmarks-openai --ref codex/prompt-optimizer-integration-20261124
 ```
 
-If the marketplace is registered from `main`, follow the
-[source-switch instructions](../README.md#1-install-in-codex). The feature
-branch is still named `feature/customer-eval-plugin`; the plugin itself is
-`prompt-optimizer`.
+If that name already points to this repository and branch, refresh it with
+`codex plugin marketplace upgrade openai-on-aws`. If it points to another branch
+or local directory, review it before changing the source. An upgrade does not
+switch branches. The [installation guide](../README.md#1-install-in-codex)
+explains how to switch deliberately or use a local clone; both use the same
+marketplace name. You can also load the clone's
+`plugins/prompt-optimizer/skills/evaluate-workflows/SKILL.md` directly without
+changing the registration.
 
-## 2. Verify the local installation
+## 2. Install and verify the plugin
 
 ```bash
+codex plugin add prompt-optimizer@openai-on-aws
 codex plugin list --marketplace openai-on-aws --json
 ```
 
 Find `pluginId: "prompt-optimizer@openai-on-aws"` with `installed: true` and
 `enabled: true`. This checks the plugin on this computer; a GitHub branch or an
 available marketplace entry alone does not establish local installation.
+
+Earlier review ZIPs used the separate `customer-eval-integration` marketplace.
+That installed copy is not updated by these commands. Use the `openai-on-aws`
+copy for this branch and verify it before removing any older installation.
 
 ## 3. Open a new session
 
@@ -55,6 +64,10 @@ available in new sessions; see the
 
 Choose one of the following paths. For a first look, start with the recorded
 dashboard; the other prompts are alternatives, not additional required steps.
+For a question about your own workflow, Codex starts with one or two business
+questions, then asks for your prompt, examples and policy. The bundled examples
+are used only when you choose them; describing your labels as synthetic does
+not select a starter or replace your own files.
 
 **Recorded dashboard — no model or AWS calls:**
 
@@ -70,7 +83,8 @@ synthetic, unreviewed evidence can actually prove. Make no new model or AWS call
 ```text
 Use Prompt Optimizer to help me choose between two models for my workflow.
 Start by asking what failure would be most costly, what quality I require,
-and what latency I can tolerate. Keep one fixed prompt and two model routes.
+and what latency I can tolerate, one or two questions at a time.
+Keep one fixed prompt and two model routes.
 Help me inspect my inputs and expected answers, then choose local, AgentCore,
 or both before freezing the study. Prepare a reviewable plan before execution.
 ```
@@ -112,8 +126,12 @@ does not deploy resources or make model calls.
 
 For the recorded prompt, open `recorded-demo/dashboard.html`. For a fresh or
 existing study, open the dashboard path returned by Codex. Start in **Overview**
-for model tradeoffs, then use **Trial explorer** to inspect individual answers
-and **Run integrity** to check evidence coverage.
+for model tradeoffs, then use **Test cases** to inspect individual answers
+and **Run details** to check evidence coverage.
+
+Each test case names its model and prompt version. Select the prompt link in
+the answer details to read the full prompt in **Run details**. Failed checks
+show saved field differences, missing or unexpected values, and schema errors.
 
 A preparation prompt can stop at an input preview and a plan. Review those
 before authorizing a live run; there will be no fresh results yet. Use the
@@ -125,19 +143,23 @@ AgentCore infrastructure. Reuse choices and authorization already supplied.
 This path replaces steps 1–5 and uses a repository checkout plus Python's
 standard library. It makes no model or AWS calls.
 
-### A1. Create a workspace and clone the feature branch
+### A1. Clone this branch and choose a workspace
 
 ```bash
+git clone --branch codex/prompt-optimizer-integration-20261124 https://github.com/openai-on-aws/benchmarks-openai.git
+export EVAL_PLUGIN="$(pwd)/benchmarks-openai/plugins/prompt-optimizer"
 mkdir -p ~/prompt-optimizer-work
 cd ~/prompt-optimizer-work
-git clone --branch feature/customer-eval-plugin \
-  https://github.com/openai-on-aws/benchmarks-openai.git
 ```
+
+If you already cloned this branch, set `EVAL_PLUGIN` to its absolute
+`plugins/prompt-optimizer` path instead of cloning it again. No marketplace
+registration is needed for this terminal-only path.
 
 ### A2. Copy the recorded evidence and render its dashboard
 
 ```bash
-python3 benchmarks-openai/plugins/prompt-optimizer/scripts/invoice_eval.py \
+python3 "$EVAL_PLUGIN/scripts/workflow_eval.py" \
   demo --output recorded-demo
 ```
 
@@ -158,11 +180,53 @@ for another copy.
 After updating the checkout, rebuild from the same recorded evidence:
 
 ```bash
-python3 benchmarks-openai/plugins/prompt-optimizer/scripts/invoice_eval.py \
+python3 "$EVAL_PLUGIN/scripts/workflow_eval.py" \
   dashboard --project recorded-demo \
   --output recorded-demo/dashboard.html --force
 ```
 
 For a fresh study's preparation and execution commands, use the
-[workflow reference](../skills/evaluate-invoices/references/workflow.md) or
+[workflow reference](../skills/evaluate-workflows/references/workflow.md) or
 [triage starter guide](../examples/support-ticket-triage/README.md).
+
+## Python for a new study
+
+Choose your input source and inspect the supplied prompt and examples before
+setting up a study environment. Discovery does not require dependencies.
+
+Study commands require Python 3.12. Check `python3.12 --version`; if that command
+is absent, locate an existing interpreter before treating setup as blocked:
+
+1. In Codex, use `load_workspace_dependencies` when available and take the
+   Python executable path it returns. Verify its version; the bundled version
+   is not assumed to be 3.12.
+2. Otherwise inspect an existing workspace virtual environment or the user's
+   configured uv, pyenv or mise toolchain for an installed Python 3.12.
+3. Set `EVAL_BASE_PYTHON` to the verified absolute path. Do not hardcode another
+   user's runtime path or substitute an older system Python.
+
+Use the selected interpreter to create the workspace environment:
+
+```bash
+export EVAL_BASE_PYTHON=/absolute/path/to/verified/python
+"$EVAL_BASE_PYTHON" -c 'import sys; assert sys.version_info[:2] == (3, 12), sys.version; print(sys.executable)'
+"$EVAL_BASE_PYTHON" -m venv "$EVAL_WORKSPACE/.venv"
+export EVAL_PYTHON="$EVAL_WORKSPACE/.venv/bin/python"
+"$EVAL_PYTHON" -m pip install -r "$EVAL_PLUGIN/requirements.txt"
+```
+
+`EVAL_WORKSPACE` and `EVAL_PLUGIN` are the chosen workspace and absolute plugin
+directory. If no compatible interpreter is available, continue collecting the
+customer's inputs and unresolved decisions, then resolve interpreter setup
+before study commands. A missing PATH entry alone is not proof that Python 3.12
+is unavailable. Keep the pinned dependencies unchanged.
+
+## Optimize a prompt
+
+In Codex, ask: “Use the evaluation skill to help improve my application prompt.
+I have logs, but I’m not sure what else you need.” Answer the questions as they
+arise. Source model, target model and optimizer model are separate choices.
+The [optimization walkthrough](../skills/evaluate-workflows/references/optimization.md)
+shows the same entrypoint in optimize mode and the resulting prompt artifacts.
+The installation steps above select this integration branch. A local clone can
+also supply the same skill directly; older ZIPs retain their packaged version.

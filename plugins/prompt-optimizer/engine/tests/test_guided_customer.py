@@ -176,8 +176,9 @@ def test_feedback_uses_distinct_cases_and_keeps_large_failure(prepared):
     feedback = development_feedback(cfg, cfg['prompt'], rows)
     assert len(feedback['examples']) == 3
     assert len({x['case_id'] for x in feedback['examples']}) == 3
-    assert feedback['examples'][0]['partial_context'] is True
-    assert 'invalid_json' in feedback['examples'][0]['checks_excerpt']
+    assert 'partial_context' not in feedback['examples'][0]
+    assert feedback['examples'][0]['expected']['notes'] == development[0]['expected']['notes']
+    assert 'invalid_json' in json.dumps(feedback['examples'][0]['checks'])
 
 
 def test_recorded_agreement_does_not_use_supplied_oracle(prepared):

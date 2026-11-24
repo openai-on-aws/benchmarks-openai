@@ -11,12 +11,9 @@
     "kind": "json_equals",
     "reference_source": "supplied",
     "fields": [
-      "category",
-      "priority",
-      "queue",
-      "needs_review"
+      ""
     ],
-    "description": "Does each configured triage field match its constructed synthetic reference? These labels are unreviewed."
+    "description": "Does the complete JSON object match the constructed reference, including field types and no extra fields? These labels are unreviewed."
   },
   "repetitions": 1,
   "concurrency": 2,

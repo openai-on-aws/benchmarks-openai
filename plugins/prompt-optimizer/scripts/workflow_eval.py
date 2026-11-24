@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare invoice extraction or ticket triage in Codex, locally, or on AgentCore."""
+"""Compare models or optimize a text-task prompt from Codex, locally or on AgentCore."""
 from __future__ import annotations
 
 import argparse
@@ -12,12 +12,47 @@ PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 ENGINE = PLUGIN_ROOT / "engine"
 
 
+def require_study_python():
+    """Reject unsupported interpreters before importing pinned engine dependencies."""
+    if sys.version_info[:2] != (3, 12):
+        version = ".".join(map(str, sys.version_info[:3]))
+        raise ValueError(
+            f"Study commands require Python 3.12; found Python {version} at {sys.executable}. "
+            "Create a workspace environment with python3.12 -m venv /path/to/workspace/.venv, "
+            "then use that environment's Python to install "
+            f"-r {PLUGIN_ROOT / 'requirements.txt'} and rerun this command. "
+            "Keep the pinned dependency versions unchanged. "
+            "The recorded demo and saved dashboard do not require engine dependencies."
+        )
+
+
 def writable_workspace(path: str) -> Path:
     """Installed plugin files are inputs; user projects and results live elsewhere."""
     resolved = Path(path).expanduser().resolve()
     if resolved.is_relative_to(PLUGIN_ROOT):
         raise ValueError("Choose a project/output directory outside the installed plugin.")
     return resolved
+
+
+def decision_paths(patch, decision_file):
+    """Persist file references relative to the answer file, independent of cwd."""
+    from copy import deepcopy
+    value = deepcopy(patch)
+    if not isinstance(value, dict):
+        raise ValueError('Decisions must be a JSON object')
+    base = Path(decision_file).expanduser().resolve().parent
+    def resolve(path):
+        if not isinstance(path, str):
+            raise ValueError('File references must be path strings')
+        path = Path(path).expanduser()
+        return str((base / path if not path.is_absolute() else path).resolve())
+    for key in ('connection', 'label_review_file'):
+        if value.get(key) is not None:
+            value[key] = resolve(value[key])
+    quality = value.get('quality')
+    if isinstance(quality, dict) and quality.get('reference_file') is not None:
+        quality['reference_file'] = resolve(quality['reference_file'])
+    return value
 
 
 def parser() -> argparse.ArgumentParser:
@@ -30,16 +65,23 @@ def parser() -> argparse.ArgumentParser:
     dashboard.add_argument("--output", required=True, help="HTML file outside the installed plugin")
     dashboard.add_argument("--title", help="Display title for this comparison")
     dashboard.add_argument("--force", action="store_true", help="Replace an existing dashboard HTML file")
-    for action in ("start", "inspect", "configure", "prepare", "plan", "run", "status", "results"):
+    for action in ("start", "inspect", "configure", "review-template", "prepare", "plan", "preflight", "run", "status", "results"):
         command = commands.add_parser(action)
         command.add_argument("--project", required=True, help="User-owned evaluation directory")
         if action == "start":
-            command.add_argument("--goal", default="Compare invoice extraction quality, model cost and latency with one fixed prompt.")
+            command.add_argument("--goal", default="Compare customer workflow quality, model cost and latency.")
+            command.add_argument("--mode", choices=("compare", "optimize"), default=None,
+                                 help="Compare models with a fixed prompt (default), or generate and evaluate prompt revisions")
         elif action == "inspect":
             command.add_argument("--input", action="append", help="Evaluation log or manual JSON/JSONL file; repeat as needed")
             command.add_argument("--sources", help="JSON array of paths with optional per-file mappings")
         elif action == "configure":
             command.add_argument("--decisions", required=True, help="JSON containing the user's newly resolved choices")
+        elif action == "review-template":
+            command.add_argument("--output", required=True, help="New review template for a human to complete; does not approve labels")
+        elif action == "preflight":
+            command.add_argument("--backend", choices=("local", "agentcore"), default="local")
+            command.add_argument("--deployment-receipt", help="Runtime upgrade receipt for implementation verification")
         elif action in ("run", "status", "results"):
             command.add_argument("--backend", choices=("local", "agentcore"), default="agentcore")
             if action == "run":
@@ -120,6 +162,7 @@ def main(argv=None) -> int:
             # Reject accidental execution before loading any model/provider dependencies.
             if args.action == "run" and not args.live:
                 raise ValueError("Running models requires the user's authorization and --live.")
+            require_study_python()
             sys.path.insert(0, str(ENGINE))
             from customer_eval import project
 
@@ -127,8 +170,10 @@ def main(argv=None) -> int:
                 existing = (directory / "project.json").exists()
                 state = project.start(directory, args.goal)
                 if not existing:
-                    value = project.configure(directory, {"optimization_enabled": False})
+                    value = project.configure(directory, {"optimization_enabled": args.mode == "optimize"})
                 else:
+                    if args.mode is not None and state['decisions'].get('optimization_enabled', True) != (args.mode == 'optimize'):
+                        raise ValueError('Existing project has a different mode. Use configure before preparation, or create a new project revision.')
                     value = project.status(directory)
             elif args.action == "inspect":
                 if args.sources and args.input:
@@ -139,7 +184,16 @@ def main(argv=None) -> int:
                 state = project.read(directory / "project.json")
                 value = project.inspect(directory, sources, prompt_location=state["decisions"].get("prompt_location"))
             elif args.action == "configure":
-                value = project.configure(directory, project.read(args.decisions))
+                value = project.configure(directory, decision_paths(project.read(args.decisions), args.decisions))
+            elif args.action == "review-template":
+                from customer_eval.label_review import write_review_template
+                destination = writable_workspace(args.output)
+                if destination.exists():
+                    raise ValueError('Review output already exists; preserve it or choose a new file.')
+                cases, _, _ = project.prepare_cases(directory, apply_reviews=False)
+                write_review_template(cases, destination)
+                value = {'status': 'review_template_ready', 'path': str(destination), 'cases': len(cases),
+                         'message': 'A human must review individual references and complete the attestations. This template grants no review status.'}
             elif args.action == "prepare":
                 value = project.prepare(directory)
             elif args.action == "plan":
@@ -162,6 +216,9 @@ def main(argv=None) -> int:
                     "model_budget_usd": config["document"]["execution"]["budget_usd"],
                     "calls_made": 0,
                 }
+            elif args.action == "preflight":
+                from customer_eval.preflight import inspect
+                value = inspect(directory, backend=args.backend, deployment_receipt=args.deployment_receipt)
             elif args.backend == "local":
                 value = run_local(project, directory) if args.action == "run" else local_results(project, directory)
             elif args.action == "status" and not (directory / "submission").exists():
@@ -171,6 +228,8 @@ def main(argv=None) -> int:
 
                 value = project_cloud.run(directory, live=True) if args.action == "run" else project_cloud.refresh(directory)
         print(json.dumps(value, indent=2, ensure_ascii=False))
+        if args.action == "preflight" and value.get("ready_for_qualification") is not True:
+            return 1
         return 0
     except Exception as exc:
         print(json.dumps({

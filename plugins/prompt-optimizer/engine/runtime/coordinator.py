@@ -24,6 +24,19 @@ from customer_eval.runner import Runner
 class CoordinatorPaused(RuntimeError): pass
 
 
+def read_study_input(body):
+    """Bound the full S3 study, independently of each model request envelope."""
+    try:
+        from customer_eval.cloud_limits import study_input_limit
+        maximum = study_input_limit(os.environ)
+        raw = body.read(maximum + 1)
+        if len(raw) > maximum:
+            raise ValueError(f'Cloud input exceeds deployed EVAL_MAX_INPUT_BYTES ({maximum})')
+        return raw
+    finally:
+        body.close()
+
+
 def deadline_guard(started, max_seconds, trial_seconds, *, clock=time.monotonic):
     """Stop at a checkpoint before the microVM's finite lifetime expires."""
     if clock()-started >= max_seconds-max(120,trial_seconds+30):
@@ -40,8 +53,7 @@ def start_job(payload, app):
     if not input_key.startswith(prefix + '/inputs/'):
         raise ValueError('Input key must be under the configured evaluation input prefix')
     s3 = boto3.client('s3')
-    raw = s3.get_object(Bucket=bucket, Key=input_key)['Body'].read(10_000_001)
-    if len(raw) > 10_000_000: raise ValueError('Cloud input exceeds 10 MB limit')
+    raw = read_study_input(s3.get_object(Bucket=bucket, Key=input_key)['Body'])
     config = json.loads(raw)
     fingerprint = config.pop('fingerprint')
     if digest(config) != fingerprint or payload['fingerprint'] != fingerprint:

@@ -5,6 +5,13 @@ description: Guide evaluation discovery from a vague customer request, existing 
 
 # Evaluation intake
 
+When this file is bundled under `prompt-optimizer/engine/`, begin customer
+workflows with the plugin's [Evaluate Workflows skill](../../../../skills/evaluate-workflows/SKILL.md)
+and its absolute `scripts/workflow_eval.py` entrypoint. Use Python 3.12 and the
+plugin root's full `requirements.txt` in a workspace environment. The legacy
+commands and smaller requirements below apply to standalone intake or existing
+Model Upgrade callers; they do not replace the plugin's setup and workflow.
+
 Agree what will be evaluated and produce inputs for the evaluation builder. In the integrated Model Upgrade package, use its saved project helper to connect discovery, input review, correctness checks and the existing AgentCore execution path.
 
 ## Start from supplied materials

@@ -1,5 +1,6 @@
 """Exercise an installed plugin from outside its repository; no live services."""
 import importlib.util
+import io
 import json
 import os
 from pathlib import Path
@@ -16,7 +17,7 @@ PLUGIN = Path(__file__).resolve().parents[1]
 class InstalledPluginTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.cache = tempfile.TemporaryDirectory(prefix="invoice-plugin-cache-")
+        cls.cache = tempfile.TemporaryDirectory(prefix="workflow-plugin-cache-")
         cls.installed = Path(cls.cache.name) / "cache with spaces" / "prompt-optimizer"
         shutil.copytree(PLUGIN, cls.installed, ignore=shutil.ignore_patterns("__pycache__", ".pytest_cache"))
 
@@ -33,7 +34,7 @@ class InstalledPluginTests(unittest.TestCase):
         env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", AWS_EC2_METADATA_DISABLED="true")
         env.pop("PYTHONPATH", None)
         result = subprocess.run(
-            [sys.executable, "-B", str(self.installed / "scripts/invoice_eval.py"), *map(str, args)],
+            [sys.executable, "-B", str(self.installed / "scripts/workflow_eval.py"), *map(str, args)],
             cwd=self.workspace, env=env, capture_output=True, text=True,
         )
         if ok:
@@ -87,14 +88,24 @@ class InstalledPluginTests(unittest.TestCase):
         self.assertEqual(native["name"], codex["name"])
         self.assertEqual(native["version"], codex["version"])
         self.assertEqual(codex["skills"], "./skills/")
-        self.assertEqual([p.parent.name for p in (self.installed / "skills").glob("*/SKILL.md")], ["evaluate-invoices"])
+        self.assertEqual([p.parent.name for p in (self.installed / "skills").glob("*/SKILL.md")], ["evaluate-workflows"])
         self.assertTrue((self.installed / "LICENSE").is_file())
+
+    def test_repository_marketplace_only_references_available_plugins(self):
+        repository = PLUGIN.parents[1]
+        marketplace = json.loads((repository / '.agents/plugins/marketplace.json').read_text())
+        self.assertTrue(marketplace['plugins'])
+        for entry in marketplace['plugins']:
+            path = (repository / entry['source']['path']).resolve()
+            self.assertTrue(path.is_relative_to(repository.resolve()))
+            manifest = json.loads((path / 'plugin.json').read_text())
+            self.assertEqual(entry['name'], manifest['name'])
 
     def test_recorded_demo_is_self_contained_and_needs_no_dependencies(self):
         destination = self.workspace / "report"
         # -S omits site-packages: the demo must use only the standard library.
         result = subprocess.run(
-            [sys.executable, "-S", str(self.installed / "scripts/invoice_eval.py"),
+            [sys.executable, "-S", str(self.installed / "scripts/workflow_eval.py"),
              "demo", "--output", str(destination)],
             cwd=self.workspace, capture_output=True, text=True,
         )
@@ -132,13 +143,28 @@ class InstalledPluginTests(unittest.TestCase):
         self.assertEqual(len(config["models"]), 2)
         self.assertTrue(all(d["label_status"] == "unreviewed" for d in config["datasets"]))
         plan = self.cli("plan", "--project", project)
-        self.assertEqual(plan["fixed_prompt_evaluation_trials_per_backend"], 96)
+        self.assertEqual(plan["fixed_prompt_evaluation_trials_per_backend"], 144)
         self.assertEqual(plan["calls_made"], 0)
         self.assertFalse(plan["prompt_optimization"])
         (project / "prepared/prompt.txt").write_text("Changed after preparation")
         result = self.cli("plan", "--project", project, ok=False)
         self.assertEqual(json.loads(result.stderr)["error_type"], "ValueError")
         self.assertFalse((project / "local").exists())
+
+    def test_preflight_blockers_have_nonzero_exit_and_keep_diagnostic_json(self):
+        project = self.prepare_study()
+        before = (project / 'project.json').read_bytes()
+        # This fixture has no cloud runtime/bucket: fail before any AWS calls.
+        result = self.cli('preflight', '--project', project, '--backend', 'agentcore', ok=False)
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stderr, '')
+        report = json.loads(result.stdout)
+        self.assertFalse(report['ready_for_qualification'])
+        self.assertIn('cloud_connection', report['blockers'])
+        self.assertTrue(report['read_only'])
+        self.assertEqual(report['model_calls'], 0)
+        self.assertEqual((project / 'project.json').read_bytes(), before)
+        self.assertFalse((project / 'submission').exists())
 
     def test_reopening_an_older_intake_preserves_optimization_intent(self):
         project = self.workspace / "legacy"
@@ -155,6 +181,57 @@ class InstalledPluginTests(unittest.TestCase):
             self.assertIn("--live", result.stderr)
         self.assertFalse((self.workspace / "study").exists())
 
+    def test_unsupported_python_fails_before_engine_dependencies(self):
+        spec = importlib.util.spec_from_file_location(
+            "fresh_setup_entrypoint", self.installed / "scripts/workflow_eval.py")
+        entrypoint = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(entrypoint)
+        project = self.workspace / "unsupported-python-study"
+        stderr = io.StringIO()
+        # An attempted engine import would fail with ModuleNotFoundError instead
+        # of the actionable interpreter message, even if this test's Python has
+        # every engine dependency installed.
+        with patch.object(sys, "version_info", (3, 9, 6)), \
+                patch.dict(sys.modules, {"customer_eval": None}), \
+                patch.object(sys, "stderr", stderr):
+            result = entrypoint.main(["start", "--project", str(project)])
+        self.assertEqual(result, 2)
+        response = json.loads(stderr.getvalue())
+        self.assertEqual(response["error_type"], "ValueError")
+        self.assertIn("require Python 3.12", response["message"])
+        self.assertIn("Python 3.9.6", response["message"])
+        self.assertIn(str(self.installed / "requirements.txt"), response["message"])
+        self.assertFalse(project.exists())
+
+    def test_relative_decision_paths_survive_resuming_from_another_directory(self):
+        project = self.workspace / 'relative-study'
+        self.cli('start', '--project', project)
+        answers_dir = self.workspace / 'answers'
+        answers_dir.mkdir()
+        answers = answers_dir / 'choices.json'
+        answers.write_text(json.dumps({'connection': 'connection.json',
+            'label_review_file': 'review.json', 'quality': {'reference_file': 'labels.json'}}))
+        # CLI runs in workspace, while references are relative to the answer file.
+        configured = self.cli('configure', '--project', project, '--decisions', answers)
+        self.assertEqual(configured['decisions']['connection'], str((answers_dir / 'connection.json').resolve()))
+        self.assertEqual(configured['decisions']['label_review_file'], str((answers_dir / 'review.json').resolve()))
+        self.assertEqual(configured['decisions']['quality']['reference_file'], str((answers_dir / 'labels.json').resolve()))
+        result = subprocess.run([sys.executable, str(self.installed / 'scripts/workflow_eval.py'),
+            'status', '--project', str(project)], cwd=answers_dir, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        # Local status reports no completed run, and preserves the saved absolute paths.
+        state = json.loads((project / 'project.json').read_text())
+        self.assertEqual(state['decisions']['connection'], str((answers_dir / 'connection.json').resolve()))
+
+    def test_explicit_optimize_mode_and_reopen_preserve_intent(self):
+        project = self.workspace / 'optimize-study'
+        value = self.cli('start', '--project', project, '--mode', 'optimize')
+        self.assertTrue(value['decisions']['optimization_enabled'])
+        self.assertTrue(any('generate prompt revisions' in q for q in value['missing_decisions']))
+        self.cli('start', '--project', project)
+        self.assertTrue(json.loads((project / 'project.json').read_text())['decisions']['optimization_enabled'])
+        self.cli('start', '--project', project, '--mode', 'compare', ok=False)
+
     def test_uncertain_cloud_submission_is_not_replayed(self):
         project = self.workspace / "study"
         (project / "submission").mkdir(parents=True)
@@ -167,7 +244,7 @@ class InstalledPluginTests(unittest.TestCase):
 
     def test_local_dispatch_preserves_frozen_optimization_choice(self):
         project_dir = self.prepare_study()
-        spec = importlib.util.spec_from_file_location("invoice_plugin_cli", self.installed / "scripts/invoice_eval.py")
+        spec = importlib.util.spec_from_file_location("workflow_plugin_cli", self.installed / "scripts/workflow_eval.py")
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         sys.path.insert(0, str(self.installed / "engine"))

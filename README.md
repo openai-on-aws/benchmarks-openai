@@ -41,7 +41,7 @@ Model and region choices depend on the suite and endpoint.
 
 | What do you want to measure? | Start here |
 | --- | --- |
-| Invoice extraction or support-ticket triage quality, cost and latency | **[Prompt Optimizer](plugins/prompt-optimizer/)** — one fixed prompt, two models, local or AgentCore execution |
+| Quality, cost and latency for text workflows | **[Prompt Optimizer](plugins/prompt-optimizer/)** — fixed-prompt model comparisons or prompt optimization, locally or on AgentCore |
 | Agent task success and cost per successful task | **[Bedrock Bench](plugins/bedrock-bench/)** — starter tasks, CDK repair, Terminal-Bench, SWE-bench, AWS-Bench |
 | Response latency and throughput | [Performance](docs/benchmark-reference.md#performance) — time to first token, tokens/sec, p50/p95/p99 |
 | Accuracy, tool use, research, and work products | [Quality](docs/benchmark-reference.md#quality) — quick evals, agentic tasks, DeepSearchQA, GDPval |

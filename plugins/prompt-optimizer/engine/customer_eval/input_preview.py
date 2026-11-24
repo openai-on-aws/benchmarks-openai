@@ -67,7 +67,9 @@ def write_preview(directory, cases, report, *, config=None):
                 'history_messages': len(case['replay']['request']['input']),
                 'captured_controls': case['metadata'].get('captured_controls', {}),
                 'reference_kind': case['metadata']['reference_kind'],
-                'label_status': case['metadata']['label_status']}
+                'label_status': case['metadata']['label_status'],
+                'expected': case['expected'],
+                'label_review': case['metadata'].get('label_review')}
         if config:
             item['outbound_requests'] = {}
             item['settings_changes'] = {}
@@ -87,6 +89,7 @@ def write_preview(directory, cases, report, *, config=None):
         rows.append(item)
     preview = {'coverage': {k: report[k] for k in ('found', 'accepted', 'dropped', 'reconciles')},
                'prompt_groups': dict(groups), 'excluded_records': details, 'cases': rows,
+               'label_review_scope': dict(Counter(row['label_status'] for row in rows)),
                'data_flow': [
                    'The import and draft are local files. Codex processes the material you provide or let it read.',
                    'A live AgentCore run uploads the selected requests, grading references and configuration to your configured S3 bucket.',

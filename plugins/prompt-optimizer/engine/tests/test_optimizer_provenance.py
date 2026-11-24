@@ -113,7 +113,7 @@ def completion_inputs():
 def test_completion_receipt_preserves_provider_identity_and_effective_settings(monkeypatch, completion_inputs, header):
     route, limits, result = completion_inputs
     sent = []
-    def request(actual_route, body):
+    def request(actual_route, body, timeout=60):
         sent.append(copy.deepcopy(body))
         return ProviderResponse(result, [(header, 'provider-request-id')])
     monkeypatch.setattr(transport, 'request', request)
@@ -136,7 +136,7 @@ def test_completion_receipt_preserves_provider_identity_and_effective_settings(m
 def test_complete_keeps_existing_text_usage_return_contract(monkeypatch, completion_inputs):
     route, limits, result = completion_inputs
     # Existing callers need neither a receipt argument nor response-header handling.
-    monkeypatch.setattr(transport, 'request', lambda *_: BytesIO(json.dumps(result).encode()))
+    monkeypatch.setattr(transport, 'request', lambda *_, **__: BytesIO(json.dumps(result).encode()))
     value = transport.complete(route, 'original caller', limits)
     assert type(value) is tuple and len(value) == 2
     assert value == ('["first","second"]', result['usage'])
@@ -147,7 +147,7 @@ def test_missing_provider_metadata_remains_unknown_and_omitted_settings_stay_omi
     route['parameters'] = {'reasoning': None, 'temperature': None}
     del result['model']
     del result['service_tier']
-    monkeypatch.setattr(transport, 'request', lambda *_: ProviderResponse(result))
+    monkeypatch.setattr(transport, 'request', lambda *_, **__: ProviderResponse(result))
     receipt = {}
     transport.complete(route, 'fixture', limits, receipt=receipt)
     assert receipt['model_returned'] is None and receipt['request_id'] is None
@@ -161,7 +161,7 @@ def test_missing_provider_metadata_remains_unknown_and_omitted_settings_stay_omi
 def test_unsuccessful_completion_does_not_publish_success_metadata(monkeypatch, completion_inputs, change, message):
     route, limits, result = completion_inputs
     result.update(change)
-    monkeypatch.setattr(transport, 'request', lambda *_: ProviderResponse(result))
+    monkeypatch.setattr(transport, 'request', lambda *_, **__: ProviderResponse(result))
     receipt = {}
     with pytest.raises(ValueError, match=message):
         transport.complete(route, 'fixture', limits, receipt=receipt)
@@ -173,7 +173,7 @@ def test_runner_persists_optimizer_receipt_and_reuses_it_without_another_call(mo
     config = load(ROOT / 'examples/log-replay/input.yaml')
     config['routes']['optimizer']['model_id'] = 'requested-optimizer'
     seen = []
-    def request(route, body):
+    def request(route, body, timeout=60):
         seen.append(copy.deepcopy(body))
         return ProviderResponse(result, [('x-amzn-requestid', 'provider-request-id')])
     monkeypatch.setattr(transport, 'request', request)
@@ -204,7 +204,7 @@ def test_runner_reuses_legacy_completion_receipt_without_inventing_metadata(monk
     legacy = {'text': '["saved"]', 'usage': {'input_tokens': 1, 'output_tokens': 1},
               'model_id': 'optimizer', 'purpose': 'optimizer', 'request_text': 'legacy'}
     runner.store.perform(ident, 0, lambda: legacy)
-    monkeypatch.setattr(transport, 'request', lambda *_: pytest.fail('Saved completion must not be replayed'))
+    monkeypatch.setattr(transport, 'request', lambda *_, **__: pytest.fail('Saved completion must not be replayed'))
     try:
         assert runner.call('optimizer', 'legacy', purpose='optimizer') == '["saved"]'
         saved = json.loads(runner.store.db.execute('select value from attempts where id=?', (ident,)).fetchone()[0])

@@ -263,10 +263,20 @@ class Runner:
             if self.backend == 'simulation':
                 from .simulation import mutate
             else:
+                policy_guidance = (
+                    'The immutable instructions below are supplied separately to every application run; '
+                    'do not duplicate them in the editable prompt.'
+                    if self.config['policy'].strip() else
+                    'The evaluator injects no separate immutable policy. Preserve every required rule '
+                    'in the editable prompt unless it is already present in unchanged captured instructions. '
+                    'Customer requirements guide optimization; they are not automatically injected into application requests.'
+                )
                 context_data = {'objective': self.config['document']['experiment']['objective'],
                                       'checks': self.config['document']['checks'],
                                       'selection_policy': cfg.get('selection'),
-                                      'efficiency_guidance': 'When joint optimization is selected, preserve all required tool calls and policy checks. Reduce unnecessary output and redundant instructions. The immutable policy is already supplied; do not repeat it. Never skip required work to appear faster.'}
+                                      'efficiency_guidance': 'When joint optimization is selected, preserve all required tool calls and policy checks. '
+                                          'Reduce unnecessary output and redundant instructions. ' + policy_guidance +
+                                          ' Never skip required work to appear faster.'}
                 # Only general customer requirements belong in mutation context.
                 # The rest of intake_context includes final split identities and
                 # reference locations; it must never be forwarded wholesale.
@@ -274,9 +284,21 @@ class Runner:
                 if rules:
                     context_data['customer_requirements'] = rules
                 context = json.dumps(context_data)
+                def optimizer_request_fits(text):
+                    from .transport import constrain
+                    limits = cfg.get('optimizer_limits', self.limits)
+                    try:
+                        constrain({'input': text, 'stream': False},
+                                  self.config['routes'][cfg['optimizer_model_id']], limits)
+                    except ValueError as exc:
+                        if str(exc).startswith('Request exceeds max_request_bytes'):
+                            return False
+                        raise
+                    return True
                 mutate = make_mutate_fn(lambda text: self.call(cfg['optimizer_model_id'], text, 'optimizer'),
                                         context=context, protected=self.config['policy'],
-                                        feedback_provider=lambda p: mutation_evidence(p, development_evidence))
+                                        feedback_provider=lambda p: mutation_evidence(p, development_evidence),
+                                        request_fits=optimizer_request_fits)
             result = run_hill_climb(seed_prompt=prompt, mutate_fn=mutate, fanout_score_fn=score,
                                    candidates_per_generation=cfg['candidates_per_generation'],
                                    max_generations=self.config['document']['optimization']['max_iterations'],
@@ -288,7 +310,7 @@ class Runner:
                                    mutation_reasons_fn=lambda candidate: candidate.judge_reasoning[:12])
         selected = result.best.prompt if result else prompt
         # Freeze the selected prompt before any final holdout case is executed.
-        frozen = {'prompt': selected, 'sha256': digest(selected), 'selection': 'validation only',
+        frozen = {'prompt': selected, 'sha256': digest(selected), 'selection': 'validation only' if result else 'Fixed prompt; no prompt selection',
                   'policy': cfg.get('selection', {'mode': 'accuracy'}),
                   'reason': result.stopped_reason if result else 'Baseline only'}
         challenger = None

@@ -1,6 +1,13 @@
 # Customer evaluation from Codex
 
-Set `EVAL_PYTHON` to the absolute Python path in your workspace virtual environment; see [plugin setup](../README.md#run-your-own-study).
+For this bundled plugin, start with [Evaluate Workflows](../skills/evaluate-workflows/SKILL.md)
+and the [public workflow](../skills/evaluate-workflows/references/workflow.md):
+Python 3.12, the plugin root's full requirements, and `scripts/workflow_eval.py`.
+The rest of this guide describes the compatibility path for existing Model Upgrade
+callers. Ask the customer's initial discovery questions before setting up Python.
+
+Set `EVAL_PYTHON` to the absolute Python path in your workspace virtual environment;
+see [plugin setup](../skills/evaluate-workflows/references/workflow.md).
 
 Start in Codex with the evaluation intake skill at intake/skills/eval-intake/SKILL.md. For example:
 

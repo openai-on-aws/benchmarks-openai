@@ -14,6 +14,27 @@ def _receipts(directory):
     return sorted((Path(directory) / 'submission').glob('*.json'))
 
 
+def validate_runtime_capacity(config, cloud, runtime):
+    """Reject deployment mismatches before any billable qualification calls."""
+    env = runtime.get('environmentVariables', {})
+    if (env.get('EVAL_ARTIFACT_BUCKET') != cloud['bucket'] or
+            env.get('EVAL_ARTIFACT_PREFIX', 'customer-evaluation') != cloud.get('prefix', 'customer-evaluation')):
+        raise ValueError('Project artifact bucket/prefix must match the deployed runtime')
+    execution = config['document']['execution']
+    limits = config['document']['runner']['limits']
+    from .cloud_limits import study_input_limit
+    input_maximum = study_input_limit(env)
+    for name, requested, default in (
+        ('EVAL_MAX_INPUT_BYTES', len(json.dumps(config).encode()), input_maximum),
+        ('EVAL_MAX_CONCURRENCY', execution['concurrency'], 4),
+        ('EVAL_MAX_TRIAL_SECONDS', execution['timeout_seconds'], 300),
+        ('EVAL_MAX_REQUESTS_PER_TRIAL', limits['max_requests'], 20),
+    ):
+        maximum = int(env.get(name, str(default)))
+        if maximum < 1 or requested > maximum:
+            raise ValueError(f'Study requires {requested} but deployed {name} is {maximum}; update the deployment before qualification')
+
+
 def run(directory, *, live=False):
     if not live:
         raise ValueError('Live execution needs explicit user authorization and --live; preparing an intake does not authorize spend.')
@@ -48,6 +69,7 @@ def run(directory, *, live=False):
             agentRuntimeId=cloud['runtime_arn'].split('/')[-1])
         if runtime['status'] != 'READY':
             raise ValueError('The configured runtime is not ready: ' + runtime['status'])
+        validate_runtime_capacity(config, cloud, runtime)
         save(directory / 'runtime-verification.json', {'account': account, 'region': cloud['region'],
             'runtime_arn': cloud['runtime_arn'], 'version': runtime['agentRuntimeVersion'], 'status': runtime['status']})
         env = dict(os.environ, **read(path.parent / 'endpoints.json'))

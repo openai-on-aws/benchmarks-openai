@@ -5,7 +5,7 @@ Open `index.html` directly in a browser. This is a saved live run from 13 Novemb
 The two backends each completed 96 evaluation trials, plus two route checks. Cost estimates cover model usage only. The interactive page links the underlying reports, summary JSON, CSV and editable AWS architecture.
 
 The plugin's `demo` command also renders these saved reports into
-`dashboard.html`, with overview, trial explorer and run-integrity views.
+`dashboard.html`, with overview, Test cases and Run details views.
 It displays 96 held-out attempts across both backends; the other 96 evaluation
 attempts were validation. Per-run model-cost totals exclude the four separate
 route checks, while `comparison.json` includes them. Rendering the dashboard

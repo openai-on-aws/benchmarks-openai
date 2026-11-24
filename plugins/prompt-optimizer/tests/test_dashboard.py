@@ -1,6 +1,7 @@
 """Portable dashboard evidence semantics; no model or AWS dependencies."""
 import importlib.util
 import base64
+import copy
 import hashlib
 import json
 from pathlib import Path
@@ -66,8 +67,66 @@ class DashboardTests(unittest.TestCase):
         self.assertIsNone(group["score"]["cost_usd_per_session"])
         self.assertEqual(run["groups"][1]["score"]["cost_usd_per_session"], 0)
         self.assertIsNone(group["trials"][0]["cost_usd"])
-        self.assertEqual(group["trials"][0]["turn_records"][0]["user"], "Read this input")
+        trial = group["trials"][0]
+        self.assertEqual(run["input_bundles"][trial["input_ref"]], ["Read this input"])
+        self.assertEqual(trial["turn_records"][0]["user_input_index"], 0)
+        self.assertEqual(trial["turn_records"][0]["output"], "Saved answer")
         self.assertFalse(group["trials"][0]["checks"]["optional_check"]["pass"])
+
+    def test_long_inputs_are_stored_once_without_changing_saved_evidence(self):
+        value = report()
+        text = "Unique long case begins\n" + "context " * 15000 + "\nComplete final line"
+        original = value["holdout"]["source_original"]
+        original["trials"][0]["result"]["turn_records"][0]["user"] = text
+        for key in ("source_original", "target_original", "target_selected"):
+            group = copy.deepcopy(original)
+            group["trials"] = [copy.deepcopy(original["trials"][0]) for _ in range(3)]
+            for repeat, row in enumerate(group["trials"]):
+                row.update(id=f"{key}-{repeat}", repeat=repeat)
+            value["holdout"][key] = group
+        saved = self.save("local", value)
+        before = saved.read_bytes()
+        data = dashboard.build_data(self.root)
+        run = data["reports"][0]
+        self.assertEqual(saved.read_bytes(), before)
+        self.assertEqual(len(run["input_bundles"]), 1)
+        self.assertEqual(next(iter(run["input_bundles"].values())), [text])
+        self.assertEqual(json.dumps(data).count("Unique long case begins"), 1)
+        self.assertLess(len(json.dumps(data)), len(text) * 2)
+        for group in run["groups"]:
+            for trial in group["trials"]:
+                self.assertNotIn("inputs", trial)
+                self.assertNotIn("user", trial["turn_records"][0])
+                self.assertEqual(trial["turn_records"][0]["user_input_index"], 0)
+                self.assertEqual(run["input_bundles"][trial["input_ref"]], [text])
+
+    def test_input_history_identity_uses_content_not_case_id(self):
+        value = report()
+        original = value["holdout"]["source_original"]["trials"][0]
+        first, second = copy.deepcopy(original), copy.deepcopy(original)
+        first["result"]["turn_records"] = [{"user": "first", "turn_index": 1}, {"user": "answer A", "turn_index": 2}]
+        second["result"]["turn_records"] = [{"user": "first", "turn_index": 1}, {"user": "answer B", "turn_index": 2}]
+        value["holdout"]["source_original"]["trials"] = [first, second]
+        self.save("local", value)
+        run = dashboard.build_data(self.root)["reports"][0]
+        a, b = run["groups"][0]["trials"]
+        self.assertEqual(a["case_id"], b["case_id"])
+        self.assertNotEqual(a["input_ref"], b["input_ref"])
+        self.assertEqual(run["input_bundles"][a["input_ref"]], ["first", "answer A"])
+        self.assertEqual(run["input_bundles"][b["input_ref"]], ["first", "answer B"])
+        self.assertEqual(a["turn_records"], [{"turn_index": 1, "user_input_index": 0}, {"turn_index": 2, "user_input_index": 1}])
+
+    def test_nontext_or_missing_turn_users_remain_inline(self):
+        for turns in ([{"user": None}], [{"user": {"text": "structured legacy input"}}],
+                      [{"user": "first"}, {"output": "user not recorded"}], []):
+            with self.subTest(turns=turns):
+                row = {"result": {"turn_records": copy.deepcopy(turns)}}
+                bundles = {}
+                trial = dashboard._trial(row, input_bundles=bundles)
+                self.assertNotIn("input_ref", trial)
+                self.assertEqual(trial["turn_records"], turns)
+                self.assertEqual(row["result"]["turn_records"], turns)
+                self.assertEqual(bundles, {})
 
     def test_incompatible_evidence_cannot_be_combined(self):
         self.save("local", report())
@@ -125,16 +184,25 @@ class DashboardTests(unittest.TestCase):
             allow_nan=False).encode("utf-8")).hexdigest()
         saved = self.save("local", report(fingerprint=config["fingerprint"]))
         (saved.parent / "run-input.json").write_text(json.dumps(config))
-        self.assertIn("customer inputs", dashboard.build_data(self.root)["provenance"])
+        data = dashboard.build_data(self.root)
+        self.assertIn("customer inputs", data["provenance"])
+        self.assertEqual(data["reports"][0]["dataset_summary"],
+                         "Test data details are in Run details.")
         # Changing label declarations without changing the recorded input hash
         # must not promote old results to independently reviewed evidence.
         config["document"]["datasets"][0]["label_status"] = "reviewed"
+        config["document"]["datasets"][0]["provenance"] = "synthetic"
         (saved.parent / "run-input.json").write_text(json.dumps(config))
-        self.assertIn("unavailable", dashboard.build_data(self.root)["provenance"])
+        data = dashboard.build_data(self.root)
+        self.assertIn("unavailable", data["provenance"])
+        self.assertEqual(data["reports"][0]["dataset_summary"],
+                         "Test data details are in Run details.")
         # A partially written optional manifest must not hide valid saved results.
         (saved.parent / "run-input.json").write_text('{"document":')
         data = dashboard.build_data(self.root)
         self.assertIn("could not be verified", data["provenance"])
+        self.assertEqual(data["reports"][0]["dataset_summary"],
+                         "Test data details are in Run details.")
         self.assertEqual(data["reports"][0]["groups"][0]["score"]["accuracy"], 0.5)
 
     def test_installed_cli_is_offline_and_safely_embeds_report_text(self):
@@ -143,7 +211,7 @@ class DashboardTests(unittest.TestCase):
                         ignore=shutil.ignore_patterns("__pycache__"))
         evidence = self.save("workspace/local", report())
         output = self.root / "workspace/dashboard.html"
-        command = [sys.executable, "-S", str(installed / "scripts/invoice_eval.py"),
+        command = [sys.executable, "-S", str(installed / "scripts/workflow_eval.py"),
                    "dashboard", "--project", str(evidence.parent.parent), "--output", str(output)]
         result = subprocess.run(command, cwd=self.root, capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -182,6 +250,8 @@ class DashboardTests(unittest.TestCase):
         data = dashboard.build_data(self.root)
         self.assertTrue(data["historical"])
         self.assertIn("Synthetic", data["provenance"])
+        self.assertEqual({run["dataset_summary"] for run in data["reports"]},
+                         {"Results from synthetic demo cases."})
         self.assertEqual(sum(len(g["trials"]) for r in data["reports"] for g in r["groups"]), 96)
         cloud = self.root / "agentcore/report.json"
         changed = json.loads(cloud.read_text())

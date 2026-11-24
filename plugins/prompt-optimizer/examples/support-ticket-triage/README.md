@@ -39,8 +39,8 @@ ask its **Evaluate Workflows** skill:
 > difficult cases. Help me decide which mistakes matter, then prepare a
 > fixed-prompt comparison of two models. Do not run models yet.
 
-The skill's stable identifier remains `evaluate-invoices`; both starters use
-`scripts/invoice_eval.py`. Codex resolves the installed plugin path and keeps
+Both starters use the `evaluate-workflows` skill and
+`scripts/workflow_eval.py`. Codex resolves the installed plugin path and keeps
 your project, connection file, environment and reports in your workspace.
 
 ## 2. Inspect from a terminal
@@ -56,10 +56,10 @@ python3.12 -m venv "$EVAL_WORKSPACE/.venv"
 export EVAL_PYTHON="$EVAL_WORKSPACE/.venv/bin/python"
 "$EVAL_PYTHON" -m pip install -r "$EVAL_PLUGIN/requirements.txt"
 
-"$EVAL_PYTHON" "$EVAL_PLUGIN/scripts/invoice_eval.py" start \
+"$EVAL_PYTHON" "$EVAL_PLUGIN/scripts/workflow_eval.py" start \
   --project "$EVAL_WORKSPACE/triage-study-v1" \
   --goal "Compare support-ticket triage quality, model cost and latency using one fixed policy."
-"$EVAL_PYTHON" "$EVAL_PLUGIN/scripts/invoice_eval.py" inspect \
+"$EVAL_PYTHON" "$EVAL_PLUGIN/scripts/workflow_eval.py" inspect \
   --project "$EVAL_WORKSPACE/triage-study-v1" \
   --input "$EVAL_PLUGIN/examples/support-ticket-triage/tickets.jsonl"
 
@@ -91,28 +91,27 @@ Edit the workspace copies, or ask Codex to collect the missing choices:
 - Choose `budget_policy`: `"capped"` with a positive `budget_usd`, or
   `"unlimited"` only if that is your intended authorization. The template
   leaves both unset. A saved budget does not itself authorize a live run.
-- Review the four required field checks and the proposed settings. Keep
+- Review the required whole-object JSON check and the proposed settings. Keep
   `provenance: "synthetic"` for these bundled fixtures; their labels stay
   `unreviewed`. No acceptance threshold or model winner is predetermined.
 
 Then run:
 
 ```bash
-"$EVAL_PYTHON" "$EVAL_PLUGIN/scripts/invoice_eval.py" configure \
+"$EVAL_PYTHON" "$EVAL_PLUGIN/scripts/workflow_eval.py" configure \
   --project "$EVAL_WORKSPACE/triage-study-v1" \
   --decisions "$EVAL_WORKSPACE/triage-decisions.json"
-"$EVAL_PYTHON" "$EVAL_PLUGIN/scripts/invoice_eval.py" prepare \
+"$EVAL_PYTHON" "$EVAL_PLUGIN/scripts/workflow_eval.py" prepare \
   --project "$EVAL_WORKSPACE/triage-study-v1"
-"$EVAL_PYTHON" "$EVAL_PLUGIN/scripts/invoice_eval.py" plan \
+"$EVAL_PYTHON" "$EVAL_PLUGIN/scripts/workflow_eval.py" plan \
   --project "$EVAL_WORKSPACE/triage-study-v1"
 ```
 
-With the supplied settings, the plan contains 20 development, 20 validation
-and 20 holdout cases, one repetition, two models and no prompt optimization.
-Validation and holdout produce **80 evaluation trials per backend**.
+With the supplied settings, the plan contains 30 validation and 30 holdout
+cases, one repetition, two models and no prompt optimization. All 60 selected
+cases produce **120 evaluation trials per backend**.
 AgentCore adds **two route qualification calls** before submission.
-Development cases are retained but do not produce evaluation trials in this
-fixed-prompt comparison. Preparation and planning make no model calls.
+No development cases are reserved in fixed-prompt mode. Preparation and planning make no model calls.
 
 Preparation freezes the inputs and engine fingerprint. To change the policy,
 references, connection or settings afterward, start a new project revision.
@@ -122,9 +121,9 @@ references, connection or settings afterward, start a new project revision.
 When you have authorized paid model calls, run the prepared study locally:
 
 ```bash
-"$EVAL_PYTHON" "$EVAL_PLUGIN/scripts/invoice_eval.py" run \
+"$EVAL_PYTHON" "$EVAL_PLUGIN/scripts/workflow_eval.py" run \
   --project "$EVAL_WORKSPACE/triage-study-v1" --backend local --live
-"$EVAL_PYTHON" "$EVAL_PLUGIN/scripts/invoice_eval.py" results \
+"$EVAL_PYTHON" "$EVAL_PLUGIN/scripts/workflow_eval.py" results \
   --project "$EVAL_WORKSPACE/triage-study-v1" --backend local
 ```
 
@@ -136,11 +135,11 @@ does not create the runtime, role or bucket. With those resources already
 included in the prepared connection:
 
 ```bash
-"$EVAL_PYTHON" "$EVAL_PLUGIN/scripts/invoice_eval.py" run \
+"$EVAL_PYTHON" "$EVAL_PLUGIN/scripts/workflow_eval.py" run \
   --project "$EVAL_WORKSPACE/triage-study-v1" --backend agentcore --live
-"$EVAL_PYTHON" "$EVAL_PLUGIN/scripts/invoice_eval.py" status \
+"$EVAL_PYTHON" "$EVAL_PLUGIN/scripts/workflow_eval.py" status \
   --project "$EVAL_WORKSPACE/triage-study-v1"
-"$EVAL_PYTHON" "$EVAL_PLUGIN/scripts/invoice_eval.py" results \
+"$EVAL_PYTHON" "$EVAL_PLUGIN/scripts/workflow_eval.py" results \
   --project "$EVAL_WORKSPACE/triage-study-v1"
 ```
 

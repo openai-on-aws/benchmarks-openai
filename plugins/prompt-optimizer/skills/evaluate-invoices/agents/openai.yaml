@@ -1,4 +1,0 @@
-interface:
-  display_name: "Evaluate Workflows"
-  short_description: "Compare extraction and triage quality, cost and latency"
-  default_prompt: "Use $evaluate-invoices to help me choose the invoice or support-ticket starter and decide what correctness should mean."

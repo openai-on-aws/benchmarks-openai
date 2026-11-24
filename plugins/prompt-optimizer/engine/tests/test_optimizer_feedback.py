@@ -112,6 +112,41 @@ def test_different_latency_scopes_cannot_be_compared():
     assert choose_joint(a,[b],{'mode':'joint_cost_latency','min_validation_sessions':20})[0] is a
 
 
+@pytest.mark.parametrize('protected_policy', ['', '  ', 'Always check the return-policy deadline.'])
+def test_runner_optimizer_guidance_matches_injected_policy(tmp_path, protected_policy):
+    from customer_eval import simulation
+
+    config = load(ROOT / 'examples/customer-support/input.yaml')
+    config['policy'] = protected_policy
+    config['document']['optimization']['max_iterations'] = 1
+    config['document']['runner']['candidates_per_generation'] = 1
+    config['intake_context'] = {'quality': {'rules': 'Preserve all required business rules.'}}
+    runner = Runner(config, tmp_path, backend='local')
+    runner.execute = simulation.execute
+    seen = []
+
+    def call(model, text, purpose='judge'):
+        assert purpose == 'optimizer'
+        seen.append(text)
+        return json.dumps(['check opened status; preserve the return-policy deadline'])
+
+    runner.call = call
+    runner.run()
+    assert len(seen) == 1
+    outgoing = seen[0]
+    if protected_policy.strip():
+        assert 'supplied separately to every application run' in outgoing
+        assert 'do not duplicate them in the editable prompt' in outgoing
+        assert protected_policy in outgoing
+        assert 'injects no separate immutable policy' not in outgoing
+    else:
+        assert 'injects no separate immutable policy' in outgoing
+        assert 'Preserve every required rule in the editable prompt' in outgoing
+        assert 'not automatically injected into application requests' in outgoing
+        assert 'do not duplicate them in the editable prompt' not in outgoing
+    assert 'The immutable policy is already supplied; do not repeat it.' not in outgoing
+
+
 def test_runner_passes_measured_development_history_without_split_leakage(tmp_path):
     from customer_eval import simulation
     c=load(ROOT/'examples/customer-support/input.yaml')

@@ -87,7 +87,12 @@ def build(config, report):
                         'with zero successful attempts. Campaign spend, including optimizer and judge calls, is reported separately.')
     all_cases = [c for rows in config['datasets'].values() for c in rows]
     recorded = any(c.get('metadata', {}).get('reference_kind') == 'recorded_response' for c in all_cases)
-    unreviewed = any(d.get('label_status') != 'reviewed' for d in config['document']['datasets'])
+    unreviewed = any(d.get('label_status') != 'human_reviewed' for d in config['document']['datasets'])
+    reviewed_count = sum(c.get('metadata', {}).get('label_status') == 'human_reviewed' for c in all_cases)
+    review_scope = {'total_cases': len(all_cases), 'human_reviewed_cases': reviewed_count,
+                    'unreviewed_cases': len(all_cases) - reviewed_count,
+                    'rejected_case_ids': [c['id'] for c in all_cases
+                        if c.get('metadata', {}).get('label_review', {}).get('outcome') == 'rejected']}
     metric = ('Agreement with recorded outputs' if recorded else
               'Reference checks passed (labels unreviewed)' if unreviewed else 'Required quality checks passed')
     required = [c['id'] for c in config['document']['checks'] if c['required']]
@@ -173,7 +178,9 @@ def build(config, report):
     if recorded:
         reasons.append('Matching previous model responses does not establish correctness.')
     if unreviewed:
-        reasons.append('Expected answers have not been independently reviewed; this is not production accuracy.')
+        reasons.append((f'{reviewed_count} of {len(all_cases)} expected answers have recorded human review; '
+                        'the remaining labels are unreviewed. This is not production accuracy.') if reviewed_count else
+                       'Expected answers have not been independently reviewed; this is not production accuracy.')
     prompt_explanation = ('A revised prompt was selected.'
                           if changed else 'The original prompt was retained. Candidate results and tradeoffs are listed below.'
                           if candidates else 'No prompt revision was evaluated.')
@@ -193,6 +200,7 @@ def build(config, report):
         prompt_explanation += (' Prompt selection used validation results and was frozen before the held-out evaluation. '
                                'Held-out results do not select or replace the prompt; they inform the recommendation for a customer pilot.')
     return {'recommendation': recommendation, 'reasons': reasons, 'quality_label': metric,
+        'label_review_scope': review_scope,
         'selection_cost_metric': cost_metric, 'selection_cost_label': cost_label,
         'cost_denominators': cost_explanation,
         'recommendation_scope': ('The recommendation addresses candidates awaiting a customer choice after validation. '

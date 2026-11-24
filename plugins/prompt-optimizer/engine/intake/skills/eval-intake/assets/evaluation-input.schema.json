@@ -311,7 +311,10 @@
           "minLength": 1
         },
         "optimizer_model_id": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "minLength": 1
         },
         "candidates_per_generation": {
@@ -405,6 +408,10 @@
               "minimum": 1
             },
             "max_request_bytes": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "request_timeout_seconds": {
               "type": "integer",
               "minimum": 1
             }
@@ -508,6 +515,10 @@
               "minimum": 1
             },
             "max_request_bytes": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "request_timeout_seconds": {
               "type": "integer",
               "minimum": 1
             }

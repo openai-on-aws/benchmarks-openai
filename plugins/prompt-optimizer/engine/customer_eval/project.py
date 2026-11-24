@@ -87,8 +87,73 @@ ALLOWED = {'title', 'owner', 'source_model', 'target_model', 'optimizer_model', 
            'prompt_location', 'connection', 'provenance', 'quality', 'repetitions', 'iterations',
            'candidates', 'concurrency', 'timeout_seconds', 'budget_usd', 'budget_policy', 'split_seed',
            'minimum_quality', 'minimum_quality_owner', 'intent', 'exclude_records', 'group_by',
-           'cost_metric', 'primary_latency', 'optimization_enabled'}
-QUALITY = {'kind', 'fields', 'reference_source', 'reference_file', 'description', 'rules'}
+           'cost_metric', 'primary_latency', 'optimization_enabled', 'label_review_file',
+           'limits', 'optimizer_limits'}
+QUALITY = {'kind', 'fields', 'reference_source', 'reference_file', 'description', 'rules', 'checks', 'schema'}
+QUALITY_KINDS = ('json_equals', 'contains', 'json_checks')
+DEFAULT_LIMITS = {'max_requests': 1, 'max_output_tokens': 2048, 'max_request_bytes': 80000,
+                  'request_timeout_seconds': 60}
+DEFAULT_OPTIMIZER_LIMITS = {'max_requests': 1, 'max_output_tokens': 8192, 'max_request_bytes': 80000,
+                            'request_timeout_seconds': 60}
+
+
+def replay_limits(value, *, optimizer=False):
+    """Typed partial overrides; captured-request replay still makes one new call."""
+    label = 'optimizer_limits' if optimizer else 'limits'
+    if not isinstance(value, dict) or set(value) - set(DEFAULT_LIMITS):
+        raise ValueError(label + ' accepts max_requests, max_output_tokens, max_request_bytes and request_timeout_seconds only')
+    if any(type(v) is not int or v < 1 for v in value.values()):
+        raise ValueError(label + ' values must be positive integers, not booleans')
+    limits = dict(DEFAULT_OPTIMIZER_LIMITS if optimizer else DEFAULT_LIMITS) | value
+    if limits['max_requests'] != 1:
+        raise ValueError(label + '.max_requests must be 1 for captured-request replay')
+    return limits
+
+
+def quality_checks(quality):
+    """Turn the small guided declaration into independent deterministic rules."""
+    if quality.get('kind') == 'json_checks':
+        checks = quality.get('checks')
+        if not isinstance(checks, list) or not checks:
+            raise ValueError('quality.checks must contain at least one structured JSON check')
+        normalized, seen = [], {'output_schema'}
+        for check in checks:
+            if not isinstance(check, dict) or set(check) - {'id', 'type', 'path', 'description', 'required'}:
+                raise ValueError('Each quality check accepts id, type, path, description and required only')
+            ident = check.get('id')
+            if not isinstance(ident, str) or not re.fullmatch(r'[A-Za-z][A-Za-z0-9_]*', ident) or ident in seen:
+                raise ValueError('Quality check IDs must be unique identifiers; output_schema is reserved')
+            seen.add(ident)
+            if check.get('type') not in ('json_equals', 'json_set_equals') or not isinstance(check.get('path'), str):
+                raise ValueError('Quality checks need type json_equals/json_set_equals and a JSON field path')
+            if type(check.get('required', True)) is not bool:
+                raise ValueError('Quality check required must be a boolean')
+            if 'description' in check and (not isinstance(check['description'], str) or not check['description'].strip()):
+                raise ValueError('Quality check description must be nonempty text')
+            path = check['path']
+            normalized.append((ident, {'type': check['type'], 'path': path,
+                'expected_key': 'answer' + ('.' + path if path else '')},
+                check.get('description') or ('Does ' + (path or 'the complete JSON answer') + ' match the supplied reference?'),
+                check.get('required', True)))
+        if not any(entry[3] for entry in normalized):
+            raise ValueError('At least one JSON value check must be required')
+        if 'schema' in quality:
+            from .json_grading import schema_validator
+            schema_validator(quality['schema'])
+            normalized.insert(0, ('output_schema', {'type': 'json_schema', 'schema': quality['schema']},
+                                  'Does the answer conform to the required JSON structure and types?', True))
+        return normalized
+    if quality.get('kind') not in QUALITY_KINDS:
+        raise ValueError('Define correctness using json_equals, contains or json_checks')
+    if 'checks' in quality or 'schema' in quality:
+        raise ValueError('quality.checks and quality.schema require kind json_checks')
+    fields = quality.get('fields', [''])
+    if not isinstance(fields, list) or not fields or any(not isinstance(p, str) for p in fields) or len(fields) != len(set(fields)):
+        raise ValueError('Quality fields must be unique JSON field paths; use [""] for the whole object')
+    return [('field_' + str(i + 1), {'type': quality['kind'], 'path': path,
+        'expected_key': ('answer' + ('.' + path if path else '')) if quality['kind'] == 'json_equals' else 'reference'},
+        quality.get('description') or ('Does ' + (path or 'the complete JSON answer') + ' match the supplied reference?'), True)
+        for i, path in enumerate(fields)]
 
 
 def configure(directory, patch):
@@ -96,7 +161,9 @@ def configure(directory, patch):
     state = read(directory / 'project.json')
     if state.get('prepared'):
         raise ValueError('This project is frozen. Start a new project to change its decisions.')
-    if not isinstance(patch, dict) or set(patch) - ALLOWED:
+    if not isinstance(patch, dict):
+        raise ValueError('Intake decisions must be an object')
+    if set(patch) - ALLOWED:
         raise ValueError('Unknown intake decision: ' + str(set(patch) - ALLOWED))
     if 'quality' in patch and (not isinstance(patch['quality'], dict) or set(patch['quality']) - QUALITY):
         raise ValueError('Unknown quality decision; see the guided evaluation reference')
@@ -106,12 +173,15 @@ def configure(directory, patch):
             raise ValueError(key + ' must be one of: ' + ', '.join(choices))
     if 'optimization_enabled' in patch and type(patch['optimization_enabled']) is not bool:
         raise ValueError('optimization_enabled must be a boolean')
+    for key in ('limits', 'optimizer_limits'):
+        if key in patch:
+            replay_limits(patch[key], optimizer=key == 'optimizer_limits')
     rules = patch.get('quality', {}).get('rules')
     if 'rules' in patch.get('quality', {}) and (not isinstance(rules, str) or not rules.strip()):
         raise ValueError('quality.rules must contain the supplied general business rules as nonempty text')
     previous_location = state['decisions'].get('prompt_location')
     for key, value in patch.items():
-        if key == 'quality':
+        if key in ('quality', 'limits', 'optimizer_limits'):
             state['decisions'].setdefault(key, {}).update(value)
         else:
             state['decisions'][key] = value
@@ -153,52 +223,75 @@ def status(directory):
         if d.get(key) is None:
             missing.append(question)
     quality = d.get('quality', {})
-    if quality.get('kind') not in ('json_equals', 'contains'):
-        missing.append('Define correctness: compare JSON fields or require specified text. Other graders can use the full input contract.')
+    try:
+        quality_checks(quality)
+        limits = replay_limits(d.get('limits', {}))
+        replay_limits(d.get('optimizer_limits', {}), optimizer=True)
+        trial_timeout = d.get('timeout_seconds', 180)
+        if type(trial_timeout) is not int or trial_timeout < 1:
+            raise ValueError('timeout_seconds must be a positive integer')
+        if trial_timeout < limits['request_timeout_seconds']:
+            raise ValueError('timeout_seconds must be at least limits.request_timeout_seconds; allow extra time for worker setup')
+    except ValueError as exc:
+        missing.append(str(exc))
     if quality.get('reference_source') not in ('recorded', 'supplied'):
         missing.append('Should we measure agreement with recorded outputs, or compare against supplied expected answers?')
+    plan = None
+    if state.get('import_path') and quality.get('kind') in QUALITY_KINDS and quality.get('reference_source') in ('recorded', 'supplied'):
+        try:
+            selected, _, _ = prepare_cases(directory, state)
+            splits = _split(selected, d.get('split_seed', 'customer-eval-v1'), d.get('group_by'),
+                            optimize=d.get('optimization_enabled', True))
+            repeats = d.get('repetitions', 3)
+            if type(repeats) is not int or repeats < 1:
+                raise ValueError('repetitions must be a positive integer')
+            plan = {'mode': 'optimize' if d.get('optimization_enabled', True) else 'compare',
+                    'provided_cases': len(read(directory / state['import_path'] / 'all-cases.json')),
+                    'selected_cases': len(selected), 'split_counts': {k: len(v) for k, v in splits.items()},
+                    'repetitions': repeats, 'validation_observations': len(splits['validation']) * repeats,
+                    'limits': replay_limits(d.get('limits', {})),
+                    'optimizer_limits': replay_limits(d.get('optimizer_limits', {}), optimizer=True) if d.get('optimization_enabled', True) else None,
+                    'evidence_scope': 'Exploratory workload comparison; repeated attempts are not independent cases.'}
+            if d.get('optimization_enabled', True) and plan['validation_observations'] < 20:
+                missing.append('Prompt optimization needs at least 20 validation observations; the current split provides '
+                               + str(plan['validation_observations']) + '. Add independent cases or explicitly adjust repetitions; repeats do not add independent cases.')
+        except (ValueError, KeyError, TypeError, OSError) as exc:
+            missing.append(str(exc))
     return {'stage': state['stage'], 'missing_decisions': missing, 'ready_to_prepare': not missing,
-            'project': str(directory), 'decisions': d, 'prepared': state.get('prepared')}
+            'project': str(directory), 'decisions': d, 'prepared': state.get('prepared'), 'evaluation_plan': plan}
 
 
-def _split(cases, seed, group_by):
+def _split(cases, seed, group_by, *, optimize=True):
     groups = {}
     for case in cases:
         ident = at(case, group_by) if group_by else case['id']
         if not isinstance(ident, (str, int)) or isinstance(ident, bool):
             raise ValueError('Each grouping value must be a document/conversation identifier')
         groups.setdefault(str(ident), []).append(case)
-    if len(groups) < 3:
-        raise ValueError('Need at least three independent groups for development, validation and holdout; add examples or save a draft.')
+    names = ('development', 'validation', 'holdout') if optimize else ('validation', 'holdout')
+    if len(groups) < len(names):
+        raise ValueError('Need at least ' + str(len(names)) + ' independent groups for ' + ', '.join(names) + '; add examples or save a draft.')
     ordered = sorted(groups, key=lambda x: digest([seed, x]))
     result = {key: [] for key in ('development', 'validation', 'holdout')}
     for i, ident in enumerate(ordered):
-        result[list(result)[i % 3]].extend(groups[ident])
+        result[names[i % len(names)]].extend(groups[ident])
     return result
 
 
-def prepare(directory):
+def prepare_cases(directory, state=None, *, apply_reviews=True):
+    """Resolve the exact references before reviewing, splitting, or freezing them."""
     directory = Path(directory).resolve()
-    state = read(directory / 'project.json')
-    if state.get('prepared'):
-        config = load_with_endpoints(directory / state['prepared']['config'])
-        if config['fingerprint'] != state['prepared']['fingerprint']:
-            raise ValueError('Prepared files or runner source changed; use a new project revision')
-        return state['prepared']
-    summary = status(directory)
-    if summary['missing_decisions']:
-        return summary
+    state = state or read(directory / 'project.json')
     d = state['decisions']
-    connection = read(Path(d['connection']).expanduser().resolve())
-    if set(connection) - {'version', 'models', 'cloud'}:
-        raise ValueError('Connection file contains unknown fields; use credential references, never credential values')
     cases = read(directory / state['import_path'] / 'all-cases.json')
     report = read(directory / state['import_path'] / 'import-report.json')
+    if not report['prompt_groups']:
+        raise ValueError('No supported prompt group remains; repair the excluded records or choose a valid instruction slot.')
     group = d.get('prompt_group') or next(iter(report['prompt_groups']))
     cases = [c for c in cases if c['metadata']['prompt_group'] == group]
     if not cases:
         raise ValueError('The selected prompt group has no cases')
-    if any(c['replay']['prompt_location'] != d['prompt_location'] for c in cases):
+    if 'prompt_location' in d and any(c['replay']['prompt_location'] != d['prompt_location'] for c in cases):
         raise ValueError('Import does not use the selected editable instruction slot')
     quality = d['quality']
     if quality['reference_source'] == 'recorded':
@@ -207,7 +300,7 @@ def prepare(directory):
         for c in cases:
             if c['metadata']['format'] == 'manual':
                 raise ValueError('Manual expected answers are supplied references, not historical model outputs.')
-            if quality['kind'] == 'json_equals':
+            if quality['kind'] in ('json_equals', 'json_checks'):
                 try:
                     c['expected']['answer'] = strict_json(c['expected']['reference'])
                 except ValueError:
@@ -226,18 +319,43 @@ def prepare(directory):
         raise ValueError('Supplied correctness requires expected answers; historical model responses are only agreement references')
     for c in cases:
         c['metadata']['label_status'] = 'unreviewed'
-    splits = _split(cases, d.get('split_seed', 'customer-eval-v1'), d.get('group_by'))
+    if apply_reviews and d.get('label_review_file'):
+        from .label_review import apply_review
+        cases, summary = apply_review(cases, Path(d['label_review_file']).expanduser().resolve())
+        if summary.get('issues') or summary.get('rejected_case_ids'):
+            raise ValueError('Label review needs attention: ' + json.dumps(summary))
+    return cases, report, group
+
+
+def prepare(directory):
+    directory = Path(directory).resolve()
+    state = read(directory / 'project.json')
+    if state.get('prepared'):
+        config = load_with_endpoints(directory / state['prepared']['config'])
+        if config['fingerprint'] != state['prepared']['fingerprint']:
+            raise ValueError('Prepared files or runner source changed; use a new project revision')
+        return state['prepared']
+    summary = status(directory)
+    if summary['missing_decisions']:
+        return summary
+    d = state['decisions']
+    connection = read(Path(d['connection']).expanduser().resolve())
+    if set(connection) - {'version', 'models', 'cloud'}:
+        raise ValueError('Connection file contains unknown fields; use credential references, never credential values')
+    cases, report, group = prepare_cases(directory, state)
+    quality = d['quality']
+    optimize = d.get('optimization_enabled', True)
+    splits = _split(cases, d.get('split_seed', 'customer-eval-v1'), d.get('group_by'), optimize=optimize)
     repetitions = d.get('repetitions', 3)
     if type(repetitions) is not int or repetitions < 1:
         raise ValueError('repetitions must be a positive integer')
-    if len(splits['validation']) * repetitions < 20:
+    if optimize and len(splits['validation']) * repetitions < 20:
         raise ValueError('Joint comparison requires at least 20 validation observations. Add independent examples or choose more repetitions; repeated cases are not independent cases.')
     doc = yaml.safe_load((ROOT / 'intake/skills/eval-intake/assets/input.template.yaml').read_text())
     doc['experiment'] = {'id': 'customer_evaluation', 'title': d.get('title', 'Customer model and prompt evaluation'),
         'objective': state['goal'], 'decision': d.get('intent', 'Compare required checks, model cost and conversation time; review tradeoffs.'), 'owner': d['owner']}
     routes = {}
     endpoints = {}
-    optimize = d.get('optimization_enabled', True)
     model_roles = [('m1', 'source_model'), ('m2', 'target_model')]
     if optimize:
         model_roles.append(('optimizer', 'optimizer_model'))
@@ -260,22 +378,24 @@ def prepare(directory):
                         'route': 'direct_model_api', 'gateway_id': None} for m in ('m1', 'm2')]
     doc['baseline_variant_id'] = 'm1_p1'
     grading = {}
-    fields = quality.get('fields', [''])
-    if not isinstance(fields, list) or not fields or any(not isinstance(p, str) for p in fields) or len(fields) != len(set(fields)):
-        raise ValueError('Quality fields must be unique JSON field paths; use [""] for the whole object')
-    for i, path in enumerate(fields):
-        ident = 'field_' + str(i + 1)
-        expected_key = ('answer' + ('.' + path if path else '')) if quality['kind'] == 'json_equals' else 'reference'
+    for ident, rule, question, required in quality_checks(quality):
         for c in cases:
             try:
-                at(c['expected'], expected_key)
+                if rule['type'] == 'json_schema':
+                    from .json_grading import schema_validator
+                    if not schema_validator(rule['schema']).is_valid(c['expected']['answer']):
+                        raise ValueError('Reference answer does not match quality.schema for ' + c['id'])
+                else:
+                    expected = at(c['expected'], rule['expected_key'])
+                    if rule['type'] == 'json_set_equals':
+                        from .json_grading import scalar_set
+                        scalar_set(expected)
             except (KeyError, IndexError, TypeError, ValueError):
-                raise ValueError('Expected answer for ' + c['id'] + ' is missing ' + expected_key + '; repair the reference before running.')
-        grading[ident] = {'type': quality['kind'], 'path': path, 'expected_key': expected_key}
-        doc['checks'].append({'id': ident, 'question': quality.get('description') or
-            ('Does ' + (path or 'the complete JSON answer') + ' match the supplied reference?'),
+                raise ValueError('Expected answer for ' + c['id'] + ' is invalid for check ' + ident + '; repair the reference before running.')
+        grading[ident] = rule
+        doc['checks'].append({'id': ident, 'question': question,
             'method': 'deterministic', 'implementation_ref': 'grading.json', 'judge_model_id': None,
-            'calibration_ref': None, 'required': True})
+            'calibration_ref': None, 'required': required})
     if d.get('minimum_quality') is not None:
         if not d.get('minimum_quality_owner'):
             raise ValueError('An absolute quality threshold needs its customer-provided owner/source')
@@ -285,7 +405,7 @@ def prepare(directory):
     doc['execution'].update(repetitions=repetitions, max_cases_per_dataset=None,
         concurrency=d.get('concurrency', 2), timeout_seconds=d.get('timeout_seconds', 180),
         budget_usd=d.get('budget_usd'), fallback_policy='none')
-    doc['optimization'].update(enabled=optimize, target_prompt_id='p1', development_dataset_ids=['development'],
+    doc['optimization'].update(enabled=optimize, target_prompt_id='p1', development_dataset_ids=['development'] if optimize else [],
         holdout_dataset_ids=['holdout'], max_iterations=d.get('iterations', 1),
         objective_criterion_id='quality' if doc['success_criteria'] else None)
     doc['runner'] = {'mode': 'prompt', 'input_mode': 'replay', 'workload': 'none',
@@ -293,14 +413,14 @@ def prepare(directory):
         'protected_instructions_path': 'policy.txt', 'grading_path': 'grading.json', 'optimizer_model_id': 'optimizer' if optimize else None,
         'intake_context_path': 'customer-context.json',
         'candidates_per_generation': d.get('candidates', 2), 'min_gain': 0.0, 'max_turns': 1,
-        'routes': routes, 'limits': {'max_requests': 1, 'max_output_tokens': 2048, 'max_request_bytes': 80000},
-        'optimizer_limits': {'max_requests': 1, 'max_output_tokens': 8192, 'max_request_bytes': 80000},
+        'routes': routes, 'limits': replay_limits(d.get('limits', {})),
+        'optimizer_limits': replay_limits(d.get('optimizer_limits', {}), optimizer=True),
         'budget_policy': d['budget_policy'], 'selection': {'mode': 'joint_cost_latency', 'min_validation_sessions': 20,
             'cost_metric': d.get('cost_metric', 'cost_usd_per_session')},
         'optimization_patience': 1, 'measurement': {'primary_latency': d.get('primary_latency', 'conversation')},
         'report_challenger': True}
     doc['evidence'] = [
-        {'field': 'datasets', 'source': 'References are ' + quality['reference_source'] + '; labels remain unreviewed. ' + d['provenance'] + ' examples.', 'status': 'observed'},
+        {'field': 'datasets', 'source': 'References are ' + quality['reference_source'] + '; scoped label review is recorded per case. ' + d['provenance'] + ' examples.', 'status': 'observed'},
         {'field': 'success_criteria', 'source': 'Compare required-check pass rates; cost and latency are preferences. Only explicitly supplied absolute thresholds are gates.', 'status': 'proposed'}]
     package = directory / 'prepared'
     package.mkdir(exist_ok=True)
@@ -308,13 +428,21 @@ def prepare(directory):
     (package / 'policy.txt').write_text('')
     save(package / 'grading.json', grading)
     for split, members in splits.items():
+        if not members:
+            continue
         (package / (split + '.jsonl')).write_text(''.join(json.dumps(c, ensure_ascii=False) + '\n' for c in members))
         doc['datasets'].append({'id': split, 'path': split + '.jsonl', 'format': 'jsonl', 'version': '1',
-            'split': split, 'provenance': d['provenance'], 'label_status': 'unreviewed'})
+            'split': split, 'provenance': d['provenance'], 'label_status':
+                'human_reviewed' if all(c['metadata'].get('label_status') == 'human_reviewed' for c in members) else 'unreviewed'})
     (package / 'input.yaml').write_text(yaml.safe_dump(doc, sort_keys=False, allow_unicode=True))
     save(package / 'endpoints.json', endpoints)
     save(package / 'connection.json', connection)
-    context = {'reference_source': quality['reference_source'], 'label_status': 'unreviewed',
+    if d.get('label_review_file'):
+        save(package / 'label-review.json', read(Path(d['label_review_file']).expanduser().resolve()))
+    context = {'reference_source': quality['reference_source'], 'label_status':
+        'human_reviewed' if all(c['metadata'].get('label_status') == 'human_reviewed' for c in cases) else 'unreviewed',
+        'reviewed_cases': sum(c['metadata'].get('label_status') == 'human_reviewed' for c in cases),
+        'evaluation_plan': summary['evaluation_plan'],
         'import_coverage': {k: report[k] for k in ('found', 'accepted', 'dropped')},
         'selected_cases': len(cases), 'selected_prompt_group': group, 'editable_location': d['prompt_location'],
         'quality': quality, 'group_by': d.get('group_by'), 'splits': {k: [c['id'] for c in v] for k, v in splits.items()}}

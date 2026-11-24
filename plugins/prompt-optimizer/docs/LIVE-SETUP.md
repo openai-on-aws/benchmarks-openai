@@ -68,7 +68,84 @@ Confirm that the runtime contains the **current plugin's engine**, not just
 that its AWS status is `READY`. The implementation fingerprint must match.
 
 Record its runtime ARN and private bucket in the connection from step 2.
-Then continue to step 4.
+Run the read-only preflight after preparing the study:
+
+```bash
+"$EVAL_PYTHON" "$PLUGIN/scripts/workflow_eval.py" preflight \
+  --project "$EVAL_PROJECT" --backend agentcore
+```
+
+Preflight reads AWS identity, Runtime/DEFAULT version, artifact metadata, bucket
+access, execution-role identity, endpoint allowlists, model prices and runtime
+limits. It makes no model calls and changes no AWS resources. `ready_for_qualification`
+means these checks passed; it does not prove model entitlement, effective IAM or
+inference compatibility. The authorized `run` still qualifies the actual model
+routes and worker code before submitting the study.
+
+For automation, preflight exits `0` only when `ready_for_qualification` is `true`.
+It exits `1` when checks block qualification or the study is not prepared, while
+preserving the full diagnostic JSON on stdout. Exceptions exit `2` with an error
+on stderr. Inspect the blockers before running; an unknown, nonblocking inference
+access check does not by itself make preflight fail.
+
+An older deployment may have no recorded implementation fingerprint. A READY
+status alone does not establish compatibility. Use the update procedure below
+and prepare a new study revision after the engine change.
+
+#### Update an existing Python ZIP runtime
+
+Build the current engine using step 3B.3 into a new build directory. Preserve the
+existing runtime, role, bucket and Gateway configuration. Choose a new receipt
+directory for this upgrade; it must remain outside the installed plugin cache:
+
+```bash
+export EVAL_RUNTIME_ID=YOUR_EXISTING_RUNTIME_ID
+export EVAL_RUNTIME_NAME=YOUR_EXISTING_RUNTIME_NAME
+export EVAL_UPGRADE_RECEIPTS="$EVAL_WORKSPACE/agentcore-upgrade-v2"
+
+"$EVAL_PYTHON" "$PLUGIN/engine/scripts/deploy_agentcore.py" update \
+  --profile "$AWS_PROFILE" --region "$AWS_REGION" \
+  --name "$EVAL_RUNTIME_NAME" --runtime-id "$EVAL_RUNTIME_ID" \
+  --receipt-dir "$EVAL_UPGRADE_RECEIPTS" \
+  --artifact "$EVAL_BUILD/prompt-optimizer-runtime.zip"
+```
+
+This command verifies that the ZIP's engine source matches the current plugin,
+uploads it to the existing deployment bucket, and updates the existing runtime.
+It reads back and preserves the live role, network, lifecycle, environment,
+authorization and other supported runtime settings. It does not regenerate IAM
+policies, replace credentials or create another runtime. The receipt records the
+previous and new versions, archive hash and implementation fingerprint without
+saving environment-variable values.
+
+The command waits up to ten minutes for the runtime and DEFAULT endpoint to
+report the new version READY. `--wait-seconds 0` returns after checking once.
+If it reports `pending` or the response is interrupted, repeat the exact command
+with the same receipt directory and ZIP: it checks the existing update rather
+than submitting another update. An uncertain dispatch stays recorded for
+investigation. Do not create another update receipt to bypass that state.
+
+For a larger study, the update command also accepts `--max-input-bytes`,
+`--max-concurrency` and `--max-trial-seconds`. Supply only the limits you intend
+to change; all other runtime settings are preserved. For example, a 64 MB study
+envelope, four workers and 360-second application trials use
+`--max-input-bytes 64000000 --max-concurrency 4 --max-trial-seconds 360`.
+The input limit covers the complete serialized study in S3, independently of
+the per-model request limit. The default remains 10 MB when no deployment value
+is set. Preflight checks these limits, and `run` rejects capacity mismatches
+before paid qualification. An individual trial limit is not an overall campaign
+deadline. Resuming an update requires the same explicit limit settings.
+
+After it reports `ready`, freeze a new study revision and run:
+
+```bash
+"$EVAL_PYTHON" "$PLUGIN/scripts/workflow_eval.py" preflight \
+  --project "$EVAL_PROJECT" --backend agentcore \
+  --deployment-receipt "$EVAL_UPGRADE_RECEIPTS/upgrade.json"
+```
+
+This path handles Python ZIP deployments. Container deployments need the
+platform's image-update procedure and build-identity verification.
 
 ### 3B. Create a deployment when you need one
 
@@ -106,10 +183,10 @@ Review these shipped deployment defaults before adopting them:
   are separate retained resources.
 
 The helper's `create` action does not replace an already recorded runtime.
-`configure-worker` reuses the original artifact; it does not deploy new engine
-code. After an engine upgrade, build and deploy a new compatible version through
-your platform's update process, or use a new runtime name and receipt directory.
-Prepare a new study revision against that deployment.
+`configure-worker` changes only the self-invocation setting using current AWS
+readback; it preserves the live artifact and other settings. Use the `update`
+procedure in step 3A to deploy a new engine to an existing Python ZIP runtime.
+Prepare a new study revision against the updated engine.
 
 Plugin tests cover local installation and offline behavior. Building the ARM64
 package, provisioning resources and live qualification must also be validated
@@ -189,11 +266,23 @@ needed for investigation and cleanup. Continue to step 4 before preparing the st
 ## 4. Freeze the study and review the plan
 
 Once the intake decisions and connection are complete, return to the
-[workflow](../skills/evaluate-invoices/references/workflow.md) to configure,
+[workflow](../skills/evaluate-workflows/references/workflow.md) to configure,
 prepare and review the plan. A frozen study cannot be edited in place: use a new
 project revision if deployment references, inputs, models or engine code change.
 
 ## 5. Run the reviewed study
+
+For local execution, the same preflight checks frozen inputs, selected routes,
+pricing and credential availability without invoking a model:
+
+```bash
+"$EVAL_PYTHON" "$PLUGIN/scripts/workflow_eval.py" preflight \
+  --project "$EVAL_PROJECT" --backend local
+```
+
+Missing or unknown checks include a concrete next action. For AgentCore, use
+`--backend agentcore` as shown in step 3A. Keep paid route qualification as a
+separate step within the authorized run.
 
 Set `EVAL_PROJECT` to the study prepared in step 4. Use the workspace and Python
 environment from step 2:
@@ -201,7 +290,7 @@ environment from step 2:
 ```bash
 export EVAL_PROJECT=/absolute/path/to/your-prepared-study
 
-"$EVAL_PYTHON" "$PLUGIN/scripts/invoice_eval.py" run \
+"$EVAL_PYTHON" "$PLUGIN/scripts/workflow_eval.py" run \
   --project "$EVAL_PROJECT" --backend agentcore --live
 ```
 
@@ -227,9 +316,9 @@ Inspect the existing cloud job and download its results without submitting
 another evaluation:
 
 ```bash
-"$EVAL_PYTHON" "$PLUGIN/scripts/invoice_eval.py" status \
+"$EVAL_PYTHON" "$PLUGIN/scripts/workflow_eval.py" status \
   --project "$EVAL_PROJECT" --backend agentcore
-"$EVAL_PYTHON" "$PLUGIN/scripts/invoice_eval.py" results \
+"$EVAL_PYTHON" "$PLUGIN/scripts/workflow_eval.py" results \
   --project "$EVAL_PROJECT" --backend agentcore
 ```
 
@@ -239,7 +328,7 @@ The backend reports are `results/decision.html` for AgentCore and
 Build the shared interactive dashboard after the reports are available:
 
 ```bash
-"$EVAL_PYTHON" "$PLUGIN/scripts/invoice_eval.py" dashboard \
+"$EVAL_PYTHON" "$PLUGIN/scripts/workflow_eval.py" dashboard \
   --project "$EVAL_PROJECT" --output "$EVAL_PROJECT/dashboard.html"
 ```
 

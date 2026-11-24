@@ -1,17 +1,23 @@
 # Prompt Optimizer
 
-Compare two models on a customer workflow with **one fixed prompt**, then
+**Compare models** with a fixed prompt, or **optimize a prompt** using development feedback and held-out evaluation. Then
 inspect quality, model cost and latency in an HTML dashboard. Start with
-invoice extraction or support-ticket triage. Run the evaluator on your laptop
+invoice-text extraction, support-ticket triage or a complex support-case decision. Run the evaluator on your laptop
 or in Amazon Bedrock AgentCore using the same prepared study.
 
 Codex guides the setup and asks what the evidence needs to prove. You choose
 which errors matter, what a correct answer looks like and whether the result
 justifies a model change.
 
+For longer inputs, the [complex support-case example](examples/complex-support-resolution/README.md)
+includes contracts, invoice lines and incident histories, with named decision and
+evidence checks. The same plugin supports configurable request/output limits and
+provider timeouts. See [complex text studies](skills/evaluate-workflows/references/complex-text.md)
+for setup and grading scope.
+
 ![Prompt Optimizer evaluation flow through AgentCore, Bedrock and S3](docs/prompt-optimizer-architecture.drawio.png)
 
-**One reusable evaluation workflow.** Prepare your inputs and fixed prompt,
+**One reusable evaluation workflow.** Prepare your inputs and starting prompt,
 run the study locally or on AgentCore, then explore the saved evidence in a
 browser. The cloud path above applies to any supported structured-output
 workflow. [Open the editable AWS diagram and six numbered steps](docs/prompt-optimizer-architecture.md).
@@ -37,68 +43,112 @@ demo, then go straight to step 6. Fresh studies use all six steps.
 
 ## 1. Install in Codex
 
-### 1.1. Add or refresh the marketplace
+### 1.1. Choose the integration branch
 
-For a first installation, add the feature-branch marketplace:
+These instructions use `codex/prompt-optimizer-integration-20261124` in
+`openai-on-aws/benchmarks-openai`. The marketplace is named **`openai-on-aws`**.
+This branch includes the integration changes; `main` and the earlier
+`feature/customer-eval-plugin` branch may contain different versions.
+
+First check existing registrations:
 
 ```bash
-codex plugin marketplace add openai-on-aws/benchmarks-openai --ref feature/customer-eval-plugin
+codex plugin marketplace list --json
 ```
 
-If this marketplace already uses the feature branch, refresh it instead:
+If `openai-on-aws` is not registered, add this branch:
+
+```bash
+codex plugin marketplace add openai-on-aws/benchmarks-openai --ref codex/prompt-optimizer-integration-20261124
+```
+
+If it already points to this repository and branch, refresh it:
 
 ```bash
 codex plugin marketplace upgrade openai-on-aws
 ```
 
-If `openai-on-aws` is already registered from `main`, Codex rejects a second
-source with the same marketplace name. Switch the registration first:
+An upgrade refreshes the registered source; it does not switch branches.
+If the name already points somewhere else, review that registration before
+changing it. The same marketplace also supplies Bedrock Bench, so replacing
+its source changes the catalog used for both plugins.
+
+<details>
+<summary>Switch an existing registration to this branch</summary>
+
+Use these commands only after deciding to replace the current `openai-on-aws`
+source. Record its current URL or local path and Git ref first so you can restore
+it later. Removing a registration does not remove your workspace studies.
 
 ```bash
 codex plugin marketplace remove openai-on-aws
-codex plugin marketplace add openai-on-aws/benchmarks-openai --ref feature/customer-eval-plugin
+codex plugin marketplace add openai-on-aws/benchmarks-openai --ref codex/prompt-optimizer-integration-20261124
 ```
 
-This changes the marketplace source; existing installed plugin caches and
-settings are separate. After merge, the default branch can be used.
-This repository marketplace is separate from the universal plugin directory.
+Then install and verify the plugin in step 1.2. A marketplace refresh alone does
+not establish which plugin version is installed.
 
-### 1.2. Install and verify
+</details>
+
+<details>
+<summary>Use a local clone of this branch instead</summary>
+
+```bash
+git clone --branch codex/prompt-optimizer-integration-20261124 https://github.com/openai-on-aws/benchmarks-openai.git
+codex plugin marketplace add /absolute/path/to/benchmarks-openai
+```
+
+Replace the path with the clone you just created. Its root contains
+`.agents/plugins/marketplace.json`, which also declares the name `openai-on-aws`.
+The local clone and Git registration are alternative sources for that same name;
+do not try to register both. If the name is already registered, review it and
+follow the source-switch guidance above, using the local path in the add command.
+For later updates, update the clone before reinstalling the plugin.
+
+To inspect the workflow without changing any registration, ask Codex to use the
+clone's `plugins/prompt-optimizer/skills/evaluate-workflows/SKILL.md` directly.
+
+</details>
+
+### 1.2. Install and verify the plugin
 
 ```bash
 codex plugin add prompt-optimizer@openai-on-aws
 codex plugin list --marketplace openai-on-aws --json
 ```
 
-Check that `installed` contains `prompt-optimizer@openai-on-aws` with
-`installed: true` and `enabled: true`. A marketplace registration by itself
-does not install the plugin.
+Check that `prompt-optimizer@openai-on-aws` has `installed: true` and
+`enabled: true`. A marketplace registration by itself does not install the plugin.
+The user-facing skill is `evaluate-workflows`; `engine/intake/` contains
+compatibility instructions for older callers.
+
+Earlier review ZIPs registered a separate marketplace named
+`customer-eval-integration`. Their `prompt-optimizer@customer-eval-integration`
+installation is a separate copy and is not updated by these commands. Use
+`prompt-optimizer@openai-on-aws` for this branch, and verify it before deciding
+whether to remove an older copy. An old ZIP does not receive later Git changes.
 
 ### 1.3. Open a new session
 
-Open a **new** Codex app chat in your workspace and choose **Evaluate Workflows**,
-or start the CLI:
+Open a **new** Codex app chat in your workspace and choose **Evaluate Workflows**
+or invoke `$evaluate-workflows`. You can also start the CLI:
 
 ```bash
 mkdir -p ~/prompt-optimizer-work
 codex -C ~/prompt-optimizer-work
 ```
 
-You can also install **Prompt Optimizer** from **OpenAI on AWS** in Codex's plugin
-directory. The [numbered new-session quickstart](docs/QUICKSTART.md) includes
-copyable prompts and a terminal-only demo.
+The [numbered new-session quickstart](docs/QUICKSTART.md) includes copyable
+prompts and a terminal-only demo. This repository marketplace is separate from
+the universal plugin directory; the branch-specific commands above select the
+version documented here.
 
 <details>
 <summary>Updating a preview installed under the former name</summary>
 
-Refresh the catalog and install the renamed plugin:
-
-```bash
-codex plugin marketplace upgrade openai-on-aws
-codex plugin add prompt-optimizer@openai-on-aws
-```
-
-After Prompt Optimizer works in a new chat, remove the old cached preview with
+After verifying the marketplace source in step 1.1, install
+`prompt-optimizer@openai-on-aws` as shown in step 1.2. Once Prompt Optimizer works
+in a new chat, you can remove the old cached preview with
 `codex plugin remove customer-eval@openai-on-aws`. Your study directories and
 reports remain in your workspace, outside the plugin cache.
 
@@ -194,7 +244,7 @@ makes two model calls to qualify the source and target routes.
 
 The [support-ticket guide](examples/support-ticket-triage/README.md) provides
 copyable preparation and execution commands. The
-[workflow reference](skills/evaluate-invoices/references/workflow.md) covers
+[workflow reference](skills/evaluate-workflows/references/workflow.md) covers
 custom invoice logs, connection settings and the common commands:
 `start`, `inspect`, `configure`, `prepare`, `plan`, `run`, `status`, `results`
 and `dashboard`.
@@ -218,7 +268,7 @@ Build an interactive dashboard from either backend, or compare both after
 retrieving their results into the same project:
 
 ```bash
-python3 /absolute/plugin/scripts/invoice_eval.py dashboard \
+python3 /absolute/plugin/scripts/workflow_eval.py dashboard \
   --project /absolute/workspace/my-study \
   --output /absolute/workspace/my-study/dashboard.html
 ```
@@ -227,17 +277,14 @@ Open the returned HTML file directly in a browser. It has three views:
 
 - **Overview:** backend filters, quality checks, cost/latency tradeoffs and
   the exact comparison table.
-- **Trial explorer:** search inputs and outputs by case, filter check failures,
+- **Test cases:** search inputs and outputs by case, filter check failures,
   inspect answers and request receipts, and export filtered evidence.
-- **Run integrity:** completion, unresolved attempts, price coverage,
-  fingerprints and the frozen prompt.
+- **Run details:** completion, unresolved attempts, price coverage,
+  fingerprints and the saved prompts.
 
-<details>
-<summary>Preview the results workspace using the recorded example</summary>
-
-![Prompt Optimizer dashboard showing recorded model cost, latency and quality evidence](docs/dashboard-overview.png)
-
-</details>
+To see the current interface, follow the
+[recorded demo instructions](#try-the-recorded-dashboard-from-a-terminal).
+Opening the demo makes no new model or AWS calls.
 
 Day and night views combine OpenAI-inspired monochrome surfaces, AWS orange
 and Squid Ink accents, and embedded Open Sans from AWS's Cloudscape design
@@ -249,6 +296,49 @@ data in the browser, works offline and needs only Python's standard library
 to build. It reads a single report directory, or the `local/`, `agentcore/`
 and `results/` report locations within a project. Combined reports must have
 matching input fingerprints and one report per backend.
+
+The results summary compares source and target with the original prompt, and
+compares the original and selected prompts on the target model when both were
+evaluated. Each backend gets its own summary with pass counts, the selected cost
+measure and observed p95 changes. Improvements, regressions, tradeoffs and missing
+evidence are reported separately. Switching the cost measure updates the summary
+and chart; it never changes the saved prompt selection. Reference provenance is
+kept under Run details, with a short data label and link on Overview. Measured
+differences are not significance claims.
+
+When a prompt revision has matching cases and verified evaluation criteria,
+Overview starts with a compact before/after comparison: required-check pass rate,
+output tokens including reasoning, p95 time, cost per attempt and cost per
+successful result. Both costs stay visible so fewer failed answers cannot hide
+an increase in cost per attempt. A criterion table shows failures and unknown
+checks separately, including optional checks.
+
+The paired example shows the same input and expected answer beside both model
+responses and their checks. Where an improvement is available, the initial example
+illustrates the required check with the largest reduction in failures; the page
+explains how the example was chosen. A selector
+includes every matched case and repeat, including regressions. The full prompt
+diff and prompt links show the wording change without claiming that one edit
+caused a particular result. All of this reads saved evidence and leaves prompt
+selection unchanged. Missing criteria or unmatched attempts are reported as
+unavailable rather than reconstructed.
+
+“Starting prompt” is the prompt supplied before optimization. “Revised prompt” is
+the version the optimizer chose after testing its candidates. Summary tables name
+both prompts or models in their column headers. “Saved run results” means the page
+reads report files; it does not update live or start model calls.
+
+Click **Starting prompt** or **Revised prompt** in the Overview comparison to
+read its full text in **Run details**. Each prompt card identifies its model and
+execution location and has a **Back to Overview** button. Runs that kept the
+starting prompt do not label it as revised.
+
+Chart points name the model and prompt. Each execution location has a separate
+plot with shared axes. The vertical axis is estimated model inference USD per
+1,000 attempts or successful results, according to the cost selector. Tooltips
+show both the per-result and per-1,000 amounts. These are normalized model costs,
+not total run spend or AgentCore pricing. AgentCore Runtime, Gateway, storage,
+logging, other infrastructure and human review charges are excluded.
 
 This is an interactive snapshot, not a live AWS monitoring service. Run
 `results` to retrieve cloud evidence, then rebuild with `--force` to refresh
@@ -271,14 +361,14 @@ steps; none makes model or AWS calls.
 ### T1. Get the repository
 
 ```bash
-git clone --branch feature/customer-eval-plugin https://github.com/openai-on-aws/benchmarks-openai.git
+git clone --branch codex/prompt-optimizer-integration-20261124 https://github.com/openai-on-aws/benchmarks-openai.git
 cd benchmarks-openai
 ```
 
 ### T2. Copy the recorded demo
 
 ```bash
-python3 plugins/prompt-optimizer/scripts/invoice_eval.py demo --output invoice-demo
+python3 plugins/prompt-optimizer/scripts/workflow_eval.py demo --output invoice-demo
 ```
 
 ### T3. Open and review the dashboard
@@ -300,8 +390,8 @@ harder, real invoices. See the [recorded evidence](examples/recorded-invoice-com
 prompt-optimizer/
 ├── plugin.json                 Portable plugin identity
 ├── .codex-plugin/plugin.json   Codex presentation and skill discovery
-├── skills/evaluate-invoices/   One shared workflow (stable skill identifier)
-├── scripts/invoice_eval.py     One entrypoint for both starters and backends
+├── skills/evaluate-workflows/   One shared workflow (stable skill identifier)
+├── scripts/workflow_eval.py     One entrypoint for both starters and backends
 ├── engine/                    Bundled evaluator and AWS runtime
 ├── examples/                  Recorded invoice report and triage starter
 ├── docs/                      Deployment and editable AWS architecture
@@ -327,3 +417,20 @@ and invoke it from another directory.
 
 The plugin is [MIT-0](LICENSE), with an included MIT-0 importer.
 [Upstream provenance](UPSTREAM.md) records the source and integration changes.
+
+## Integration branch
+
+The `codex/prompt-optimizer-integration-20261124` branch integrates Nick’s plugin
+with the workshop engine and subsequent fixes. The evaluator is bundled at
+`plugins/prompt-optimizer/engine`, so the installed plugin does not need the
+original workshop checkout. Use the `evaluate-workflows` skill and
+`scripts/workflow_eval.py` entrypoint.
+
+Choose `start --mode compare` or `start --mode optimize`; see the
+[optimization walkthrough](skills/evaluate-workflows/references/optimization.md).
+The dashboard shows both cost per attempt and cost per successful result. Small
+comparisons use all selected cases across validation and holdout; prompt optimization
+keeps a development split and its validation minimum.
+
+Use [the branch installation steps](#1-install-in-codex) above,
+then open a new Codex chat.

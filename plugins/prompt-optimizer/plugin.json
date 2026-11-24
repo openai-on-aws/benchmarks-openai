@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "prompt-optimizer",
-  "version": "0.2.2",
-  "description": "Compare invoice extraction or support-ticket triage with one fixed prompt on two models, locally or in AgentCore, and inspect quality, cost and latency.",
+  "version": "0.5.8",
+  "description": "Compare models or optimize prompts from customer text logs, locally or in AgentCore, with quality, cost and latency evidence.",
   "author": {
     "name": "OpenAI on AWS",
     "url": "https://github.com/openai-on-aws"

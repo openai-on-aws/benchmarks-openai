@@ -34,7 +34,7 @@ class TriageStarterTests(unittest.TestCase):
 
             def cli(*args):
                 result = subprocess.run(
-                    [sys.executable, "-B", str(PLUGIN / "scripts/invoice_eval.py"), *map(str, args)],
+                    [sys.executable, "-B", str(PLUGIN / "scripts/workflow_eval.py"), *map(str, args)],
                     cwd=workspace, env=env, capture_output=True, text=True,
                 )
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -72,17 +72,17 @@ class TriageStarterTests(unittest.TestCase):
             configured = cli("configure", "--project", project, "--decisions", answers)
             self.assertTrue(configured["ready_to_prepare"], configured)
             prepared = cli("prepare", "--project", project)
-            self.assertEqual(prepared["split_counts"], {"development": 20, "validation": 20, "holdout": 20})
+            self.assertEqual(prepared["split_counts"], {"development": 0, "validation": 30, "holdout": 30})
             plan = cli("plan", "--project", project)
             self.assertEqual(plan["calls_made"], 0)
-            self.assertEqual(plan["fixed_prompt_evaluation_trials_per_backend"], 80)
+            self.assertEqual(plan["fixed_prompt_evaluation_trials_per_backend"], 120)
             self.assertFalse(plan["prompt_optimization"])
             document = yaml.safe_load((project / "prepared/input.yaml").read_text())
             self.assertEqual({d["label_status"] for d in document["datasets"]}, {"unreviewed"})
             self.assertEqual({d["provenance"] for d in document["datasets"]}, {"synthetic"})
-            self.assertEqual(len(document["checks"]), 4)
+            self.assertEqual(len(document["checks"]), 1)
             self.assertEqual(document["success_criteria"], [])
-            for split in ("development", "validation", "holdout"):
+            for split in ("validation", "holdout"):
                 cases = [json.loads(line) for line in (project / "prepared" / f"{split}.jsonl").read_text().splitlines()]
                 for case in cases:
                     self.assertEqual(case["metadata"]["reference_kind"], "supplied_expected")

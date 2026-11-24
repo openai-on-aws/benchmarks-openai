@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "seed": "complex-support-v1",
+  "provenance": "synthetic",
+  "label_status": "unreviewed",
+  "split_seed": "complex-support-resolution-v1",
+  "prompt_sha256": "86bf9c1d629978e3828116e8efc70054664936a06193a4f3816557f9736eb36a",
+  "datasets": {
+    "cases": {
+      "distinct_cases": 180,
+      "sha256": "ac28386d47f4be781401cbd9444626db1dc0c78cb18b691a141412ae25e3b4d9",
+      "bytes": 14717388,
+      "size_bands": {
+        "small": 60,
+        "medium": 60,
+        "large": 60
+      },
+      "scenarios": {
+        "threshold_boundary": 15,
+        "overlapping_monitors": 15,
+        "late_claim": 15,
+        "deadline_correction": 15,
+        "active_security": 15,
+        "contained_security": 15,
+        "pending_evidence": 15,
+        "claim_conflict": 15,
+        "cap_exhausted": 15,
+        "already_credited": 15,
+        "ineligible_plan": 15,
+        "ongoing_outage": 15
+      },
+      "dispositions": {
+        "no_eligible_credit": 5,
+        "eligible": 85,
+        "late_claim": 15,
+        "require_review": 30,
+        "cap_exhausted": 15,
+        "already_credited": 15,
+        "ineligible_plan": 15
+      },
+      "input_characters": {
+        "minimum": 17405,
+        "maximum": 118710
+      },
+      "token_estimate_method": "characters / 4; not a model tokenizer or measured usage"
+    },
+    "pilot": {
+      "distinct_cases": 20,
+      "sha256": "d4bb68093f7f8bcf2f78b9131bcd71dcfdf570c64406a499324f59f9863470b7",
+      "bytes": 1696005,
+      "size_bands": {
+        "small": 6,
+        "medium": 7,
+        "large": 7
+      },
+      "scenarios": {
+        "threshold_boundary": 2,
+        "overlapping_monitors": 2,
+        "late_claim": 2,
+        "deadline_correction": 2,
+        "active_security": 2,
+        "contained_security": 2,
+        "pending_evidence": 2,
+        "claim_conflict": 2,
+        "cap_exhausted": 1,
+        "already_credited": 1,
+        "ineligible_plan": 1,
+        "ongoing_outage": 1
+      },
+      "dispositions": {
+        "no_eligible_credit": 1,
+        "eligible": 10,
+        "late_claim": 2,
+        "require_review": 4,
+        "cap_exhausted": 1,
+        "already_credited": 1,
+        "ineligible_plan": 1
+      },
+      "input_characters": {
+        "minimum": 17563,
+        "maximum": 119145
+      },
+      "token_estimate_method": "characters / 4; not a model tokenizer or measured usage"
+    }
+  }
+}

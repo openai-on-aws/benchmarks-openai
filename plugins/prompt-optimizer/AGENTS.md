@@ -1,16 +1,16 @@
 # Prompt Optimizer development
 
 The plugin must run from its installed cache without the source repository.
-Keep the public interface focused on fixed-prompt structured-output comparisons:
-invoice OCR-text extraction and support-ticket triage share one skill,
-`evaluate-invoices`, and one entrypoint, `scripts/invoice_eval.py`. Retain those
-identifiers for compatibility; do not add a runner or skill for each example.
+Offer fixed-prompt model comparison and explicit prompt optimization for supported
+text workflows. Invoice OCR-text extraction and support-ticket triage share one skill,
+`evaluate-workflows`, and one entrypoint, `scripts/workflow_eval.py`. Use these
+shared identifiers across examples; do not add a runner or skill for each example.
 
 Treat the plugin directory as read-only input. Projects, environments, reports,
 receipts and build output belong in the user's workspace. The `demo` command
 copies historical evidence and must never invoke models or AWS.
 
-The default invoice study freezes the prompt and requires only source and
+The default comparison study freezes the prompt and requires only source and
 target models. Existing engine callers retain their optimization default.
 Do not weaken label provenance, input fingerprints, split separation, spend
 accounting or durable recovery to make a demo pass.

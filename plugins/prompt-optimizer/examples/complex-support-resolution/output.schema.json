@@ -1,0 +1,91 @@
+{
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "contract_id": {
+      "type": "string"
+    },
+    "eligible_fee_cents": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "eligible_outage_minutes": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "credit_rate_percent": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "credit_cents": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "disposition": {
+      "type": "string",
+      "enum": [
+        "eligible",
+        "require_review",
+        "ineligible_plan",
+        "late_claim",
+        "no_eligible_credit",
+        "cap_exhausted",
+        "already_credited"
+      ]
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "urgent",
+        "high",
+        "normal"
+      ]
+    },
+    "queue": {
+      "type": "string",
+      "enum": [
+        "security",
+        "billing_review",
+        "technical",
+        "billing",
+        "support"
+      ]
+    },
+    "requires_human_review": {
+      "type": "boolean"
+    },
+    "required_actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "evidence_source_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "case_id",
+    "contract_id",
+    "eligible_fee_cents",
+    "eligible_outage_minutes",
+    "credit_rate_percent",
+    "credit_cents",
+    "disposition",
+    "priority",
+    "queue",
+    "requires_human_review",
+    "required_actions",
+    "evidence_source_ids"
+  ],
+  "additionalProperties": false
+}

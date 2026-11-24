@@ -1,8 +1,15 @@
-# Fixed-prompt evaluation workflow
+# Evaluation workflow
 
 `PLUGIN` below is the absolute installed plugin directory; `EVAL_PYTHON` is the Python
 executable in the user's Python 3.12 workspace environment. Use the same
 entrypoint for local and AgentCore execution.
+
+Ask the initial workflow questions before environment setup. Before creating the
+environment, check `python3.12 --version`. If it is not on PATH, use the absolute
+path of an available Python 3.12 installation. Do not substitute the system
+`python3` or downgrade dependencies to fit an older interpreter. If Python 3.12
+is unavailable, keep collecting the draft and resolve that setup requirement
+before running study commands.
 
 ```bash
 export PLUGIN=/absolute/path/to/prompt-optimizer
@@ -13,13 +20,13 @@ export EVAL_PYTHON="$EVAL_WORKSPACE/.venv/bin/python"
 "$EVAL_PYTHON" -m pip install -r "$PLUGIN/requirements.txt"
 export EVAL_PROJECT="$EVAL_WORKSPACE/invoice-study"
 
-"$EVAL_PYTHON" "$PLUGIN/scripts/invoice_eval.py" start --project "$EVAL_PROJECT"
-"$EVAL_PYTHON" "$PLUGIN/scripts/invoice_eval.py" inspect --project "$EVAL_PROJECT" \
+"$EVAL_PYTHON" "$PLUGIN/scripts/workflow_eval.py" start --project "$EVAL_PROJECT"
+"$EVAL_PYTHON" "$PLUGIN/scripts/workflow_eval.py" inspect --project "$EVAL_PROJECT" \
   --input /absolute/path/to/invoices.jsonl
-"$EVAL_PYTHON" "$PLUGIN/scripts/invoice_eval.py" configure --project "$EVAL_PROJECT" \
+"$EVAL_PYTHON" "$PLUGIN/scripts/workflow_eval.py" configure --project "$EVAL_PROJECT" \
   --decisions "$EVAL_WORKSPACE/answers.json"
-"$EVAL_PYTHON" "$PLUGIN/scripts/invoice_eval.py" prepare --project "$EVAL_PROJECT"
-"$EVAL_PYTHON" "$PLUGIN/scripts/invoice_eval.py" plan --project "$EVAL_PROJECT"
+"$EVAL_PYTHON" "$PLUGIN/scripts/workflow_eval.py" prepare --project "$EVAL_PROJECT"
+"$EVAL_PYTHON" "$PLUGIN/scripts/workflow_eval.py" plan --project "$EVAL_PROJECT"
 ```
 
 The bundled synthetic OCR-text logs are under
@@ -48,7 +55,9 @@ infrastructure and never creates it. Choose local-only while access is being
 arranged, or keep a draft for both backends. Adding cloud configuration to an
 already prepared local study requires a new project revision.
 
-The `answers.json` patch records only known choices. For a fixed-prompt study
+The `answers.json` patch records only known choices. Relative file references in
+that JSON resolve against the answer file’s directory and are saved as absolute
+paths, so resuming from another working directory is safe. For a fixed-prompt study
 it needs `owner`, `source_model`, `target_model`, `connection`,
 `prompt_location`, `provenance`, `quality` and `budget_policy`; a capped policy
 also needs `budget_usd`. Do not invent missing values. Model choices select
@@ -61,14 +70,20 @@ keys in the connection's `models` object.
   for historical output agreement.
 - `quality.fields`: `[""]` for whole-object equality, or agreed dotted paths,
   such as `["invoice_id", "total", "needs_review"]`.
-  The triage starter uses `["category", "priority", "queue", "needs_review"]`.
+  The triage starter uses whole-object equality, including types and unexpected fields.
 - `quality.description`: the user's correctness criterion.
+- `quality.kind: "json_checks"`: named structured decision checks and an optional
+  output schema; see [complex text studies](complex-text.md) for the contract.
 - `quality.reference_file`: optional mapping of case IDs to expected answers.
 - `quality.rules`: supplied general business rules, kept separate from
   case-specific expected answers.
-- `provenance`: `"synthetic"`, `"customer"` or `"public"`. Labels stay unreviewed.
+- `provenance`: `"synthetic"`, `"customer"` or `"public"`. Labels stay unreviewed until a scoped human review is recorded; see [label review](label-review.md).
+- `label_review_file`: optional human-completed review file tied to case inputs and expected-answer hashes.
 - `repetitions`, `concurrency`, `timeout_seconds`: propose and explain these
   settings; engine defaults are 3, 2 and 180 respectively.
+- `limits` and `optimizer_limits`: partial overrides for serialized request size,
+  output-token allowance and provider request timeout. The replay path uses one
+  new model request per case. See [complex text studies](complex-text.md).
 - `budget_policy`: `"capped"` or `"unlimited"` according to actual authorization.
   An uncapped study still has case, concurrency, request and timeout limits.
 - `cost_metric`: `"cost_usd_per_session"` or `"cost_usd_per_success"`.
@@ -78,29 +93,31 @@ keys in the connection's `models` object.
 - `optimization_enabled`: starts as false. Turning it on is a scope extension
   requiring an optimizer model and separate prompt-change agreement.
 
-The existing joint comparison requires at least 20 validation observations;
-repetitions are not independent cases. Group related records with `group_by`
+Fixed comparison needs at least two independent groups, divided into validation
+and holdout; all selected cases are evaluated. Prompt optimization additionally
+uses development cases and requires at least 20 validation observations. Intake
+checks these requirements before preparation. Repetitions are not independent cases. Group related records with `group_by`
 when applicable so related documents do not cross splits.
 
 ```bash
 # Run the frozen study locally. This makes real model calls.
-"$EVAL_PYTHON" "$PLUGIN/scripts/invoice_eval.py" run \
+"$EVAL_PYTHON" "$PLUGIN/scripts/workflow_eval.py" run \
   --project "$EVAL_PROJECT" --backend local --live
 
 # Run the same study in an already deployed AgentCore coordinator.
-"$EVAL_PYTHON" "$PLUGIN/scripts/invoice_eval.py" run \
+"$EVAL_PYTHON" "$PLUGIN/scripts/workflow_eval.py" run \
   --project "$EVAL_PROJECT" --backend agentcore --live
 
 # Inspect the same job. These commands do not submit a new evaluation.
-"$EVAL_PYTHON" "$PLUGIN/scripts/invoice_eval.py" status \
+"$EVAL_PYTHON" "$PLUGIN/scripts/workflow_eval.py" status \
   --project "$EVAL_PROJECT"
-"$EVAL_PYTHON" "$PLUGIN/scripts/invoice_eval.py" results \
+"$EVAL_PYTHON" "$PLUGIN/scripts/workflow_eval.py" results \
   --project "$EVAL_PROJECT"
-"$EVAL_PYTHON" "$PLUGIN/scripts/invoice_eval.py" results \
+"$EVAL_PYTHON" "$PLUGIN/scripts/workflow_eval.py" results \
   --project "$EVAL_PROJECT" --backend local
 
 # Render compatible saved results together, without AWS or model calls.
-python3 "$PLUGIN/scripts/invoice_eval.py" dashboard \
+python3 "$PLUGIN/scripts/workflow_eval.py" dashboard \
   --project "$EVAL_PROJECT" --output "$EVAL_PROJECT/dashboard.html"
 ```
 
@@ -109,7 +126,7 @@ calls. `results/decision.html` is the cloud report; `local/decision.html` is
 the local report. Reports preserve usage, timing, checks and prompt evidence.
 The `dashboard` command combines the saved backend reports when their input
 fingerprints match. It also supports a single backend. Open `dashboard.html`
-for the overview, trial explorer and run-integrity views. It is an offline
+for the overview, Test cases and Run details views. It is an offline
 snapshot; retrieve results, then rebuild with `--force` to refresh it.
 
 For unsupported log formats or grading needs, inspect the bundled engine's

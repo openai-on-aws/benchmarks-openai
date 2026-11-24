@@ -1,0 +1,727 @@
+[
+  {
+    "id": "PILOT-001",
+    "scenario": "threshold_boundary",
+    "size_band": "small",
+    "input_characters": 17612,
+    "request_text_characters": 24891,
+    "estimated_tokens_at_four_chars": 6223,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "PILOT-001",
+      "contract_id": "PILOT-001-BASE",
+      "eligible_fee_cents": 8009,
+      "eligible_outage_minutes": 29,
+      "credit_rate_percent": 0,
+      "credit_cents": 0,
+      "disposition": "no_eligible_credit",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "PILOT-001-ACCOUNT",
+        "PILOT-001-CLAIM",
+        "PILOT-001-CONTRACT_BASE",
+        "PILOT-001-CREDIT_LEDGER",
+        "PILOT-001-INCIDENTS",
+        "PILOT-001-INVOICE",
+        "PILOT-001-OPERATIONS",
+        "PILOT-001-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "PILOT-002",
+    "scenario": "overlapping_monitors",
+    "size_band": "medium",
+    "input_characters": 62763,
+    "request_text_characters": 70042,
+    "estimated_tokens_at_four_chars": 17510,
+    "invoice_lines": 50,
+    "incident_rows": 62,
+    "expected": {
+      "case_id": "PILOT-002",
+      "contract_id": "PILOT-002-BASE",
+      "eligible_fee_cents": 83148,
+      "eligible_outage_minutes": 339,
+      "credit_rate_percent": 15,
+      "credit_cents": 7934,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "PILOT-002-ACCOUNT",
+        "PILOT-002-CLAIM",
+        "PILOT-002-CONTRACT_BASE",
+        "PILOT-002-CREDIT_LEDGER",
+        "PILOT-002-INCIDENTS",
+        "PILOT-002-INVOICE",
+        "PILOT-002-MAINTENANCE_NOTICES",
+        "PILOT-002-OPERATIONS",
+        "PILOT-002-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "PILOT-003",
+    "scenario": "late_claim",
+    "size_band": "large",
+    "input_characters": 118775,
+    "request_text_characters": 126054,
+    "estimated_tokens_at_four_chars": 31514,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "PILOT-003",
+      "contract_id": "PILOT-003-BASE",
+      "eligible_fee_cents": 166514,
+      "eligible_outage_minutes": 468,
+      "credit_rate_percent": 15,
+      "credit_cents": 0,
+      "disposition": "late_claim",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "PILOT-003-ACCOUNT",
+        "PILOT-003-CLAIM",
+        "PILOT-003-CONTRACT_BASE",
+        "PILOT-003-CREDIT_LEDGER",
+        "PILOT-003-INCIDENTS",
+        "PILOT-003-INVOICE",
+        "PILOT-003-MAINTENANCE_NOTICES",
+        "PILOT-003-OPERATIONS",
+        "PILOT-003-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "PILOT-004",
+    "scenario": "deadline_correction",
+    "size_band": "small",
+    "input_characters": 17563,
+    "request_text_characters": 24842,
+    "estimated_tokens_at_four_chars": 6210,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "PILOT-004",
+      "contract_id": "PILOT-004-BASE",
+      "eligible_fee_cents": 11835,
+      "eligible_outage_minutes": 158,
+      "credit_rate_percent": 15,
+      "credit_cents": 1046,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "PILOT-004-ACCOUNT",
+        "PILOT-004-CLAIM",
+        "PILOT-004-CONTRACT_BASE",
+        "PILOT-004-CREDIT_LEDGER",
+        "PILOT-004-INCIDENTS",
+        "PILOT-004-INVOICE",
+        "PILOT-004-MAINTENANCE_NOTICES",
+        "PILOT-004-OPERATIONS",
+        "PILOT-004-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "PILOT-005",
+    "scenario": "active_security",
+    "size_band": "medium",
+    "input_characters": 62163,
+    "request_text_characters": 69442,
+    "estimated_tokens_at_four_chars": 17360,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "PILOT-005",
+      "contract_id": "PILOT-005-BASE",
+      "eligible_fee_cents": 84630,
+      "eligible_outage_minutes": 323,
+      "credit_rate_percent": 15,
+      "credit_cents": 8459,
+      "disposition": "eligible",
+      "priority": "urgent",
+      "queue": "security",
+      "requires_human_review": true,
+      "required_actions": [
+        "open_security_escalation",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "PILOT-005-ACCOUNT",
+        "PILOT-005-CLAIM",
+        "PILOT-005-CONTRACT_BASE",
+        "PILOT-005-CREDIT_LEDGER",
+        "PILOT-005-INCIDENTS",
+        "PILOT-005-INVOICE",
+        "PILOT-005-MAINTENANCE_NOTICES",
+        "PILOT-005-OPERATIONS",
+        "PILOT-005-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "PILOT-006",
+    "scenario": "contained_security",
+    "size_band": "large",
+    "input_characters": 118106,
+    "request_text_characters": 125385,
+    "estimated_tokens_at_four_chars": 31346,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "PILOT-006",
+      "contract_id": "PILOT-006-BASE",
+      "eligible_fee_cents": 135112,
+      "eligible_outage_minutes": 540,
+      "credit_rate_percent": 15,
+      "credit_cents": 13487,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "PILOT-006-ACCOUNT",
+        "PILOT-006-CLAIM",
+        "PILOT-006-CONTRACT_BASE",
+        "PILOT-006-CREDIT_LEDGER",
+        "PILOT-006-INCIDENTS",
+        "PILOT-006-INVOICE",
+        "PILOT-006-MAINTENANCE_NOTICES",
+        "PILOT-006-OPERATIONS",
+        "PILOT-006-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "PILOT-007",
+    "scenario": "pending_evidence",
+    "size_band": "small",
+    "input_characters": 18136,
+    "request_text_characters": 25415,
+    "estimated_tokens_at_four_chars": 6354,
+    "invoice_lines": 12,
+    "incident_rows": 14,
+    "expected": {
+      "case_id": "PILOT-007",
+      "contract_id": "PILOT-007-BASE",
+      "eligible_fee_cents": 22258,
+      "eligible_outage_minutes": 184,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "PILOT-007-ACCOUNT",
+        "PILOT-007-CLAIM",
+        "PILOT-007-CONTRACT_BASE",
+        "PILOT-007-CREDIT_LEDGER",
+        "PILOT-007-INCIDENTS",
+        "PILOT-007-INVOICE",
+        "PILOT-007-MAINTENANCE_NOTICES",
+        "PILOT-007-OPERATIONS",
+        "PILOT-007-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "PILOT-008",
+    "scenario": "claim_conflict",
+    "size_band": "medium",
+    "input_characters": 61890,
+    "request_text_characters": 69169,
+    "estimated_tokens_at_four_chars": 17292,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "PILOT-008",
+      "contract_id": "PILOT-008-BASE",
+      "eligible_fee_cents": 95946,
+      "eligible_outage_minutes": 351,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "PILOT-008-ACCOUNT",
+        "PILOT-008-CLAIM",
+        "PILOT-008-CONTRACT_BASE",
+        "PILOT-008-CREDIT_LEDGER",
+        "PILOT-008-INCIDENTS",
+        "PILOT-008-INVOICE",
+        "PILOT-008-MAINTENANCE_NOTICES",
+        "PILOT-008-OPERATIONS",
+        "PILOT-008-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "PILOT-009",
+    "scenario": "cap_exhausted",
+    "size_band": "large",
+    "input_characters": 118585,
+    "request_text_characters": 125864,
+    "estimated_tokens_at_four_chars": 31466,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "PILOT-009",
+      "contract_id": "PILOT-009-BASE",
+      "eligible_fee_cents": 162834,
+      "eligible_outage_minutes": 578,
+      "credit_rate_percent": 15,
+      "credit_cents": 0,
+      "disposition": "cap_exhausted",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "PILOT-009-ACCOUNT",
+        "PILOT-009-CLAIM",
+        "PILOT-009-CONTRACT_BASE",
+        "PILOT-009-CREDIT_LEDGER",
+        "PILOT-009-INCIDENTS",
+        "PILOT-009-INVOICE",
+        "PILOT-009-MAINTENANCE_NOTICES",
+        "PILOT-009-OPERATIONS",
+        "PILOT-009-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "PILOT-010",
+    "scenario": "already_credited",
+    "size_band": "small",
+    "input_characters": 17656,
+    "request_text_characters": 24935,
+    "estimated_tokens_at_four_chars": 6234,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "PILOT-010",
+      "contract_id": "PILOT-010-BASE",
+      "eligible_fee_cents": 21082,
+      "eligible_outage_minutes": 178,
+      "credit_rate_percent": 15,
+      "credit_cents": 0,
+      "disposition": "already_credited",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "PILOT-010-ACCOUNT",
+        "PILOT-010-CLAIM",
+        "PILOT-010-CONTRACT_BASE",
+        "PILOT-010-CREDIT_LEDGER",
+        "PILOT-010-INCIDENTS",
+        "PILOT-010-INVOICE",
+        "PILOT-010-MAINTENANCE_NOTICES",
+        "PILOT-010-OPERATIONS",
+        "PILOT-010-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "PILOT-011",
+    "scenario": "ineligible_plan",
+    "size_band": "medium",
+    "input_characters": 61831,
+    "request_text_characters": 69110,
+    "estimated_tokens_at_four_chars": 17278,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "PILOT-011",
+      "contract_id": "PILOT-011-BASE",
+      "eligible_fee_cents": 87055,
+      "eligible_outage_minutes": 387,
+      "credit_rate_percent": 15,
+      "credit_cents": 0,
+      "disposition": "ineligible_plan",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "PILOT-011-ACCOUNT",
+        "PILOT-011-CLAIM",
+        "PILOT-011-CONTRACT_BASE",
+        "PILOT-011-CREDIT_LEDGER",
+        "PILOT-011-INCIDENTS",
+        "PILOT-011-INVOICE",
+        "PILOT-011-MAINTENANCE_NOTICES",
+        "PILOT-011-OPERATIONS",
+        "PILOT-011-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "PILOT-012",
+    "scenario": "ongoing_outage",
+    "size_band": "large",
+    "input_characters": 118084,
+    "request_text_characters": 125363,
+    "estimated_tokens_at_four_chars": 31341,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "PILOT-012",
+      "contract_id": "PILOT-012-BASE",
+      "eligible_fee_cents": 130928,
+      "eligible_outage_minutes": 548,
+      "credit_rate_percent": 15,
+      "credit_cents": 12790,
+      "disposition": "eligible",
+      "priority": "high",
+      "queue": "technical",
+      "requires_human_review": false,
+      "required_actions": [
+        "investigate_service_incident",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "PILOT-012-ACCOUNT",
+        "PILOT-012-CLAIM",
+        "PILOT-012-CONTRACT_BASE",
+        "PILOT-012-CREDIT_LEDGER",
+        "PILOT-012-INCIDENTS",
+        "PILOT-012-INVOICE",
+        "PILOT-012-MAINTENANCE_NOTICES",
+        "PILOT-012-OPERATIONS",
+        "PILOT-012-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "PILOT-013",
+    "scenario": "threshold_boundary",
+    "size_band": "medium",
+    "input_characters": 61617,
+    "request_text_characters": 68896,
+    "estimated_tokens_at_four_chars": 17224,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "PILOT-013",
+      "contract_id": "PILOT-013-AMENDMENT",
+      "eligible_fee_cents": 86860,
+      "eligible_outage_minutes": 30,
+      "credit_rate_percent": 5,
+      "credit_cents": 4343,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "PILOT-013-ACCOUNT",
+        "PILOT-013-CLAIM",
+        "PILOT-013-CONTRACT_AMENDMENT",
+        "PILOT-013-CREDIT_LEDGER",
+        "PILOT-013-INCIDENTS",
+        "PILOT-013-INVOICE",
+        "PILOT-013-OPERATIONS",
+        "PILOT-013-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "PILOT-014",
+    "scenario": "overlapping_monitors",
+    "size_band": "large",
+    "input_characters": 119145,
+    "request_text_characters": 126424,
+    "estimated_tokens_at_four_chars": 31606,
+    "invoice_lines": 100,
+    "incident_rows": 122,
+    "expected": {
+      "case_id": "PILOT-014",
+      "contract_id": "PILOT-014-AMENDMENT",
+      "eligible_fee_cents": 151627,
+      "eligible_outage_minutes": 598,
+      "credit_rate_percent": 20,
+      "credit_cents": 30297,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "PILOT-014-ACCOUNT",
+        "PILOT-014-CLAIM",
+        "PILOT-014-CONTRACT_AMENDMENT",
+        "PILOT-014-CREDIT_LEDGER",
+        "PILOT-014-INCIDENTS",
+        "PILOT-014-INVOICE",
+        "PILOT-014-MAINTENANCE_NOTICES",
+        "PILOT-014-OPERATIONS",
+        "PILOT-014-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "PILOT-015",
+    "scenario": "late_claim",
+    "size_band": "small",
+    "input_characters": 17670,
+    "request_text_characters": 24949,
+    "estimated_tokens_at_four_chars": 6237,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "PILOT-015",
+      "contract_id": "PILOT-015-AMENDMENT",
+      "eligible_fee_cents": 10415,
+      "eligible_outage_minutes": 172,
+      "credit_rate_percent": 10,
+      "credit_cents": 0,
+      "disposition": "late_claim",
+      "priority": "normal",
+      "queue": "support",
+      "requires_human_review": false,
+      "required_actions": [
+        "explain_credit_decision"
+      ],
+      "evidence_source_ids": [
+        "PILOT-015-ACCOUNT",
+        "PILOT-015-CLAIM",
+        "PILOT-015-CONTRACT_AMENDMENT",
+        "PILOT-015-CREDIT_LEDGER",
+        "PILOT-015-INCIDENTS",
+        "PILOT-015-INVOICE",
+        "PILOT-015-MAINTENANCE_NOTICES",
+        "PILOT-015-OPERATIONS",
+        "PILOT-015-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "PILOT-016",
+    "scenario": "deadline_correction",
+    "size_band": "medium",
+    "input_characters": 62194,
+    "request_text_characters": 69473,
+    "estimated_tokens_at_four_chars": 17368,
+    "invoice_lines": 50,
+    "incident_rows": 61,
+    "expected": {
+      "case_id": "PILOT-016",
+      "contract_id": "PILOT-016-AMENDMENT",
+      "eligible_fee_cents": 71789,
+      "eligible_outage_minutes": 385,
+      "credit_rate_percent": 20,
+      "credit_cents": 13920,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "PILOT-016-ACCOUNT",
+        "PILOT-016-CLAIM",
+        "PILOT-016-CONTRACT_AMENDMENT",
+        "PILOT-016-CREDIT_LEDGER",
+        "PILOT-016-INCIDENTS",
+        "PILOT-016-INVOICE",
+        "PILOT-016-MAINTENANCE_NOTICES",
+        "PILOT-016-OPERATIONS",
+        "PILOT-016-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "PILOT-017",
+    "scenario": "active_security",
+    "size_band": "large",
+    "input_characters": 118597,
+    "request_text_characters": 125876,
+    "estimated_tokens_at_four_chars": 31469,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "PILOT-017",
+      "contract_id": "PILOT-017-AMENDMENT",
+      "eligible_fee_cents": 151365,
+      "eligible_outage_minutes": 584,
+      "credit_rate_percent": 20,
+      "credit_cents": 22306,
+      "disposition": "eligible",
+      "priority": "urgent",
+      "queue": "security",
+      "requires_human_review": true,
+      "required_actions": [
+        "open_security_escalation",
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "PILOT-017-ACCOUNT",
+        "PILOT-017-CLAIM",
+        "PILOT-017-CONTRACT_AMENDMENT",
+        "PILOT-017-CREDIT_LEDGER",
+        "PILOT-017-INCIDENTS",
+        "PILOT-017-INVOICE",
+        "PILOT-017-MAINTENANCE_NOTICES",
+        "PILOT-017-OPERATIONS",
+        "PILOT-017-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "PILOT-018",
+    "scenario": "contained_security",
+    "size_band": "small",
+    "input_characters": 17675,
+    "request_text_characters": 24954,
+    "estimated_tokens_at_four_chars": 6238,
+    "invoice_lines": 12,
+    "incident_rows": 13,
+    "expected": {
+      "case_id": "PILOT-018",
+      "contract_id": "PILOT-018-AMENDMENT",
+      "eligible_fee_cents": 9820,
+      "eligible_outage_minutes": 176,
+      "credit_rate_percent": 10,
+      "credit_cents": 982,
+      "disposition": "eligible",
+      "priority": "normal",
+      "queue": "billing",
+      "requires_human_review": false,
+      "required_actions": [
+        "recommend_service_credit"
+      ],
+      "evidence_source_ids": [
+        "PILOT-018-ACCOUNT",
+        "PILOT-018-CLAIM",
+        "PILOT-018-CONTRACT_AMENDMENT",
+        "PILOT-018-CREDIT_LEDGER",
+        "PILOT-018-INCIDENTS",
+        "PILOT-018-INVOICE",
+        "PILOT-018-MAINTENANCE_NOTICES",
+        "PILOT-018-OPERATIONS",
+        "PILOT-018-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "PILOT-019",
+    "scenario": "pending_evidence",
+    "size_band": "medium",
+    "input_characters": 62778,
+    "request_text_characters": 70057,
+    "estimated_tokens_at_four_chars": 17514,
+    "invoice_lines": 50,
+    "incident_rows": 62,
+    "expected": {
+      "case_id": "PILOT-019",
+      "contract_id": "PILOT-019-AMENDMENT",
+      "eligible_fee_cents": 94676,
+      "eligible_outage_minutes": 361,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "PILOT-019-ACCOUNT",
+        "PILOT-019-CLAIM",
+        "PILOT-019-CONTRACT_AMENDMENT",
+        "PILOT-019-CREDIT_LEDGER",
+        "PILOT-019-INCIDENTS",
+        "PILOT-019-INVOICE",
+        "PILOT-019-MAINTENANCE_NOTICES",
+        "PILOT-019-OPERATIONS",
+        "PILOT-019-SECURITY"
+      ]
+    }
+  },
+  {
+    "id": "PILOT-020",
+    "scenario": "claim_conflict",
+    "size_band": "large",
+    "input_characters": 118569,
+    "request_text_characters": 125848,
+    "estimated_tokens_at_four_chars": 31462,
+    "invoice_lines": 100,
+    "incident_rows": 121,
+    "expected": {
+      "case_id": "PILOT-020",
+      "contract_id": "PILOT-020-AMENDMENT",
+      "eligible_fee_cents": 155439,
+      "eligible_outage_minutes": 544,
+      "credit_rate_percent": null,
+      "credit_cents": null,
+      "disposition": "require_review",
+      "priority": "normal",
+      "queue": "billing_review",
+      "requires_human_review": true,
+      "required_actions": [
+        "explain_credit_decision",
+        "reconcile_claim_evidence"
+      ],
+      "evidence_source_ids": [
+        "PILOT-020-ACCOUNT",
+        "PILOT-020-CLAIM",
+        "PILOT-020-CONTRACT_AMENDMENT",
+        "PILOT-020-CREDIT_LEDGER",
+        "PILOT-020-INCIDENTS",
+        "PILOT-020-INVOICE",
+        "PILOT-020-MAINTENANCE_NOTICES",
+        "PILOT-020-OPERATIONS",
+        "PILOT-020-SECURITY"
+      ]
+    }
+  }
+]

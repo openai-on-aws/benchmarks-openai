@@ -1,7 +1,7 @@
 {
   "name": "prompt-optimizer",
-  "version": "0.2.2",
-  "description": "Compare invoice extraction or support-ticket triage with one fixed prompt on two models, locally or in AgentCore, and inspect quality, cost and latency.",
+  "version": "0.5.8",
+  "description": "Compare models or optimize prompts from customer text logs, locally or in AgentCore, with quality, cost and latency evidence.",
   "author": {
     "name": "OpenAI on AWS",
     "url": "https://github.com/openai-on-aws"
@@ -11,8 +11,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Prompt Optimizer",
-    "shortDescription": "Compare extraction and triage quality, cost and latency",
-    "longDescription": "Compare two models on a fixed prompt, locally or on AgentCore. Start with invoice extraction or support-ticket triage, then explore interactive dashboards for quality, model cost, latency and individual trial evidence.",
+    "shortDescription": "Compare models or optimize text-task prompts",
+    "longDescription": "Use progressive intake with your text logs, compare models or optimize prompts, then inspect quality, cost per attempt, cost per successful result, latency and individual evidence locally or on AgentCore.",
     "developerName": "OpenAI on AWS",
     "category": "Productivity",
     "capabilities": [
@@ -24,7 +24,8 @@
     "defaultPrompt": [
       "Show me the interactive results dashboard and explain what the saved evidence can support.",
       "Help me prepare the support-ticket triage starter and challenge its expected answers.",
-      "Prepare a model comparison and help me choose local or AgentCore execution."
+      "Prepare a model comparison and help me choose local or AgentCore execution.",
+      "Help optimize my application prompt using my LiteLLM logs, with separate development, validation and held-out results."
     ]
   }
 }

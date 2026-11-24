@@ -85,13 +85,18 @@ def load(path: str | Path, *, live=False):
     if set(grading) != set(indexes['checks']):
         raise ValueError('grading file must define exactly the intake checks')
     for check_id, rule in grading.items():
-        if rule.get('type') not in {'json_equals', 'contains', 'tool_called', 'state_equals', 'llm_rubric'} | TYPES:
+        if rule.get('type') not in {'json_equals', 'json_set_equals', 'json_schema', 'contains', 'tool_called', 'state_equals', 'llm_rubric'} | TYPES:
             raise ValueError(f'Unknown grading type for {check_id}')
         method = indexes['checks'][check_id]['method']
         if method != ('llm_judge' if rule['type'] in ('llm_rubric', 'turn_semantic') else 'deterministic'):
             raise ValueError(f'Grading method does not match intake check {check_id}')
         if rule['type'] == 'turn_semantic' and (not isinstance(rule.get('rubric'), str) or not rule['rubric'].strip()):
             raise ValueError('turn_semantic requires a nonempty rubric')
+        if rule['type'] == 'json_schema':
+            from .json_grading import schema_validator
+            schema_validator(rule.get('schema'))
+        if rule['type'] == 'json_set_equals' and (not isinstance(rule.get('path'), str) or not isinstance(rule.get('expected_key'), str)):
+            raise ValueError('json_set_equals requires path and expected_key strings')
     semantic_models = {indexes['checks'][key]['judge_model_id'] for key, rule in grading.items()
                        if rule['type'] == 'turn_semantic'}
     if len(semantic_models) > 1:
@@ -131,6 +136,14 @@ def load(path: str | Path, *, live=False):
                     raise ValueError('Replay grading turn must equal the captured final user message')
             if 'expected' not in row:
                 raise ValueError('Runnable cases need expected values; use intake for incomplete drafts')
+            from .scoring import at
+            from .json_grading import scalar_set
+            for rule in grading.values():
+                if rule['type'] == 'json_set_equals':
+                    try:
+                        scalar_set(at(row['expected'], rule['expected_key']))
+                    except (KeyError, IndexError, TypeError, ValueError) as exc:
+                        raise ValueError('Invalid JSON set reference for case ' + row['id']) from exc
             validate_expectations(row, grading)
             if any(rule['type'] in TYPES for rule in grading.values()):
                 for turn in row['expected']['turns']:
@@ -142,8 +155,9 @@ def load(path: str | Path, *, live=False):
         'validation': cfg['validation_dataset_ids'],
         'holdout': doc['optimization']['holdout_dataset_ids'],
     }
-    if any(not ids for ids in splits.values()):
-        raise ValueError('Development, validation and holdout datasets are required')
+    required_splits = ('development', 'validation', 'holdout') if doc['optimization']['enabled'] else ('validation', 'holdout')
+    if any(not splits[key] for key in required_splits):
+        raise ValueError(', '.join(required_splits) + ' datasets are required')
     for split, ids in splits.items():
         for ident in ids:
             if ident not in indexes['datasets'] or indexes['datasets'][ident]['split'] != split:
@@ -151,6 +165,9 @@ def load(path: str | Path, *, live=False):
     for field in ('repetitions', 'concurrency', 'timeout_seconds'):
         if not doc['execution'][field] or doc['execution'][field] <= 0:
             raise ValueError(f'execution.{field} must be positive before running')
+    if ('request_timeout_seconds' in cfg['limits'] and
+            doc['execution']['timeout_seconds'] < cfg['limits']['request_timeout_seconds']):
+        raise ValueError('execution.timeout_seconds must be at least runner.limits.request_timeout_seconds; allow worker setup time')
     if cfg.get('selection'):
         from .selection import validate_policy
         validate_policy(cfg['selection'])
@@ -159,7 +176,7 @@ def load(path: str | Path, *, live=False):
                 raise ValueError('Non-regression checks must name required per-turn checks')
         count = sum(len(datasets[i][:doc['execution']['max_cases_per_dataset']])
                     for i in splits['validation']) * doc['execution']['repetitions']
-        if count < cfg['selection']['min_validation_sessions']:
+        if doc['optimization']['enabled'] and count < cfg['selection']['min_validation_sessions']:
             raise ValueError('Joint selection requires more validation sessions; increase cases or repetitions')
     unlimited = cfg.get('budget_policy', 'capped') == 'unlimited'
     if not unlimited and not doc['execution']['budget_usd']:
@@ -199,8 +216,18 @@ def load(path: str | Path, *, live=False):
                 if any(route.get(k) is None for k in ('cached_input_usd_per_million',
                        'cache_write_usd_per_million', 'pricing_verified_at', 'pricing_max_input_tokens')):
                     raise ValueError(f'{ident}: joint selection requires cache prices, pricing date and context bound')
-                if cfg['limits']['max_request_bytes'] > route['pricing_max_input_tokens']:
-                    raise ValueError(f'{ident}: request envelope exceeds the priced context band')
+                envelopes = []
+                if ident in {source['model_id'], target['model_id']} or any(
+                        c['judge_model_id'] == ident for c in doc['checks'] if c['method'] == 'llm_judge'):
+                    envelopes.append(('application/judge', cfg['limits']))
+                if doc['optimization']['enabled'] and ident == cfg['optimizer_model_id']:
+                    envelopes.append(('optimizer', cfg.get('optimizer_limits', cfg['limits'])))
+                # UTF-8 request bytes are a conservative input-token bound for this
+                # text-only runner, not a tokenizer estimate. Check each purpose's
+                # actual envelope, including an optimizer sharing a model route.
+                for purpose, envelope in envelopes:
+                    if envelope['max_request_bytes'] > route['pricing_max_input_tokens']:
+                        raise ValueError(f'{ident}: {purpose} request envelope exceeds the priced context band')
             if not route['model_id'] or not route['base_url'].startswith('https://'):
                 raise ValueError(f'{ident}: set the model ID and explicit HTTPS endpoint environment variable')
             if route['auth'] == 'sigv4' and not route['region']:
