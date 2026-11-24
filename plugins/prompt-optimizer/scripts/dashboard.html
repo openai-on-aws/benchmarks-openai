@@ -1648,8 +1648,10 @@
             comparisons.push(comparisonSummary(r, original, selected, "prompt", state.costMetric));
           if (reused && get("target_challenger") && !hasEvidence("target_challenger"))
             comparisons.push(comparisonSummary(r, original, get("target_challenger"), "candidate", state.costMetric));
-          if (get("source_original") || original) comparisons.push(comparisonSummary(r, get("source_original"), original, "model", state.costMetric));
+          const sameModelBaseline = r.reused_groups?.source_original === "target_original";
+          if (!sameModelBaseline && (get("source_original") || original)) comparisons.push(comparisonSummary(r, get("source_original"), original, "model", state.costMetric));
           const notes = [];
+          if (sameModelBaseline) notes.push(r.optimization_recorded ? "This run uses one model and compares prompts." : "This run uses one model and a fixed prompt.");
           if (reused) notes.push(r.selected_prompt?.reason === "Baseline only"
             ? "The prompt was fixed for this run; no prompt optimization was performed."
             : "The optimizer kept the starting prompt; it did not choose a revised version.");
@@ -1657,7 +1659,7 @@
             notes.push(`Recorded selection reason: ${r.selected_prompt.reason}.`);
           if (get("target_challenger")) notes.push("The candidate prompt in the table was not selected.");
           if (selected && !reused) notes.push("These test cases were not used to choose the revised prompt.");
-          if (!comparisons.length && !promptEvidencePairs(r).length) notes.push("No supported comparison pair is available in this saved report.", ...evidenceIssues(r));
+          if (!comparisons.length && !promptEvidencePairs(r).length && !sameModelBaseline) notes.push("No supported comparison pair is available in this saved report.", ...evidenceIssues(r));
           notes.push("P95 is the time within which 95% of test runs finished. Timing differences may vary between runs.");
           return `<section class="run-summary"><div class="eyebrow">${esc(r.backend === "local" ? "Run locally" : "Run on " + backendLabel(r.backend))}</div>${assessmentNote(r)}` + comparisons.map((c) =>
             `<div class="result-comparison" data-result="${esc(c.status)}" data-comparison="${c.kind}"><h2>${esc(c.label)}</h2><p>${esc(c.description)}</p><p><strong>${esc(c.headline)}</strong></p><table class="summary-table"><thead><tr><th scope="col">Measure</th>${c.columns.map((col, i) => `<th scope="col">${c.promptGroups ? promptLink(r, c.promptGroups[i], col) : esc(col)}</th>`).join("")}</tr></thead><tbody>${c.rows.map((row) => `<tr><th scope="row">${esc(row[0])}</th><td>${esc(row[1])}</td><td>${esc(row[2])}</td></tr>`).join("")}</tbody></table>${c.kind === "model" && promptEntry(r, "target_original") ? `<p>${promptLink(r, "target_original", "View starting prompt")}</p>` : ""}${c.issues.length ? `<p><strong>${esc(c.issues.join(" "))}</strong></p>` : ""}</div>`).join("") +
