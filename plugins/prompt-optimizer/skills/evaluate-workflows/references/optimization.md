@@ -19,6 +19,9 @@ Then inspect the customer's logs and configure their resolved decisions as in
 [the shared workflow](workflow.md). Set `optimizer_model` to a key in the
 connection file, independently of `source_model` and `target_model`. The optimizer
 may use a different model and reasoning setting. Preserve exact requested routes.
+When optimizing one application model, source and target may select the same
+connection key; they represent the starting-model comparison roles, not a
+requirement to migrate to another model.
 
 For a worked starter, use `examples/support-ticket-triage/tickets.jsonl` and its
 decision template. Set `optimization_enabled: true`, `optimizer_model` to the
@@ -55,3 +58,25 @@ worse measured cost or latency; explicit customer thresholds apply only if suppl
 
 Raw PDF/image processing and live customer tools require an application adapter;
 text-log replay does not execute those upstream application steps.
+
+## Optimize without expected answers
+
+When the customer has source text but no labels, use [source-based judging](source-judging.md).
+The customer confirms the named rubric and output contract. `quality.kind` is
+`source_judge`; no expected values are created. A separate `judge_model` judges
+each completed candidate output against the fixed source context. An Astra
+connection can be selected for both `optimizer_model` and `judge_model`, with
+the reasoning settings explicitly configured; neither role is inferred from
+the Codex chat model. `judge_limits` and `optimizer_limits` are separate.
+
+Development feedback contains the judge's failed criteria and source evidence.
+The optimizer changes only the application prompt; it does not edit the rubric,
+source texts or grading schema. Validation and holdout source/output judgments
+remain outside the mutation feedback. `needs_review` is not a pass and is not a
+verified correction for the optimizer to copy.
+
+Show source-assessed quality, deterministic schema results, review/grade-error
+counts, application cost and application latency. Report judge and optimizer
+spend separately from those application metrics. A high judge pass rate is not
+human-verified accuracy; inspect representative judgments before an adoption
+decision.

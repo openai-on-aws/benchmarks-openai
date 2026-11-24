@@ -89,6 +89,22 @@ Help me inspect my inputs and expected answers, then choose local, AgentCore,
 or both before freezing the study. Prepare a reviewable plan before execution.
 ```
 
+**Assess extractions when you have source text but no expected answers:**
+
+```text
+Use Prompt Optimizer. I have invoice text and extraction requests, but no
+expected answers. Help me decide which extraction errors matter and agree a
+rubric from my output contract. Use source-based judging without inventing
+labels. Ask only for the missing decisions, including a separate judge model.
+Prepare a reviewable plan before making paid model calls.
+```
+
+This evaluates the supplied text stage, not raw PDF/OCR processing. Codex can
+propose criteria, but you confirm what they should require. The
+[source-judging guide](../skills/evaluate-workflows/references/source-judging.md)
+shows the supported input formats and exact decision fields. The results are
+judge assessments, not human-verified accuracy.
+
 **Try the second example:**
 
 ```text
@@ -226,6 +242,10 @@ is unavailable. Keep the pinned dependencies unchanged.
 In Codex, ask: “Use the evaluation skill to help improve my application prompt.
 I have logs, but I’m not sure what else you need.” Answer the questions as they
 arise. Source model, target model and optimizer model are separate choices.
+If you have source text but no expected answers, select source-based judging
+and a separate judge model. Astra can serve as the optimizer and judge when
+chosen, while Sol performs extraction; those roles and reasoning settings are
+explicit configuration, not defaults taken from the chat.
 The [optimization walkthrough](../skills/evaluate-workflows/references/optimization.md)
 shows the same entrypoint in optimize mode and the resulting prompt artifacts.
 The installation steps above select this integration branch. A local clone can

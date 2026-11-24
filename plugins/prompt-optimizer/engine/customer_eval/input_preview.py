@@ -13,6 +13,8 @@ REMEDIES = {
     'unsupported_or_empty_content': ('A message is empty or contains a file, image, or other non-text content.', 'Supply extracted text to test the text stage, or add a document/application adapter to test the original input.'),
     'unsupported_request_setting': ('The request contains a setting this replay runner cannot preserve.', 'Inspect the original request and add a supported adapter or explicitly revise the experiment.'),
     'missing_request_or_response': ('The full request or completed response is missing.', 'Export both request and response bodies, or use a manual input with an expected answer.'),
+    'missing_request': ('The captured request is missing.', 'Export the complete text request, including instructions and history; source judging does not require a recorded answer.'),
+    'source_judge_expected_answers_conflict': ('This record supplies expected answers but source judging was selected.', 'Use a reference-based evaluation or explicitly provide a source-only input file; expected answers are never silently used or discarded.'),
     'missing_messages': ('The request messages are missing.', 'Export the full request body, including instructions and conversation history.'),
     'invalid_replay_or_missing_prompt': ('No usable editable instruction was found, or the conversation does not end with a user message.', 'Supply the prompt and complete request, then choose its instruction slot.'),
     'conflicting_reference': ('The same request has conflicting expected answers.', 'Review the references and resolve the disagreement before including this request.'),
@@ -68,8 +70,11 @@ def write_preview(directory, cases, report, *, config=None):
                 'captured_controls': case['metadata'].get('captured_controls', {}),
                 'reference_kind': case['metadata']['reference_kind'],
                 'label_status': case['metadata']['label_status'],
-                'expected': case['expected'],
                 'label_review': case['metadata'].get('label_review')}
+        if 'expected' in case:
+            item['expected'] = case['expected']
+        else:
+            item['evaluation_basis'] = 'Source inputs and fixed rubric; no expected answer was supplied.'
         if config:
             item['outbound_requests'] = {}
             item['settings_changes'] = {}
@@ -96,6 +101,9 @@ def write_preview(directory, cases, report, *, config=None):
                    'Candidate models receive the request bodies shown below; expected answers and grading rules are not included.',
                    'The optimizer receives the editable prompt, supplied general business rules and development-case feedback. Validation and holdout cases are withheld from it.',
                    'Runtime results and traces are saved in the same customer S3 prefix.'] }
+    if any(case['metadata'].get('reference_kind') == 'source_judge' for case in cases):
+        preview['data_flow'][1] = 'A live AgentCore run uploads the selected source requests, fixed rubric and configuration to your configured S3 bucket; no expected answers are supplied.'
+        preview['data_flow'].insert(3, 'The separately selected judge receives the full fixed source context and the candidate answer. Historical outputs are not expected answers; the editable prompt is excluded from source evidence. Judge decisions are assessments, not human-verified ground truth.')
     (directory / 'input-preview.json').write_text(json.dumps(preview, indent=2, ensure_ascii=False))
     lines = ['# Input preview', '', f"{report['accepted']} of {report['found']} records can be replayed; {report['dropped']} excluded.",
              'Excluded records remain outside the measured quality denominator; they are not counted as passing.', '',

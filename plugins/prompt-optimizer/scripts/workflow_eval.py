@@ -201,6 +201,10 @@ def main(argv=None) -> int:
 
                 config = prepared_config(project, directory)
                 repetitions = config["document"]["execution"]["repetitions"]
+                source, target = config['source'], config['target']
+                same_baseline = (config['routes'][source['model_id']] == config['routes'][target['model_id']]
+                    and {k:v for k,v in source.items() if k not in ('id','model_id')}
+                    == {k:v for k,v in target.items() if k not in ('id','model_id')})
                 value = {
                     "fingerprint": config["fingerprint"],
                     "prompt_optimization": config["document"]["optimization"]["enabled"],
@@ -208,10 +212,14 @@ def main(argv=None) -> int:
                     "distinct_cases": {s: len(cases(config, s)) for s in config["splits"]},
                     "repetitions": repetitions,
                     "fixed_prompt_evaluation_trials_per_backend": (
-                        2 * repetitions * sum(len(cases(config, s)) for s in ("validation", "holdout"))
+                        (1 if same_baseline else 2) * repetitions * sum(len(cases(config, s)) for s in ("validation", "holdout"))
                         if not config["document"]["optimization"]["enabled"] else None
                     ),
                     "agentcore_route_checks": 2,
+                    "identical_model_baseline_reused": same_baseline,
+                    "judging": {"method": "source_judge" if any(r.get('type') == 'llm_source_rubric' for r in config['grading'].values()) else "configured_checks",
+                                "models": sorted({c['judge_model_id'] for c in config['document']['checks'] if c['method'] == 'llm_judge'}),
+                                "call_note": "Source judging makes one grouped request per unique source/output/rubric combination. Identical requests reuse saved verdicts. Judge and optimizer calls add separate cost and time."},
                     "budget_policy": config["document"]["runner"].get("budget_policy", "capped"),
                     "model_budget_usd": config["document"]["execution"]["budget_usd"],
                     "calls_made": 0,

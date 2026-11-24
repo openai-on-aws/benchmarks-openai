@@ -9,6 +9,11 @@ Codex guides the setup and asks what the evidence needs to prove. You choose
 which errors matter, what a correct answer looks like and whether the result
 justifies a model change.
 
+Have source text but no expected answers? The [source-based judging workflow](skills/evaluate-workflows/references/source-judging.md)
+uses a separately selected model and an agreed rubric to assess extraction
+outputs against their sources. It reports source-assessed quality, not
+human-verified accuracy. It does not create reference answers from past outputs.
+
 For longer inputs, the [complex support-case example](examples/complex-support-resolution/README.md)
 includes contracts, invoice lines and incident histories, with named decision and
 evidence checks. The same plugin supports configurable request/output limits and
@@ -185,13 +190,16 @@ prompt. It asks for decisions in small steps:
 - Which two model routes should be compared, and who owns the study?
 - Which fields determine success? Should a wrong priority count differently
   from an unnecessary human review?
-- Are the expected answers independently reviewed, synthetic, or historical
+- Do you have expected answers, or should a judge assess outputs against source
+  text? If answers exist, are they independently reviewed, synthetic, or historical
   model outputs? What evidence would change your mind about them?
 - How many distinct cases and repetitions are useful? What cost and latency
   tradeoffs would justify switching models?
 
-The default keeps the prompt fixed and needs **two models only**. It does not
-require a third optimizer model. Synthetic labels remain marked unreviewed;
+The default keeps the prompt fixed and needs two application model selections.
+It does not require an optimizer. Source-based judging adds a separate judge
+selection; prompt optimization adds an optimizer selection. You can use the same
+application model before and after prompt optimization. Synthetic labels remain marked unreviewed;
 matching them is not proof of production accuracy.
 
 ## 4. Choose local, AgentCore, or both
@@ -231,7 +239,7 @@ date and priced context bound. Never place credential values in it.
 
 ### 5.2. Review the frozen plan
 
-Review `input-preview.html`, the expected answers and the plan's case counts,
+Review `input-preview.html`, the expected answers or agreed source rubric, and the plan's case counts,
 repetitions and budget before paid execution. Resolve any input, model or
 deployment changes in a new study revision before proceeding.
 
@@ -346,6 +354,12 @@ an existing dashboard. Rendering makes no AWS or model calls. The HTML and
 exports contain recorded inputs and outputs; share them as evaluation data.
 
 ### 6.3. Decide what the evidence supports
+
+For source-based judging, inspect pass, fail and needs-review counts and the
+cited source passages. `needs_review` does not count as a successful result.
+Judge/model errors are reported separately from extraction failures. Compare
+application inference costs and latency, then inspect the additional judge and
+optimizer spend; a slower judge does not make the extraction model itself slower.
 
 A useful conclusion may be that the data is too easy or the labels need review.
 Do not choose a winner just because one chart looks better. Repetitions are

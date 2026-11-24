@@ -21,6 +21,8 @@ def grade(config, case, result, judge):
     if result['status'] == 'completed':
         from .semantic_grading import grade_semantics
         checks.update(grade_semantics(config, case, result, judge))
+        from .source_grading import grade_source
+        checks.update(grade_source(config, case, result, judge))
     for check in config['document']['checks']:
         if check['id'] in checks:
             continue
@@ -71,6 +73,58 @@ def grade(config, case, result, judge):
                            'error': True, 'failure_category': 'grading'}
         checks[check['id']] = outcome
     return checks
+
+
+
+def source_judge_metrics(config, rows):
+    """Report source assessments separately from correctness against reference labels.
+
+    Attempt categories are exclusive: execution/grading/unknown precede failures,
+    then abstentions, then passes. Per-check counts retain any simultaneous failure
+    and abstention; the additional review count exposes overlap at attempt level.
+    """
+    checks = config['document']['checks']
+    if not any(config['grading'][check['id']]['type'] == 'llm_source_rubric' for check in checks):
+        return None
+    required = [check['id'] for check in checks if check['required']]
+    categories = ('passed', 'failed', 'needs_review', 'grading_errors', 'execution_failures', 'unknown')
+
+    def category(row, check):
+        if row.get('result', {}).get('status') != 'completed':
+            return 'execution_failures'
+        outcome = row.get('checks', {}).get(check['id'])
+        if not isinstance(outcome, dict):
+            return 'unknown'
+        if outcome.get('error') or outcome.get('failure_category') == 'grading':
+            return 'grading_errors'
+        if config['grading'][check['id']]['type'] == 'llm_source_rubric':
+            status = outcome.get('status')
+            if (status not in ('pass', 'fail', 'needs_review') or
+                    type(outcome.get('pass')) is not bool or outcome['pass'] != (status == 'pass')):
+                return 'unknown'
+            return {'pass': 'passed', 'fail': 'failed', 'needs_review': 'needs_review'}[status]
+        if type(outcome.get('pass')) is not bool:
+            return 'unknown'
+        return 'passed' if outcome['pass'] else 'failed'
+
+    totals = dict.fromkeys(categories, 0)
+    by_check = {check['id']: dict(required=check['required'], total=len(rows), **dict.fromkeys(categories, 0))
+                for check in checks}
+    review_attempts = 0
+    precedence = ('execution_failures', 'grading_errors', 'unknown', 'failed', 'needs_review')
+    for row in rows:
+        observed = {check['id']: category(row, check) for check in checks}
+        for ident, value in observed.items():
+            by_check[ident][value] += 1
+        values = [observed[ident] for ident in required]
+        review_attempts += 'needs_review' in values
+        result = next((kind for kind in precedence if kind in values), 'passed' if required else 'unknown')
+        totals[result] += 1
+    return {'quality_label': 'Source-assessed quality', 'method': 'source_judge',
+            'scope': 'Judge assessment against supplied text and a fixed rubric, not human-verified extraction accuracy. '
+                     'Needs-review judgments and missing grades are not passes. Required checks determine attempt outcomes.',
+            'attempts': len(rows), **totals, 'attempts_with_needs_review': review_attempts,
+            'required_check_ids': required, 'by_check': by_check}
 
 
 def turn_metrics(config, rows):

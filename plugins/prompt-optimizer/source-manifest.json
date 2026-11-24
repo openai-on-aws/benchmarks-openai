@@ -809,8 +809,11 @@
     "engine/RUN-AGENTCORE.md",
     "engine/VERIFICATION.md",
     "engine/customer_eval/contract.py",
+    "engine/customer_eval/decision_report.py",
     "engine/customer_eval/feedback.py",
+    "engine/customer_eval/input_preview.py",
     "engine/customer_eval/json_grading.py",
+    "engine/customer_eval/log_import.py",
     "engine/customer_eval/preflight.py",
     "engine/customer_eval/project.py",
     "engine/customer_eval/project_cloud.py",
@@ -823,6 +826,7 @@
     "engine/optimizer.py",
     "engine/runtime/coordinator.py",
     "engine/scripts/deploy_agentcore.py",
+    "engine/scripts/import_logs.py",
     "engine/tests/test_guided_customer.py",
     "engine/tests/test_optimizer_provenance.py"
   ],
@@ -834,12 +838,20 @@
   ],
   "added_engine_files": [
     "engine/customer_eval/cloud_limits.py",
+    "engine/customer_eval/errors.py",
+    "engine/customer_eval/source_grading.py",
     "engine/tests/test_complex_guided.py",
+    "engine/tests/test_coordinator_completion_limits.py",
+    "engine/tests/test_feedback_actionable.py",
     "engine/tests/test_feedback_budget.py",
     "engine/tests/test_large_cloud_study.py",
     "engine/tests/test_provider_error_diagnostics.py",
     "engine/tests/test_provider_request_timeouts.py",
-    "engine/tests/test_feedback_actionable.py"
+    "engine/tests/test_source_feedback.py",
+    "engine/tests/test_source_grading.py",
+    "engine/tests/test_source_grading_recovery.py",
+    "engine/tests/test_source_judge_intake.py",
+    "engine/tests/test_source_policy.py"
   ],
-  "integration_version": "0.5.8"
+  "integration_version": "0.6.0"
 }

@@ -1,12 +1,12 @@
 ---
 name: evaluate-workflows
-description: Compare models or optimize prompts for text workflows from LiteLLM, API or mapped application logs, locally or on Amazon Bedrock AgentCore. Guide intake, define correctness checks, run evaluations and inspect accuracy, cost and latency. Includes invoice-text and support-ticket examples.
+description: Compare models or optimize prompts for text workflows from LiteLLM, API or mapped application logs, locally or on Amazon Bedrock AgentCore. Guide intake, judge outputs against source text when expected answers are unavailable, or use reference checks. Inspect quality, cost and latency. Includes invoice-text and support-ticket examples.
 ---
 
 # Evaluate customer workflows
 
 Start with the application and decision the user wants to evaluate. Reuse existing
-text logs, expected answers and configuration; invoice extraction and ticket triage
+text logs, configuration and expected answers when available; invoice extraction and ticket triage
 are examples. Resolve whether they want to compare models with a fixed prompt or
 also optimize that prompt. Codex hosts this conversation; the application under
 test calls the model directly. Raw PDF extraction, ticket-system actions and
@@ -34,8 +34,9 @@ user's next decision. Useful questions include:
 
 - Which error costs more: silently accepting a wrong total or sending a correct
   invoice for unnecessary human review?
-- Do we need to match historical answers, or do we have independently reviewed
-  correct answers? Which fields determine acceptance?
+- Do you have reviewed expected answers, or should we assess new outputs against
+  the source text? Which fields and errors determine acceptance? Historical-output
+  agreement is a separate option when that is the intended measure.
 - What would justify a model change if cost improves but latency worsens?
 - For triage, which is worse: missing a security incident or escalating an
   ordinary ticket? What should happen when the ticket lacks enough evidence?
@@ -49,6 +50,16 @@ examples, and any policy or expected-output contract not already supplied.
 Inspect those assets before choosing fields or grading rules. Infer schema
 names only from supplied assets; ask when the contract is missing. Synthetic
 or unreviewed labels describe provenance, not a choice of bundled starter.
+
+When the customer has source inputs but no expected answers, offer source-based
+judging instead of requiring them to label every case. Read
+[source-based judging](references/source-judging.md). Discover the output contract
+and costly errors from their assets; propose a small named rubric and have the
+customer confirm it before freezing the study. Do not invent answers or turn
+historic model outputs into truth. If only extracted outputs are available, ask
+for their source text or complete recorded requests; outputs alone cannot support
+source-based checks. Raw PDFs still need a document adapter or an explicit choice
+to evaluate their extracted-text stage.
 
 Choose the input source before initializing a project, installing dependencies
 or writing a study decision patch. Use the customer's assets first. If they
@@ -95,8 +106,10 @@ connection details or preparing a run.
 Use the common entrypoint to `start`, `inspect`, `configure`, `prepare` and
 `plan`. Use `start --mode compare` for fixed-prompt model comparisons and
 `start --mode optimize` when prompt changes are requested. The default is compare.
-The two comparison models and the optimizer are separate roles: select source and
-target connection keys, and an optimizer key only for optimization. The Codex chat
+Application, optimizer and judge are separate roles: select source and target
+connection keys, an optimizer key only for optimization, and an explicit
+`judge_model` key for source-based judging. The optimizer may share the same
+underlying model as the judge, but does not choose the grades or rubric. The Codex chat
 model is selected in Codex and is not set by these connection keys. Follow the
 [optimization workflow](references/optimization.md) for prompt revisions.
 
@@ -107,7 +120,9 @@ not automatically correctness. Preserve synthetic/unreviewed provenance until
 a human reviews the identified cases and labels.
 
 Use the [label review workflow](references/label-review.md) when a human wants
-to review reference answers. Export a pending review template and record only
+to review supplied reference answers. Source judging has no expected labels to
+certify: review the rubric and representative source/output judgments instead.
+For supplied reference answers, export a pending review template and record only
 the human's scoped attestations. Synthetic test dialogue never establishes human
 review. Readiness explains case-count and stale-review issues before preparation.
 Fixed comparisons use validation and holdout groups; optimization also reserves
@@ -118,7 +133,7 @@ decisions as a small JSON file and pass it to `configure`.
 Do not hand the user a large internal schema as a questionnaire. Missing
 credentials, prices or deployment references do not prevent a useful draft.
 
-Use deterministic JSON checks. Whole-object equality treats all differences
+When expected answers are available, use deterministic JSON checks. Whole-object equality treats all differences
 alike; field-specific checks measure only those fields. Ask which reflects the
 business decision. When the supplied contract requires the complete object and
 forbids extra fields, include the whole-object path `""` as a required check;
@@ -129,6 +144,13 @@ For long text cases or decisions with several independently scored fields, read
 [complex text studies](references/complex-text.md). Set request, output and
 provider timeout limits from the actual inputs. Use named checks and an output
 schema when required by the task; do not treat unscored explanations as verified.
+For source judging, set `quality.kind: "source_judge"` and the agreed named
+rubric checks before `inspect`; setting it afterward reimports the original
+sources. Expected answers stay absent. Add `quality.schema` for independent
+shape/type checks, and select `judge_model` plus `judge_limits` separately from
+application and optimizer settings. Report source-assessed pass/fail/needs-review
+counts, not human-verified extraction accuracy. Keep judge and optimizer spend
+separate from application inference cost and latency.
 Propose concrete case counts, repetitions, timeouts and
 concurrency, keeping repeated trials distinct from independent cases.
 

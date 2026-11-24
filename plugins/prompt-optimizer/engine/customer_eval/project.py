@@ -42,11 +42,12 @@ def inspect(directory, sources, *, prompt_location=None):
     state = read(directory / 'project.json')
     if state.get('prepared'):
         raise ValueError('This project is frozen. Start a new project to change its inputs.')
+    reference_mode = 'source_judge' if state['decisions'].get('quality', {}).get('kind') == 'source_judge' else 'standard'
     cases, reports = [], []
     # Mapping may differ per file. The final merge still checks global duplicates.
     for spec in sources:
         path = str(Path(spec['path']).expanduser().resolve())
-        members, report = import_logs([path], mapping=spec.get('mapping'), prompt_location=prompt_location)
+        members, report = import_logs([path], mapping=spec.get('mapping'), prompt_location=prompt_location, reference_mode=reference_mode)
         cases += members
         reports.append(report)
     merged = {'found': sum(r['found'] for r in reports), 'accepted': 0, 'dropped': 0,
@@ -59,16 +60,17 @@ def inspect(directory, sources, *, prompt_location=None):
         if case['id'] in ids:
             code = 'duplicate_case_id'
         elif sha in requests:
-            code = 'duplicate_request' if requests[sha] == case['expected'] else 'conflicting_reference'
+            code = 'duplicate_request' if requests[sha] == case.get('expected') else 'conflicting_reference'
         if code:
             merged['excluded_records'].append({k: case['metadata'][k] for k in ('source_file', 'source_row')} | {'reason': code})
         else:
-            ids.add(case['id']); requests[sha] = case['expected']; unique.append(case)
+            ids.add(case['id']); requests[sha] = case.get('expected'); unique.append(case)
     from collections import Counter
     merged.update(accepted=len(unique), dropped=len(merged['excluded_records']),
                   formats=dict(Counter(c['metadata']['format'] for c in unique)),
                   drop_reasons=dict(Counter(x['reason'] for x in merged['excluded_records'])))
     merged['reconciles'] = merged['found'] == merged['accepted'] + merged['dropped']
+    merged['reference_mode'] = reference_mode
     merged['scope'] = 'One text response with recorded history; no tool execution or raw PDF extraction.'
     state['import_revision'] += 1
     relative = 'imports/' + str(state['import_revision']).zfill(4)
@@ -83,28 +85,30 @@ def inspect(directory, sources, *, prompt_location=None):
             'preview': str(directory / 'input-preview.html'), 'excluded_records': preview['excluded_records']}
 
 
-ALLOWED = {'title', 'owner', 'source_model', 'target_model', 'optimizer_model', 'prompt_group',
+ALLOWED = {'title', 'owner', 'source_model', 'target_model', 'optimizer_model', 'judge_model', 'prompt_group',
            'prompt_location', 'connection', 'provenance', 'quality', 'repetitions', 'iterations',
            'candidates', 'concurrency', 'timeout_seconds', 'budget_usd', 'budget_policy', 'split_seed',
            'minimum_quality', 'minimum_quality_owner', 'intent', 'exclude_records', 'group_by',
            'cost_metric', 'primary_latency', 'optimization_enabled', 'label_review_file',
-           'limits', 'optimizer_limits'}
+           'limits', 'optimizer_limits', 'judge_limits'}
 QUALITY = {'kind', 'fields', 'reference_source', 'reference_file', 'description', 'rules', 'checks', 'schema'}
-QUALITY_KINDS = ('json_equals', 'contains', 'json_checks')
+QUALITY_KINDS = ('json_equals', 'contains', 'json_checks', 'source_judge')
 DEFAULT_LIMITS = {'max_requests': 1, 'max_output_tokens': 2048, 'max_request_bytes': 80000,
                   'request_timeout_seconds': 60}
 DEFAULT_OPTIMIZER_LIMITS = {'max_requests': 1, 'max_output_tokens': 8192, 'max_request_bytes': 80000,
                             'request_timeout_seconds': 60}
 
 
-def replay_limits(value, *, optimizer=False):
+def replay_limits(value, *, optimizer=False, judge=False):
     """Typed partial overrides; captured-request replay still makes one new call."""
-    label = 'optimizer_limits' if optimizer else 'limits'
+    if optimizer and judge:
+        raise ValueError('Choose one limits purpose')
+    label = 'judge_limits' if judge else ('optimizer_limits' if optimizer else 'limits')
     if not isinstance(value, dict) or set(value) - set(DEFAULT_LIMITS):
         raise ValueError(label + ' accepts max_requests, max_output_tokens, max_request_bytes and request_timeout_seconds only')
     if any(type(v) is not int or v < 1 for v in value.values()):
         raise ValueError(label + ' values must be positive integers, not booleans')
-    limits = dict(DEFAULT_OPTIMIZER_LIMITS if optimizer else DEFAULT_LIMITS) | value
+    limits = dict(DEFAULT_OPTIMIZER_LIMITS if optimizer or judge else DEFAULT_LIMITS) | value
     if limits['max_requests'] != 1:
         raise ValueError(label + '.max_requests must be 1 for captured-request replay')
     return limits
@@ -112,6 +116,36 @@ def replay_limits(value, *, optimizer=False):
 
 def quality_checks(quality):
     """Turn the small guided declaration into independent deterministic rules."""
+    if quality.get('kind') == 'source_judge':
+        if any(key in quality for key in ('fields', 'reference_source', 'reference_file')):
+            raise ValueError('source_judge uses source inputs and a rubric, not expected-answer or recorded-output references')
+        checks = quality.get('checks')
+        if not isinstance(checks, list) or not checks:
+            raise ValueError('source_judge requires named rubric checks')
+        normalized, seen = [], {'output_schema'}
+        for check in checks:
+            if not isinstance(check, dict) or set(check) - {'id', 'rubric', 'description', 'required'}:
+                raise ValueError('Each source_judge check accepts id, rubric, description and required only')
+            ident = check.get('id')
+            if not isinstance(ident, str) or not re.fullmatch(r'[A-Za-z][A-Za-z0-9_]*', ident) or ident in seen:
+                raise ValueError('Quality check IDs must be unique identifiers; output_schema is reserved')
+            seen.add(ident)
+            if not isinstance(check.get('rubric'), str) or not check['rubric'].strip():
+                raise ValueError('Each source_judge check needs a nonempty fixed rubric')
+            if type(check.get('required', True)) is not bool:
+                raise ValueError('Quality check required must be a boolean')
+            description = check.get('description', 'Does the candidate satisfy ' + ident + ' using the supplied source?')
+            if not isinstance(description, str) or not description.strip():
+                raise ValueError('Quality check description must be nonempty text')
+            normalized.append((ident, {'type': 'llm_source_rubric', 'rubric': check['rubric']}, description, check.get('required', True)))
+        if not any(entry[3] for entry in normalized):
+            raise ValueError('At least one source rubric check must be required')
+        if 'schema' in quality:
+            from .json_grading import schema_validator
+            schema_validator(quality['schema'])
+            normalized.insert(0, ('output_schema', {'type': 'json_schema', 'schema': quality['schema']},
+                                  'Does the answer conform to the required JSON structure and types?', True))
+        return normalized
     if quality.get('kind') == 'json_checks':
         checks = quality.get('checks')
         if not isinstance(checks, list) or not checks:
@@ -144,9 +178,9 @@ def quality_checks(quality):
                                   'Does the answer conform to the required JSON structure and types?', True))
         return normalized
     if quality.get('kind') not in QUALITY_KINDS:
-        raise ValueError('Define correctness using json_equals, contains or json_checks')
+        raise ValueError('Define checks using json_equals, contains, json_checks or source_judge')
     if 'checks' in quality or 'schema' in quality:
-        raise ValueError('quality.checks and quality.schema require kind json_checks')
+        raise ValueError('quality.checks and quality.schema require kind json_checks or source_judge')
     fields = quality.get('fields', [''])
     if not isinstance(fields, list) or not fields or any(not isinstance(p, str) for p in fields) or len(fields) != len(set(fields)):
         raise ValueError('Quality fields must be unique JSON field paths; use [""] for the whole object')
@@ -173,21 +207,26 @@ def configure(directory, patch):
             raise ValueError(key + ' must be one of: ' + ', '.join(choices))
     if 'optimization_enabled' in patch and type(patch['optimization_enabled']) is not bool:
         raise ValueError('optimization_enabled must be a boolean')
-    for key in ('limits', 'optimizer_limits'):
+    for key in ('limits', 'optimizer_limits', 'judge_limits'):
         if key in patch:
-            replay_limits(patch[key], optimizer=key == 'optimizer_limits')
+            replay_limits(patch[key], optimizer=key == 'optimizer_limits', judge=key == 'judge_limits')
     rules = patch.get('quality', {}).get('rules')
     if 'rules' in patch.get('quality', {}) and (not isinstance(rules, str) or not rules.strip()):
         raise ValueError('quality.rules must contain the supplied general business rules as nonempty text')
     previous_location = state['decisions'].get('prompt_location')
+    previous_kind = state['decisions'].get('quality', {}).get('kind')
+    next_kind = patch.get('quality', {}).get('kind', previous_kind)
+    reference_mode_changed = (previous_kind == 'source_judge') != (next_kind == 'source_judge')
     for key, value in patch.items():
-        if key in ('quality', 'limits', 'optimizer_limits'):
+        if key == 'quality' and reference_mode_changed:
+            state['decisions'][key] = deepcopy(value)
+        elif key in ('quality', 'limits', 'optimizer_limits', 'judge_limits'):
             state['decisions'].setdefault(key, {}).update(value)
         else:
             state['decisions'][key] = value
     save(directory / 'project.json', state)
     location = state['decisions'].get('prompt_location')
-    if location is not None and location != previous_location and state.get('sources'):
+    if state.get('sources') and (reference_mode_changed or (location is not None and location != previous_location)):
         inspect(directory, state['sources'], prompt_location=location)
     return status(directory)
 
@@ -198,7 +237,7 @@ def status(directory):
     d = state['decisions']
     missing = []
     if not state.get('import_path'):
-        missing.append('Provide logs or a few manual input/expected-answer examples.')
+        missing.append('Provide captured requests or manual prompt/input examples; choose supplied references, recorded agreement, or source-based judging.')
     else:
         report = read(directory / state['import_path'] / 'import-report.json')
         if not report['accepted']:
@@ -212,10 +251,13 @@ def status(directory):
         ('source_model', 'Which existing model is the baseline?'),
         ('target_model', 'Which model should it be compared with?'),
         ('optimizer_model', 'Which approved model should generate prompt revisions?'),
+        ('judge_model', 'Which separately selected approved model should judge the extraction against its source?'),
         ('connection', 'Provide the platform connection file, or continue with a local draft.'),
         ('prompt_location', 'Which instruction slot may the optimizer change? Other instructions remain protected.'),
         ('provenance', 'Are these synthetic, customer, or public examples? Record any redaction in the intake notes.'),
         ('budget_policy', 'Use the existing paid-run authorization, or obtain a budget decision before execution.')]:
+        if key == 'judge_model' and d.get('quality', {}).get('kind') != 'source_judge':
+            continue
         if key == 'optimizer_model' and not d.get('optimization_enabled', True):
             continue
         if key == 'prompt_location' and not d.get('optimization_enabled', True):
@@ -227,6 +269,8 @@ def status(directory):
         quality_checks(quality)
         limits = replay_limits(d.get('limits', {}))
         replay_limits(d.get('optimizer_limits', {}), optimizer=True)
+        if quality.get('kind') == 'source_judge' or 'judge_limits' in d:
+            replay_limits(d.get('judge_limits', {}), judge=True)
         trial_timeout = d.get('timeout_seconds', 180)
         if type(trial_timeout) is not int or trial_timeout < 1:
             raise ValueError('timeout_seconds must be a positive integer')
@@ -234,10 +278,11 @@ def status(directory):
             raise ValueError('timeout_seconds must be at least limits.request_timeout_seconds; allow extra time for worker setup')
     except ValueError as exc:
         missing.append(str(exc))
-    if quality.get('reference_source') not in ('recorded', 'supplied'):
-        missing.append('Should we measure agreement with recorded outputs, or compare against supplied expected answers?')
+    source_judge = quality.get('kind') == 'source_judge'
+    if not source_judge and quality.get('reference_source') not in ('recorded', 'supplied'):
+        missing.append('Should we compare against supplied expected answers, measure agreement with recorded outputs, or judge outputs against the source inputs using a fixed rubric when no answers are available?')
     plan = None
-    if state.get('import_path') and quality.get('kind') in QUALITY_KINDS and quality.get('reference_source') in ('recorded', 'supplied'):
+    if state.get('import_path') and quality.get('kind') in QUALITY_KINDS and (source_judge or quality.get('reference_source') in ('recorded', 'supplied')):
         try:
             selected, _, _ = prepare_cases(directory, state)
             splits = _split(selected, d.get('split_seed', 'customer-eval-v1'), d.get('group_by'),
@@ -251,6 +296,7 @@ def status(directory):
                     'repetitions': repeats, 'validation_observations': len(splits['validation']) * repeats,
                     'limits': replay_limits(d.get('limits', {})),
                     'optimizer_limits': replay_limits(d.get('optimizer_limits', {}), optimizer=True) if d.get('optimization_enabled', True) else None,
+                    'judge_limits': replay_limits(d.get('judge_limits', {}), judge=True) if source_judge else None,
                     'evidence_scope': 'Exploratory workload comparison; repeated attempts are not independent cases.'}
             if d.get('optimization_enabled', True) and plan['validation_observations'] < 20:
                 missing.append('Prompt optimization needs at least 20 validation observations; the current split provides '
@@ -294,6 +340,17 @@ def prepare_cases(directory, state=None, *, apply_reviews=True):
     if 'prompt_location' in d and any(c['replay']['prompt_location'] != d['prompt_location'] for c in cases):
         raise ValueError('Import does not use the selected editable instruction slot')
     quality = d['quality']
+    if quality.get('kind') == 'source_judge':
+        quality_checks(quality)
+        if report.get('reference_mode') != 'source_judge':
+            raise ValueError('Reinspect the original inputs in source_judge mode before preparing')
+        if d.get('label_review_file'):
+            raise ValueError('Source judging has no expected-answer labels to review; remove label_review_file')
+        for c in cases:
+            if 'expected' in c or c['metadata'].get('reference_kind') != 'source_judge':
+                raise ValueError('Source judging requires source-only cases without expected answers')
+            c['metadata']['label_status'] = 'not_provided'
+        return cases, report, group
     if quality['reference_source'] == 'recorded':
         if quality.get('reference_file'):
             raise ValueError('Choose supplied references when using an expected-answer file; recorded agreement uses historical responses.')
@@ -359,6 +416,9 @@ def prepare(directory):
     model_roles = [('m1', 'source_model'), ('m2', 'target_model')]
     if optimize:
         model_roles.append(('optimizer', 'optimizer_model'))
+    source_judge = quality.get('kind') == 'source_judge'
+    if source_judge:
+        model_roles.append(('judge', 'judge_model'))
     for role, field in model_roles:
         entry = connection['models'].get(d[field])
         if not entry:
@@ -379,7 +439,7 @@ def prepare(directory):
     doc['baseline_variant_id'] = 'm1_p1'
     grading = {}
     for ident, rule, question, required in quality_checks(quality):
-        for c in cases:
+        for c in ([] if source_judge else cases):
             try:
                 if rule['type'] == 'json_schema':
                     from .json_grading import schema_validator
@@ -394,7 +454,8 @@ def prepare(directory):
                 raise ValueError('Expected answer for ' + c['id'] + ' is invalid for check ' + ident + '; repair the reference before running.')
         grading[ident] = rule
         doc['checks'].append({'id': ident, 'question': question,
-            'method': 'deterministic', 'implementation_ref': 'grading.json', 'judge_model_id': None,
+            'method': 'llm_judge' if rule['type'] == 'llm_source_rubric' else 'deterministic',
+            'implementation_ref': 'grading.json', 'judge_model_id': 'judge' if rule['type'] == 'llm_source_rubric' else None,
             'calibration_ref': None, 'required': required})
     if d.get('minimum_quality') is not None:
         if not d.get('minimum_quality_owner'):
@@ -419,8 +480,10 @@ def prepare(directory):
             'cost_metric': d.get('cost_metric', 'cost_usd_per_session')},
         'optimization_patience': 1, 'measurement': {'primary_latency': d.get('primary_latency', 'conversation')},
         'report_challenger': True}
+    if source_judge:
+        doc['runner']['judge_limits'] = replay_limits(d.get('judge_limits', {}), judge=True)
     doc['evidence'] = [
-        {'field': 'datasets', 'source': 'References are ' + quality['reference_source'] + '; scoped label review is recorded per case. ' + d['provenance'] + ' examples.', 'status': 'observed'},
+        {'field': 'datasets', 'source': ('No expected answers are supplied; model judgments use the source inputs and fixed rubric. ' if source_judge else 'References are ' + quality['reference_source'] + '; scoped label review is recorded per case. ') + d['provenance'] + ' examples.', 'status': 'observed'},
         {'field': 'success_criteria', 'source': 'Compare required-check pass rates; cost and latency are preferences. Only explicitly supplied absolute thresholds are gates.', 'status': 'proposed'}]
     package = directory / 'prepared'
     package.mkdir(exist_ok=True)
@@ -433,19 +496,21 @@ def prepare(directory):
         (package / (split + '.jsonl')).write_text(''.join(json.dumps(c, ensure_ascii=False) + '\n' for c in members))
         doc['datasets'].append({'id': split, 'path': split + '.jsonl', 'format': 'jsonl', 'version': '1',
             'split': split, 'provenance': d['provenance'], 'label_status':
-                'human_reviewed' if all(c['metadata'].get('label_status') == 'human_reviewed' for c in members) else 'unreviewed'})
+                'not_provided' if source_judge else ('human_reviewed' if all(c['metadata'].get('label_status') == 'human_reviewed' for c in members) else 'unreviewed')})
     (package / 'input.yaml').write_text(yaml.safe_dump(doc, sort_keys=False, allow_unicode=True))
     save(package / 'endpoints.json', endpoints)
     save(package / 'connection.json', connection)
     if d.get('label_review_file'):
         save(package / 'label-review.json', read(Path(d['label_review_file']).expanduser().resolve()))
-    context = {'reference_source': quality['reference_source'], 'label_status':
-        'human_reviewed' if all(c['metadata'].get('label_status') == 'human_reviewed' for c in cases) else 'unreviewed',
+    context = {'reference_source': 'source_inputs' if source_judge else quality['reference_source'], 'label_status':
+        'not_provided' if source_judge else ('human_reviewed' if all(c['metadata'].get('label_status') == 'human_reviewed' for c in cases) else 'unreviewed'),
         'reviewed_cases': sum(c['metadata'].get('label_status') == 'human_reviewed' for c in cases),
         'evaluation_plan': summary['evaluation_plan'],
         'import_coverage': {k: report[k] for k in ('found', 'accepted', 'dropped')},
         'selected_cases': len(cases), 'selected_prompt_group': group, 'editable_location': d['prompt_location'],
         'quality': quality, 'group_by': d.get('group_by'), 'splits': {k: [c['id'] for c in v] for k, v in splits.items()}}
+    if source_judge:
+        context['expected_answers_provided'] = False
     save(package / 'customer-context.json', context)
     config = load_with_endpoints(package / 'input.yaml')
     write_preview(directory, cases, report, config=config)

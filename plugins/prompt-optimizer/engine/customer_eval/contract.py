@@ -85,11 +85,14 @@ def load(path: str | Path, *, live=False):
     if set(grading) != set(indexes['checks']):
         raise ValueError('grading file must define exactly the intake checks')
     for check_id, rule in grading.items():
-        if rule.get('type') not in {'json_equals', 'json_set_equals', 'json_schema', 'contains', 'tool_called', 'state_equals', 'llm_rubric'} | TYPES:
+        if rule.get('type') not in {'json_equals', 'json_set_equals', 'json_schema', 'contains', 'tool_called', 'state_equals', 'llm_rubric', 'llm_source_rubric'} | TYPES:
             raise ValueError(f'Unknown grading type for {check_id}')
         method = indexes['checks'][check_id]['method']
-        if method != ('llm_judge' if rule['type'] in ('llm_rubric', 'turn_semantic') else 'deterministic'):
+        if method != ('llm_judge' if rule['type'] in ('llm_rubric', 'turn_semantic', 'llm_source_rubric') else 'deterministic'):
             raise ValueError(f'Grading method does not match intake check {check_id}')
+        if rule['type'] == 'llm_source_rubric':
+            if set(rule) != {'type', 'rubric'} or not isinstance(rule['rubric'], str) or not rule['rubric'].strip():
+                raise ValueError('llm_source_rubric requires only type and a nonempty fixed rubric')
         if rule['type'] == 'turn_semantic' and (not isinstance(rule.get('rubric'), str) or not rule['rubric'].strip()):
             raise ValueError('turn_semantic requires a nonempty rubric')
         if rule['type'] == 'json_schema':
@@ -101,6 +104,14 @@ def load(path: str | Path, *, live=False):
                        if rule['type'] == 'turn_semantic'}
     if len(semantic_models) > 1:
         raise ValueError('Turn semantic criteria must use one judge model')
+    source_checks = [key for key, rule in grading.items() if rule['type'] == 'llm_source_rubric']
+    if source_checks:
+        if cfg['mode'] != 'prompt' or cfg['workload'] != 'none':
+            raise ValueError('Source-grounded judging currently supports text prompt mode with no tools')
+        if any(rule['type'] not in ('llm_source_rubric', 'json_schema') for rule in grading.values()):
+            raise ValueError('Source-grounded rubrics may be combined with JSON schema checks, not reference-based checks')
+        if len({indexes['checks'][key]['judge_model_id'] for key in source_checks}) != 1:
+            raise ValueError('Source-grounded criteria must use one judge model')
     datasets, all_ids, seen = {}, set(), {}
     for dataset in doc['datasets']:
         rows = [json.loads(line) for line in intake.local_path(base, dataset['path']).read_text().splitlines() if line.strip()]
@@ -134,7 +145,14 @@ def load(path: str | Path, *, live=False):
                 from .replay import message_text
                 if turns != [message_text(row['replay']['request']['input'][-1])]:
                     raise ValueError('Replay grading turn must equal the captured final user message')
-            if 'expected' not in row:
+            if source_checks:
+                if 'expected' in row:
+                    raise ValueError('Source-grounded judging uses no expected answers; remove references or choose reference-based grading')
+                if len(turns) != 1:
+                    raise ValueError('Source-grounded judging currently supports one text extraction response per case')
+                from .source_grading import build_source_context
+                build_source_context(row, policy=policy)
+            elif 'expected' not in row:
                 raise ValueError('Runnable cases need expected values; use intake for incomplete drafts')
             from .scoring import at
             from .json_grading import scalar_set
@@ -217,9 +235,10 @@ def load(path: str | Path, *, live=False):
                        'cache_write_usd_per_million', 'pricing_verified_at', 'pricing_max_input_tokens')):
                     raise ValueError(f'{ident}: joint selection requires cache prices, pricing date and context bound')
                 envelopes = []
-                if ident in {source['model_id'], target['model_id']} or any(
-                        c['judge_model_id'] == ident for c in doc['checks'] if c['method'] == 'llm_judge'):
-                    envelopes.append(('application/judge', cfg['limits']))
+                if ident in {source['model_id'], target['model_id']}:
+                    envelopes.append(('application', cfg['limits']))
+                if any(c['judge_model_id'] == ident for c in doc['checks'] if c['method'] == 'llm_judge'):
+                    envelopes.append(('judge', cfg.get('judge_limits', cfg['limits'])))
                 if doc['optimization']['enabled'] and ident == cfg['optimizer_model_id']:
                     envelopes.append(('optimizer', cfg.get('optimizer_limits', cfg['limits'])))
                 # UTF-8 request bytes are a conservative input-token bound for this

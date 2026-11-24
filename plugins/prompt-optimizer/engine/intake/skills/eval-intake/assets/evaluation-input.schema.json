@@ -528,6 +528,34 @@
             "max_output_tokens",
             "max_request_bytes"
           ]
+        },
+        "judge_limits": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "max_requests": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "max_output_tokens": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "max_request_bytes": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "request_timeout_seconds": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "max_requests",
+            "max_output_tokens",
+            "max_request_bytes"
+          ],
+          "description": "Separate limits for source-based judge requests, including source context, candidate output and rubric."
         }
       },
       "required": [
@@ -1024,7 +1052,8 @@
             "human_reviewed",
             "unreviewed",
             "no_labels",
-            null
+            null,
+            "not_provided"
           ]
         }
       },

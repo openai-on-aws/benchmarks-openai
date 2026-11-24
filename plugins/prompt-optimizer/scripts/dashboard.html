@@ -1098,6 +1098,7 @@
               <option value="all">All outcomes</option>
               <option value="failed">Any check failed</option>
               <option value="passed">All recorded checks passed</option>
+              <option value="needs_review">Judge needs review</option>
               <option value="error">Execution / grading issue</option>
             </select>
           </div>
@@ -1245,6 +1246,17 @@
         if (Array.isArray(t.inputs)) return t.inputs;
         return (t.turn_records || []).map((record) => record.user);
       }
+      function sourceJudged(r) {
+        return r?.assessment?.mode === "source_judge";
+      }
+      function assessmentNote(r) {
+        return sourceJudged(r) ? `<p class="sub"><strong>LLM-assessed quality</strong> · Judge: ${esc(modelLabel(r.assessment.judge_model))}. Judgments use the frozen sources and rubric, not expected answers. Needs-review judgments remain in every-attempt denominators and are not passes.</p>` : "";
+      }
+      function assessmentReference(t, r) {
+        if (!sourceJudged(r)) return `<h3>Expected answer</h3><pre class="code">${esc(t.expected_available ? pretty(t.expected_answer) : "Expected answer unavailable: a matching frozen input manifest was not included.")}</pre><p class="sub">${esc(t.expected_available ? "From the verified frozen input; reference status: " + (t.reference_metadata?.label_status || "not recorded") + "." : "The dashboard does not infer a reference from the model output.")}</p>`;
+        const sources = r.source_bundles?.[t.source_ref];
+        return `<h3>Source-based assessment</h3>${assessmentNote(r)}<p>No expected answer was supplied or used.</p><details><summary>Full frozen sources used by the judge</summary>${Array.isArray(sources) ? sources.map((source) => `<h3>${esc(source.source_id)} · ${esc(source.role)}</h3><pre class="code">${esc(source.text)}</pre>`).join("") : '<p>Verified source text is unavailable.</p>'}</details><details><summary>Frozen evaluation rubric</summary><pre class="code">${esc(pretty(r.assessment.criteria))}</pre></details>`;
+      }
       function outcome(t) {
         const checks = Object.values(t.checks || {});
         if (
@@ -1253,6 +1265,7 @@
           !checks.length
         )
           return "error";
+        if (checks.some((c) => c.status === "needs_review")) return "needs_review";
         return checks.some((c) => c.pass === false)
           ? "failed"
           : checks.every((c) => c.pass === true)
@@ -1439,7 +1452,7 @@
           return coverage && coverage.observations !== s.n_sessions;
         })) issues.push("The selected latency measure does not cover every attempt.");
         const rows = [
-          ["Test runs passing all checks", countA === null ? "Unknown" : `${countA}/${a.n_sessions} (${pct(a.accuracy)})`, countB === null ? "Unknown" : `${countB}/${b.n_sessions} (${pct(b.accuracy)})`],
+          [sourceJudged(r) ? "LLM-assessed: all required checks passed" : "Test runs passing all checks", countA === null ? "Unknown" : `${countA}/${a.n_sessions} (${pct(a.accuracy)})`, countB === null ? "Unknown" : `${countB}/${b.n_sessions} (${pct(b.accuracy)})`],
           [metric ? costName : "Choose a cost measure", before && metric ? costDisplay(before, metric, 6) : "Unknown", after && metric ? costDisplay(after, metric, 6) : "Unknown"],
           [`P95 ${latencyKnown ? a.latency_scope + " " : ""}time`, latencyKnown ? fixed(a.latency_p95_s, 3) + " s" : "Unknown", latencyKnown ? fixed(b.latency_p95_s, 3) + " s" : "Unknown"],
         ];
@@ -1543,8 +1556,8 @@
         return Array.isArray(e.examples) && e.examples.length ? e.examples : e.example ? [e.example] : [];
       }
       function promptEvidenceExampleLabel(example) {
-        const outcomes = {improved: "Failed before, passed after", regressed: "Passed before, failed after",
-          both_passed: "Both passed", both_failed: "Both failed"};
+        const outcomes = {improved: "Not passed before, passed after", regressed: "Passed before, not passed after",
+          both_passed: "Both passed", both_failed: "Neither passed"};
         return `${example.case_id} · repeat ${Number(example.repeat) + 1}${outcomes[example.outcome] ? " · " + outcomes[example.outcome] : ""}`;
       }
       function renderPromptEvidenceExample(r, e, index, exampleIndex) {
@@ -1557,10 +1570,10 @@
         const afterLabel = e.after_id === "target_challenger" ? "Candidate prompt (not selected)" : "Revised prompt";
         const inputs = trialInputs({...a, group: {...before, report: r}});
         const criteria = new Map((e.criteria || []).map((c) => [c.id, c]));
-        const output = (trial, group, label) => `<div class="paired-output"><h3>${promptLink(r, group.id, label)}</h3><pre class="code">${esc((trial.outputs || []).map(pretty).join("\n\n") || "No output recorded.")}</pre><p>Attempt ${esc(trial.id)}</p><h3>Recorded checks</h3><div class="checks">${Object.entries(trial.checks || {}).map(([id, check]) => recordedCheck(id, check, criteria.get(id)?.label || id)).join("") || '<p>No checks recorded.</p>'}</div></div>`;
+        const output = (trial, group, label) => `<div class="paired-output"><h3>${promptLink(r, group.id, label)}</h3><pre class="code">${esc((trial.outputs || []).map(pretty).join("\n\n") || "No output recorded.")}</pre><p>Attempt ${esc(trial.id)}</p><h3>Recorded checks</h3><div class="checks">${Object.entries(trial.checks || {}).map(([id, check]) => recordedCheck(id, check, criteria.get(id)?.label || id, sourceJudged(r))).join("") || '<p>No checks recorded.</p>'}</div></div>`;
         const isDefault = example.before_trial_id === e.example?.before_trial_id && example.after_trial_id === e.example?.after_trial_id;
         const selection = example.selection_reason || (isDefault ? e.example.selection_reason : null) || "Selected from the saved attempts with the same case and repeat.";
-        return `<label class="pair-label" for="prompt-example-select-${esc(r.id)}-${index}">Matched case <select id="prompt-example-select-${esc(r.id)}-${index}" aria-label="Choose a matched case">${examples.map((pair, i) => `<option value="${i}"${i === exampleIndex ? " selected" : ""}>${esc(promptEvidenceExampleLabel(pair))}</option>`).join("")}</select></label><p>${esc(selection)}</p><p>This is one recorded pair, not an explanation of what caused the aggregate change. Review improved and regressed cases before drawing conclusions.</p><details><summary>Full input shared by both attempts</summary><pre class="code">${esc(inputs.length ? inputs.map((v, i) => "TURN " + (i + 1) + "\n" + (typeof v === "string" ? v : pretty(v))).join("\n\n") : "Input messages were not recorded.")}</pre></details><h3>Expected answer</h3><pre class="code">${esc(a.expected_available ? pretty(a.expected_answer) : "Expected answer unavailable.")}</pre><p>Reference status: ${esc(a.reference_metadata?.label_status || "not recorded")}. The reference comes from the verified input, not either model response.</p><div class="answer-grid">${output(a, before, "Starting prompt")}${output(b, after, afterLabel)}</div>`;
+        return `<label class="pair-label" for="prompt-example-select-${esc(r.id)}-${index}">Matched case <select id="prompt-example-select-${esc(r.id)}-${index}" aria-label="Choose a matched case">${examples.map((pair, i) => `<option value="${i}"${i === exampleIndex ? " selected" : ""}>${esc(promptEvidenceExampleLabel(pair))}</option>`).join("")}</select></label><p>${esc(selection)}</p><p>This is one recorded pair, not an explanation of what caused the aggregate change. Review improved and regressed cases before drawing conclusions.</p><details><summary>Full input shared by both attempts</summary><pre class="code">${esc(inputs.length ? inputs.map((v, i) => "TURN " + (i + 1) + "\n" + (typeof v === "string" ? v : pretty(v))).join("\n\n") : "Input messages were not recorded.")}</pre></details>${assessmentReference(a, r)}<div class="answer-grid">${output(a, before, "Starting prompt")}${output(b, after, afterLabel)}</div>`;
       }
       function renderPromptEvidence() {
         const cards = reports().flatMap((r) => promptEvidencePairs(r).map((e, index) => ({r, e, index})));
@@ -1581,14 +1594,14 @@
             return first > 0 ? `${fixed(Math.abs(second - first) / first * 100, 1)}% ${second > first ? "higher" : "lower"}` : `${fixed(second - first, 1)} more`;
           };
           const rows = [
-            ["Test runs passing every required check", passes(counts.before_passes), passes(counts.after_passes), number(counts.before_passes) && number(counts.after_passes) && attempts > 0 ? `${fixed((counts.after_passes - counts.before_passes) / attempts * 100, 1)} percentage points` : "Unknown"],
+            [sourceJudged(r) ? "LLM-assessed: all required checks passed" : "Test runs passing every required check", passes(counts.before_passes), passes(counts.after_passes), number(counts.before_passes) && number(counts.after_passes) && attempts > 0 ? `${fixed((counts.after_passes - counts.before_passes) / attempts * 100, 1)} percentage points` : "Unknown"],
             ["Mean output tokens (includes reasoning)", fixed(e.usage?.before?.output_tokens?.mean, 1), fixed(e.usage?.after?.output_tokens?.mean, 1), change(e.usage?.before?.output_tokens?.mean, e.usage?.after?.output_tokens?.mean)],
             [`P95 ${sameLatency ? a.latency_scope + " " : ""}time`, number(p95(a)) ? fixed(p95(a), 3) + " s" : "Unknown", number(p95(b)) ? fixed(p95(b), 3) + " s" : "Unknown", change(p95(a), p95(b))],
             ["Model cost per attempt", costDisplay(before, "cost_usd_per_session", 6), costDisplay(after, "cost_usd_per_session", 6), change(costValue(before, "cost_usd_per_session"), costValue(after, "cost_usd_per_session"))],
             ["Model cost per successful result", costDisplay(before, "cost_usd_per_success", 6), costDisplay(after, "cost_usd_per_success", 6), change(costValue(before, "cost_usd_per_success"), costValue(after, "cost_usd_per_success"))],
           ];
           const failureCount = (value) => number(value?.failed) && number(value?.total)
-            ? `${value.failed}/${value.total}${value.unknown ? " (" + value.unknown + " unknown)" : ""}` : "Unknown";
+            ? `${value.failed}/${value.total}${value.needs_review ? " · " + value.needs_review + " needs review" : ""}${value.unknown ? " (" + value.unknown + " unknown)" : ""}` : "Unknown";
           const failureChange = (criterion) => {
             if (!number(criterion.before?.failed) || !number(criterion.after?.failed) || criterion.before.unknown || criterion.after.unknown) return "Incomplete coverage";
             const change = criterion.before.failed - criterion.after.failed;
@@ -1599,7 +1612,7 @@
             return `${number(output?.covered_attempts) ? output.covered_attempts : "Unknown"}/${number(usage?.attempts) ? usage.attempts : "unknown"} attempts`;
           };
           const examples = promptEvidenceExamples(e);
-          return `<section class="card prompt-evidence-card" data-prompt-evidence="${esc(e.after_id)}"><div class="eyebrow">${esc(backendLabel(r.backend))} · ${esc(modelLabel(after.model))}</div><h2>${candidate ? "What changed with the candidate prompt" : "What changed with the revised prompt"}</h2><p>${candidate ? "This candidate was evaluated but was not selected. The saved selection remains unchanged." : "The optimizer chose this revised prompt before these final measurements."}</p><table class="summary-table"><thead><tr><th scope="col">Measure</th><th scope="col">${promptLink(r, e.before_id, "Starting prompt")}</th><th scope="col">${promptLink(r, e.after_id, afterLabel)}</th><th scope="col">Change</th></tr></thead><tbody>${rows.map((row) => `<tr><th scope="row">${esc(row[0])}</th><td>${esc(row[1])}</td><td>${esc(row[2])}</td><td>${esc(row[3])}</td></tr>`).join("")}</tbody></table><p>Both costs include failed attempts. Cost per successful result divides model spend by attempts passing every required check. All costs are USD; AgentCore and other infrastructure charges are excluded.</p><p>Output-token coverage: starting prompt ${esc(coverage("before"))}; ${candidate ? "candidate" : "revised"} prompt ${esc(coverage("after"))}. Missing usage is unknown, not zero. P95 is the time within which 95% of measured attempts finished.</p><h3>Which checks changed</h3><p>${esc(fixed(counts.improved, 0))} paired attempts changed from failing to passing; ${esc(fixed(counts.regressed, 0))} changed from passing to failing. ${esc(fixed(counts.both_passed, 0))} passed both times; ${esc(fixed(counts.both_failed, 0))} failed both times. These counts use the ${esc(fixed(e.required_check_count, 0))} required checks.</p><div class="table-wrap"><table class="summary-table"><thead><tr><th scope="col">Check</th><th scope="col">Starting failures</th><th scope="col">${candidate ? "Candidate" : "Revised"} failures</th><th scope="col">Change</th></tr></thead><tbody>${(e.criteria || []).map((criterion) => `<tr><th scope="row">${esc(criterion.label || criterion.id)} <span class="sub">(${criterion.required ? "required" : "optional"})</span>${criterion.question ? `<p>${esc(criterion.question)}</p>` : ""}</th><td>${esc(failureCount(criterion.before))}</td><td>${esc(failureCount(criterion.after))}</td><td>${esc(failureChange(criterion))}</td></tr>`).join("")}</tbody></table></div><p>Failures are counted over matched attempts. Unknown checks are shown separately; optional checks do not determine the required-check pass rate.</p>${examples.length ? `<details id="prompt-example-${esc(r.id)}-${index}"><summary>Inspect one paired example and browse all ${examples.length} matched attempts</summary><div id="prompt-example-body-${esc(r.id)}-${index}"></div></details>` : '<p>No complete paired example is available.</p>'}<details><summary>Read the full prompt changes</summary><p>${promptLink(r, e.before_id, "Full starting prompt")} · ${promptLink(r, e.after_id, candidate ? "Full candidate prompt (not selected)" : "Full revised prompt")}</p><pre class="code">${esc(e.prompt_diff?.text || "No prompt diff is available.")}</pre></details><p>These observations do not establish statistical significance or production performance. Repeated attempts are not independent cases.</p></section>`;
+          return `<section class="card prompt-evidence-card" data-prompt-evidence="${esc(e.after_id)}"><div class="eyebrow">${esc(backendLabel(r.backend))} · ${esc(modelLabel(after.model))}</div><h2>${candidate ? "What changed with the candidate prompt" : "What changed with the revised prompt"}</h2>${assessmentNote(r)}<p>${candidate ? "This candidate was evaluated but was not selected. The saved selection remains unchanged." : "The optimizer chose this revised prompt before these final measurements."}</p><table class="summary-table"><thead><tr><th scope="col">Measure</th><th scope="col">${promptLink(r, e.before_id, "Starting prompt")}</th><th scope="col">${promptLink(r, e.after_id, afterLabel)}</th><th scope="col">Change</th></tr></thead><tbody>${rows.map((row) => `<tr><th scope="row">${esc(row[0])}</th><td>${esc(row[1])}</td><td>${esc(row[2])}</td><td>${esc(row[3])}</td></tr>`).join("")}</tbody></table><p>Both costs include failed attempts. Cost per successful result divides model spend by attempts passing every required check. All costs are USD; AgentCore and other infrastructure charges are excluded.</p><p>Output-token coverage: starting prompt ${esc(coverage("before"))}; ${candidate ? "candidate" : "revised"} prompt ${esc(coverage("after"))}. Missing usage is unknown, not zero. P95 is the time within which 95% of measured attempts finished.</p><h3>Which checks changed</h3><p>${esc(fixed(counts.improved, 0))} paired attempts changed from ${sourceJudged(r) ? "not passing" : "failing"} to passing; ${esc(fixed(counts.regressed, 0))} changed from passing to ${sourceJudged(r) ? "not passing" : "failing"}. ${esc(fixed(counts.both_passed, 0))} passed both times; ${esc(fixed(counts.both_failed, 0))} ${sourceJudged(r) ? "did not pass either time" : "failed both times"}. These counts use the ${esc(fixed(e.required_check_count, 0))} required checks.${sourceJudged(r) ? ` Needs review on at least one required check: ${esc(fixed(counts.before_needs_review, 0))} starting attempts; ${esc(fixed(counts.after_needs_review, 0))} revised attempts. These remain in the denominator.` : ""}</p><div class="table-wrap"><table class="summary-table"><thead><tr><th scope="col">Check</th><th scope="col">Starting failures</th><th scope="col">${candidate ? "Candidate" : "Revised"} failures</th><th scope="col">Change</th></tr></thead><tbody>${(e.criteria || []).map((criterion) => `<tr><th scope="row">${esc(criterion.label || criterion.id)} <span class="sub">(${criterion.required ? "required" : "optional"})</span>${criterion.question ? `<p>${esc(criterion.question)}</p>` : ""}</th><td>${esc(failureCount(criterion.before))}</td><td>${esc(failureCount(criterion.after))}</td><td>${esc(failureChange(criterion))}</td></tr>`).join("")}</tbody></table></div><p>Failures are counted over matched attempts. Needs-review judgments and unknown checks are shown separately; optional checks do not determine the required-check pass rate.</p>${examples.length ? `<details id="prompt-example-${esc(r.id)}-${index}"><summary>Inspect one paired example and browse all ${examples.length} matched attempts</summary><div id="prompt-example-body-${esc(r.id)}-${index}"></div></details>` : '<p>No complete paired example is available.</p>'}<details><summary>Read the full prompt changes</summary><p>${promptLink(r, e.before_id, "Full starting prompt")} · ${promptLink(r, e.after_id, candidate ? "Full candidate prompt (not selected)" : "Full revised prompt")}</p><pre class="code">${esc(e.prompt_diff?.text || "No prompt diff is available.")}</pre></details><p>These observations do not establish statistical significance or production performance. Repeated attempts are not independent cases.</p></section>`;
         }).join("");
         bindPromptNavigation($("prompt-evidence"));
         cards.forEach(({r, e, index}) => {
@@ -1646,7 +1659,7 @@
           if (selected && !reused) notes.push("These test cases were not used to choose the revised prompt.");
           if (!comparisons.length && !promptEvidencePairs(r).length) notes.push("No supported comparison pair is available in this saved report.", ...evidenceIssues(r));
           notes.push("P95 is the time within which 95% of test runs finished. Timing differences may vary between runs.");
-          return `<section class="run-summary"><div class="eyebrow">${esc(r.backend === "local" ? "Run locally" : "Run on " + backendLabel(r.backend))}</div>` + comparisons.map((c) =>
+          return `<section class="run-summary"><div class="eyebrow">${esc(r.backend === "local" ? "Run locally" : "Run on " + backendLabel(r.backend))}</div>${assessmentNote(r)}` + comparisons.map((c) =>
             `<div class="result-comparison" data-result="${esc(c.status)}" data-comparison="${c.kind}"><h2>${esc(c.label)}</h2><p>${esc(c.description)}</p><p><strong>${esc(c.headline)}</strong></p><table class="summary-table"><thead><tr><th scope="col">Measure</th>${c.columns.map((col, i) => `<th scope="col">${c.promptGroups ? promptLink(r, c.promptGroups[i], col) : esc(col)}</th>`).join("")}</tr></thead><tbody>${c.rows.map((row) => `<tr><th scope="row">${esc(row[0])}</th><td>${esc(row[1])}</td><td>${esc(row[2])}</td></tr>`).join("")}</tbody></table>${c.kind === "model" && promptEntry(r, "target_original") ? `<p>${promptLink(r, "target_original", "View starting prompt")}</p>` : ""}${c.issues.length ? `<p><strong>${esc(c.issues.join(" "))}</strong></p>` : ""}</div>`).join("") +
             `<p>${esc(notes.join(" "))}</p></section>`;
         }).join("");
@@ -1674,8 +1687,9 @@
               g.score.n_sessions > 0,
           ),
           denom = weighted.reduce((n, g) => n + g.score.n_sessions, 0);
+        const assessmentModes = [...new Set(reports().map((r) => sourceJudged(r) ? "source_judge" : "reference"))];
         const quality =
-          denom && weighted.length === gs.length
+          assessmentModes.length === 1 && denom && weighted.length === gs.length
             ? weighted.reduce(
                 (n, g) => n + g.score.accuracy * g.score.n_sessions,
                 0,
@@ -1683,9 +1697,9 @@
             : null;
         const cards = [
           [
-            "Required-check pass rate",
+            assessmentModes.length > 1 ? "Different assessment methods" : assessmentModes[0] === "source_judge" ? "LLM-assessed pass rate" : "Required-check pass rate",
             pct(quality),
-            "Attempt-weighted · not production accuracy",
+            assessmentModes.length > 1 ? "Choose one backend to compare like assessments" : "All attempts included · not production accuracy",
           ],
           [
             "Distinct cases",
@@ -1718,7 +1732,7 @@
           gs
             .map(
               (g) =>
-                `<tr><td class="name"><span class="swatch" style="background:${color(g)}"></span>${esc(modelLabel(g.model))}<small>${esc(backendLabel(g.report.backend))} · ${esc(g.label)}</small></td><td>${pct(g.score?.accuracy)}<div class="mini-bar"><span style="width:${number(g.score?.accuracy) ? Math.max(0, Math.min(100, g.score.accuracy * 100)) : 0}%"></span></div></td><td>${costDisplay(g, "cost_usd_per_session")}<small>${g.score?.unpriced_requests ? esc(g.score.unpriced_requests) + " unpriced requests" : "Configured list-price estimate"}</small></td><td>${costDisplay(g, "cost_usd_per_success")}<small>Includes spend on failed attempts</small></td><td>${fixed(g.score?.latency_p50_s)} / ${fixed(g.score?.latency_p95_s)} s<small>${esc(g.score?.latency_scope || "Recorded latency scope")}</small></td><td>${new Set((g.trials || []).map((t) => t.case_id)).size} / ${(g.trials || []).length}</td></tr>`,
+                `<tr><td class="name"><span class="swatch" style="background:${color(g)}"></span>${esc(modelLabel(g.model))}<small>${esc(backendLabel(g.report.backend))} · ${esc(g.label)}</small></td><td>${pct(g.score?.accuracy)}${sourceJudged(g.report) ? `<small>LLM-assessed · ${(g.trials || []).filter((t) => Object.values(t.checks || {}).some((c) => c?.status === "needs_review")).length} attempts need review</small>` : ""}<div class="mini-bar"><span style="width:${number(g.score?.accuracy) ? Math.max(0, Math.min(100, g.score.accuracy * 100)) : 0}%"></span></div></td><td>${costDisplay(g, "cost_usd_per_session")}<small>${g.score?.unpriced_requests ? esc(g.score.unpriced_requests) + " unpriced requests" : "Configured list-price estimate"}</small></td><td>${costDisplay(g, "cost_usd_per_success")}<small>Includes spend on failed attempts</small></td><td>${fixed(g.score?.latency_p50_s)} / ${fixed(g.score?.latency_p95_s)} s<small>${esc(g.score?.latency_scope || "Recorded latency scope")}</small></td><td>${new Set((g.trials || []).map((t) => t.case_id)).size} / ${(g.trials || []).length}</td></tr>`,
             )
             .join("") ||
           '<tr><td colspan="6">No holdout configurations available.</td></tr>';
@@ -1764,7 +1778,7 @@
         });
         const h = Math.max(305, T + Math.max(...panels.map((panel) => panel.labelHeight)) + B + 10);
         $("tradeoff").innerHTML = panels.map(({report, labels, labelHeight}) => {
-          const context = `<p class="chart-execution">Execution location: ${esc(backendLabel(report.backend))}</p>`;
+          const context = `<p class="chart-execution">Execution location: ${esc(backendLabel(report.backend))}</p>${sourceJudged(report) ? '<p class="sub">Successful results are LLM-assessed passes, not independently verified answers. Judge spend is separate from these application costs.</p>' : ""}`;
           if (!labels.length)
             return `<section class="chart-panel">${context}<p class="sub">No comparable points are available for this location.</p></section>`;
           const x = (value) => L + ((w - L - R) * value) / xmax;
@@ -1818,7 +1832,7 @@
           ts
             .map(
               (t, i) =>
-                `<button class="trial-button ${t.key === state.selected ? "selected" : ""}" data-trial-index="${i}" aria-pressed="${t.key === state.selected}"><div class="trial-top"><strong>${esc(t.case_id)}</strong>${badge(outcome(t) === "passed" ? "Checks passed" : outcome(t) === "failed" ? "Check failed" : "Needs inspection", outcome(t) === "passed" ? "good" : "warn")}</div><div class="trial-meta"><span class="swatch" style="background:${color(t.group)}"></span>${esc(modelLabel(t.group.model))} · ${esc(backendLabel(t.group.report.backend))}<span>${esc(promptEntry(t.group.report, t.group.id)?.label || promptLabel(t.group))}</span><span>Repeat ${Number(t.repeat) + 1}</span><span>${fixed(conversation(t))} s</span></div></button>`,
+                `<button class="trial-button ${t.key === state.selected ? "selected" : ""}" data-trial-index="${i}" aria-pressed="${t.key === state.selected}"><div class="trial-top"><strong>${esc(t.case_id)}</strong>${badge(outcome(t) === "passed" ? "Checks passed" : outcome(t) === "failed" ? "Check failed" : outcome(t) === "needs_review" ? "Needs review" : "Needs inspection", outcome(t) === "passed" ? "good" : "warn")}</div><div class="trial-meta"><span class="swatch" style="background:${color(t.group)}"></span>${esc(modelLabel(t.group.model))} · ${esc(backendLabel(t.group.report.backend))}<span>${esc(promptEntry(t.group.report, t.group.id)?.label || promptLabel(t.group))}</span><span>Repeat ${Number(t.repeat) + 1}</span><span>${fixed(conversation(t))} s</span></div></button>`,
             )
             .join("") ||
           '<div class="empty">No attempts match these filters.<br>Try another outcome or search.</div>';
@@ -1851,15 +1865,18 @@
           return `<p><strong>${esc(label + path + scope)}</strong></p><pre class="code">${esc(pretty(values))}</pre>`;
         }).join("");
       }
-      function recordedCheck(id, value, label = id) {
+      function recordedCheck(id, value, label = id, sourceMode = false) {
         const valid = value !== null && typeof value === "object" && !Array.isArray(value);
         const check = valid ? value : {};
         const hasError = Boolean(check.error) || check.failure_category === "grading";
-        const passed = hasError ? null : check.pass;
-        const status = passed === true ? "Passed" : passed === false ? "Failed" : "Unknown";
+        const needsReview = !hasError && check.status === "needs_review";
+        const contradictory = check.status && !["pass", "fail", "needs_review"].includes(check.status) || check.status && check.pass !== (check.status === "pass");
+        const passed = hasError || needsReview || contradictory ? null : check.pass;
+        const status = needsReview ? "Needs review" : passed === true ? "Passed" : passed === false ? "Failed" : "Unknown";
         const reason = check.reason || (valid ? "No reason recorded." : "No valid check result was recorded.");
         const error = hasError ? `<p><strong>Grading error</strong>${typeof check.error === "boolean" || !check.error ? ": the saved check is marked as an error." : ": " + esc(pretty(check.error))}</p>` : "";
-        return `<div class="check">${badge(status, passed === true ? "good" : "warn")} <strong>${esc(label)}</strong><p>${esc(reason)}</p>${error}${checkDetails(check)}</div>`;
+        const sourceEvidence = Array.isArray(check.evidence) ? check.evidence.filter((entry) => entry && typeof entry === "object").map((entry) => `<p><strong>Source evidence · ${esc(entry.source_id)}</strong></p><pre class="code">${esc(entry.quote)}</pre>`).join("") : "";
+        return `<div class="check">${badge(status, passed === true ? "good" : "warn")} <strong>${esc(label)}</strong>${sourceMode && check.status ? '<p>LLM-assessed criterion</p>' : ""}<p>${esc(reason)}</p>${error}${checkDetails(check)}${sourceEvidence}</div>`;
       }
       function renderDetail(t) {
         if (!t) {
@@ -1876,7 +1893,7 @@
         const inputs = trialInputs(t);
         const checks = Object.entries(t.checks || {});
         $("detail").innerHTML =
-          `<div class="eyebrow">Trial detail</div><h2>${esc(t.case_id)}</h2><p class="sub">${esc(modelLabel(t.group.model))} · ${esc(backendLabel(t.group.report.backend))} · repeat ${Number(t.repeat) + 1}</p><p class="sub">${promptLink(t.group.report, t.group.id, promptEntry(t.group.report, t.group.id)?.label || promptLabel(t.group))}</p><div class="detail-stats"><div class="detail-stat"><span>Conversation</span><strong>${fixed(conversation(t), 3)} s</strong></div><div class="detail-stat"><span>Recorded tokens</span><strong>${number(tokens) ? tokens.toLocaleString() : "Unknown"}</strong></div><div class="detail-stat"><span>Execution</span><strong>${esc(t.status)}</strong></div></div><h3>Input conversation</h3><pre class="code">${esc(inputs.length ? inputs.map((v, i) => "TURN " + (i + 1) + "\n" + (typeof v === "string" ? v : pretty(v))).join("\n\n") : "Input messages were not recorded in this report.")}</pre><div class="answer-grid"><div><h3>Expected answer</h3><pre class="code">${esc(t.expected_available ? pretty(t.expected_answer) : "Expected answer unavailable: a matching frozen input manifest was not included.")}</pre><p class="sub">${esc(t.expected_available ? "From the verified frozen input; reference status: " + (t.reference_metadata?.label_status || "not recorded") + "." : "The dashboard does not infer a reference from the model output.")}</p></div><div><h3>Model output</h3><pre class="code">${esc((t.outputs || []).map(pretty).join("\n\n") || "No output recorded.")}</pre></div></div><h3>Recorded checks</h3><div class="checks">${checks.map(([id, c]) => recordedCheck(id, c)).join("") || '<p class="sub">No checks recorded.</p>'}</div><p class="sub" style="margin-top:12px">The outcome filter includes every recorded check, including optional checks. It is not the aggregate required-check score.</p><details><summary>Request receipts & timing</summary><pre class="code">${esc(pretty({ trial_id: t.id, timing: t.timing, requests: routes.map((r) => ({ status: r.status, model: r.model_requested, request_id: r.request_id || r.response_id || null, started_at: r.started_at, usage: r.usage, timing: r.timing })) }))}</pre></details>`;
+          `<div class="eyebrow">Trial detail</div><h2>${esc(t.case_id)}</h2><p class="sub">${esc(modelLabel(t.group.model))} · ${esc(backendLabel(t.group.report.backend))} · repeat ${Number(t.repeat) + 1}</p><p class="sub">${promptLink(t.group.report, t.group.id, promptEntry(t.group.report, t.group.id)?.label || promptLabel(t.group))}</p><div class="detail-stats"><div class="detail-stat"><span>Conversation</span><strong>${fixed(conversation(t), 3)} s</strong></div><div class="detail-stat"><span>Recorded tokens</span><strong>${number(tokens) ? tokens.toLocaleString() : "Unknown"}</strong></div><div class="detail-stat"><span>Execution</span><strong>${esc(t.status)}</strong></div></div><h3>Input conversation</h3><pre class="code">${esc(inputs.length ? inputs.map((v, i) => "TURN " + (i + 1) + "\n" + (typeof v === "string" ? v : pretty(v))).join("\n\n") : "Input messages were not recorded in this report.")}</pre><div class="answer-grid"><div>${assessmentReference(t, t.group.report)}</div><div><h3>Model output</h3><pre class="code">${esc((t.outputs || []).map(pretty).join("\n\n") || "No output recorded.")}</pre></div></div><h3>Recorded checks</h3><div class="checks">${checks.map(([id, c]) => recordedCheck(id, c, id, sourceJudged(t.group.report))).join("") || '<p class="sub">No checks recorded.</p>'}</div><p class="sub" style="margin-top:12px">The outcome filter includes every recorded check, including optional checks. It is not the aggregate required-check score.</p><details><summary>Request receipts & timing</summary><pre class="code">${esc(pretty({ trial_id: t.id, timing: t.timing, requests: routes.map((r) => ({ status: r.status, model: r.model_requested, request_id: r.request_id || r.response_id || null, started_at: r.started_at, usage: r.usage, timing: r.timing })) }))}</pre></details>`;
         bindPromptNavigation($("detail"));
       }
       function renderIntegrity() {
@@ -1885,7 +1902,7 @@
             const c = r.model_costs || {},
               known = c.known_model_cost_usd,
               estimated = c.estimated_model_cost_usd;
-            return `<div class="card integrity-card"><div class="eyebrow">${esc(backendLabel(r.backend))}</div><h2>${esc(r.source_name || "Saved report")}</h2><div class="definition"><span>Evaluation status</span><strong>${esc(r.status || "Unknown")}</strong></div><div class="definition"><span>Execution evidence</span><strong>${r.simulated === true ? "Simulated" : r.simulated === false ? "Live inference recorded" : "Unknown"}</strong></div><div class="definition"><span>Unresolved attempts</span><strong>${Array.isArray(r.unresolved_attempts) ? r.unresolved_attempts.length : "Unknown"}</strong></div><div class="definition"><span>Grading error records</span><strong>${esc(r.grading_error_records ?? "Unknown")}</strong></div><div class="definition"><span>Estimated run model cost</span><strong>${money(estimated)}</strong></div><div class="definition"><span>Known priced portion</span><strong>${money(known)}</strong></div><div class="definition"><span>Unpriced / incomplete traces</span><strong>${esc(c.unpriced_requests_or_incomplete_traces ?? "Unknown")}</strong></div><p class="sub" style="margin-top:15px">${esc(c.scope || r.cost_note || "Cost scope not supplied.")}</p><div class="fingerprint">RUN FINGERPRINT<br>${esc(r.fingerprint || "Not recorded")}</div><details><summary>Latency and evidence scope</summary><p class="sub">${esc(r.latency_scope || "Not supplied")}</p><p class="sub" style="margin-top:9px">${esc(r.claim || "")}</p></details></div>`;
+            return `<div class="card integrity-card"><div class="eyebrow">${esc(backendLabel(r.backend))}</div><h2>${esc(r.source_name || "Saved report")}</h2><div class="definition"><span>Evaluation status</span><strong>${esc(r.status || "Unknown")}</strong></div><div class="definition"><span>Execution evidence</span><strong>${r.simulated === true ? "Simulated" : r.simulated === false ? "Live inference recorded" : "Unknown"}</strong></div><div class="definition"><span>Unresolved attempts</span><strong>${Array.isArray(r.unresolved_attempts) ? r.unresolved_attempts.length : "Unknown"}</strong></div><div class="definition"><span>Grading error records</span><strong>${esc(r.grading_error_records ?? "Unknown")}</strong></div><div class="definition"><span>Estimated run model cost</span><strong>${money(estimated)}</strong></div><div class="definition"><span>Known priced portion</span><strong>${money(known)}</strong></div>${[ ["agent", "Application model costs"], ["optimizer", "Prompt optimizer costs"], ["judge", "Judge model costs"] ].map(([purpose, label]) => `<div class="definition"><span>${esc(label)} · known priced portion</span><strong>${money(c.by_purpose_usd?.[purpose], 6)}</strong></div>`).join("")}<p class="sub">Purpose totals cover the whole campaign, including development and validation. Judge and optimizer costs are separate from the application cost per attempt shown in Overview. Missing receipts or prices make these known portions incomplete, not final totals.</p>${assessmentNote(r)}<div class="definition"><span>Unpriced / incomplete traces</span><strong>${esc(c.unpriced_requests_or_incomplete_traces ?? "Unknown")}</strong></div><p class="sub" style="margin-top:15px">${esc(c.scope || r.cost_note || "Cost scope not supplied.")}</p><div class="fingerprint">RUN FINGERPRINT<br>${esc(r.fingerprint || "Not recorded")}</div><details><summary>Latency and evidence scope</summary><p class="sub">${esc(r.latency_scope || "Not supplied")}</p><p class="sub" style="margin-top:9px">${esc(r.claim || "")}</p></details></div>`;
           })
           .join("");
         $("provenance").textContent =
@@ -1942,6 +1959,10 @@
             outputs: t.outputs,
             input_ref: t.input_ref ? t.group.report.id + "::" + t.input_ref : null,
             inputs: t.input_ref ? undefined : trialInputs(t),
+            assessment_mode: t.assessment_mode || t.group.report.assessment?.mode || "reference",
+            source_ref: t.source_ref ? t.group.report.id + "::" + t.source_ref : null,
+            source_sha256: t.source_sha256,
+            rubric_sha256: t.rubric_sha256,
             expected_available: t.expected_available,
             expected_answer: t.expected_answer,
             expected_checks: t.expected_checks,
@@ -1960,6 +1981,8 @@
                     Object.entries(r.input_bundles || {})
                       .filter(([reference]) => rows.some((t) => t.input_ref === r.id + "::" + reference))
                       .map(([reference, inputs]) => [r.id + "::" + reference, inputs]))),
+                  source_bundles: Object.fromEntries(reports().flatMap((r) => Object.entries(r.source_bundles || {}).filter(([reference]) => rows.some((t) => t.source_ref === r.id + "::" + reference)).map(([reference, sources]) => [r.id + "::" + reference, sources]))),
+                  assessments: reports().map((r) => ({report: r.id, ...r.assessment})),
                   fingerprints: [
                     ...new Set(reports().map((r) => r.fingerprint)),
                   ],

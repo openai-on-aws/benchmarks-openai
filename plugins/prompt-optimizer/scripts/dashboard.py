@@ -8,6 +8,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import sys
 import tempfile
 
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
@@ -96,6 +97,12 @@ def _frozen_input(path: Path, report: dict) -> tuple[dict | None, str]:
 
 
 def _provenance(path: Path, report: dict, historical: bool, config: dict | None, frozen_status: str) -> str:
+    assessment = _assessment(config)
+    if assessment["mode"] == "source_judge":
+        origins = sorted({str(d.get("provenance") or "unspecified") for d in config["document"].get("datasets", []) if isinstance(d, dict)})
+        return ("LLM-assessed results against the frozen source text and rubric; no expected answers were supplied or used. "
+                "Test data: " + (", ".join(origins) or "unspecified") + ". Needs-review judgments remain in the denominator and do not count as passes. "
+                "These are model judgments, not human-verified accuracy.")
     if historical:
         return "Recorded live measurements from 13 November 2026. Synthetic inputs and unreviewed reference answers; this is not production accuracy."
     unavailable = "Label provenance is unavailable in this saved report. Review the source dataset and reference answers before treating check agreement as accuracy."
@@ -159,7 +166,61 @@ def _cost_values(score: dict) -> dict:
     return result
 
 
-def _trial(row: dict, case: dict | None = None, *, input_bundles: dict | None = None) -> dict:
+def _source_helpers():
+    """The same local, stdlib-only projection used by the evaluator."""
+    engine = str(PLUGIN_ROOT / "engine")
+    if engine not in sys.path:
+        sys.path.insert(0, engine)
+    from customer_eval.source_grading import build_source_context, build_source_criteria, evidence_digest
+    return build_source_context, build_source_criteria, evidence_digest
+
+
+def _assessment(config: dict | None) -> dict:
+    """Only verified, explicitly configured source judging may omit references."""
+    reference = {"mode": "reference", "quality_label": "Required-check pass rate"}
+    if not isinstance(config, dict):
+        return reference
+    rules = config.get("grading")
+    if not isinstance(rules, dict) or not any(isinstance(rule, dict) and rule.get("type") == "llm_source_rubric" for rule in rules.values()):
+        return reference
+    unavailable = {"mode": "unverified_source_judge", "quality_label": "Assessment configuration unavailable"}
+    document = config.get("document")
+    definitions = document.get("checks") if isinstance(document, dict) else None
+    if (not isinstance(definitions, list) or not definitions or
+            any(not isinstance(c, dict) or not isinstance(c.get("id"), str) or type(c.get("required")) is not bool for c in definitions) or
+            set(rules) != {c["id"] for c in definitions} or len(definitions) != len(rules)):
+        return unavailable
+    judges = set()
+    for check in definitions:
+        rule = rules[check["id"]]
+        if not isinstance(rule, dict) or rule.get("type") not in ("llm_source_rubric", "json_schema"):
+            return unavailable
+        if rule["type"] == "llm_source_rubric":
+            if (check.get("method") != "llm_judge" or not isinstance(check.get("judge_model_id"), str) or not check["judge_model_id"] or
+                    not isinstance(rule.get("rubric"), str) or not rule["rubric"].strip()):
+                return unavailable
+            judges.add(check["judge_model_id"])
+        elif check.get("method") != "deterministic":
+            return unavailable
+    if len(judges) != 1:
+        return unavailable
+    try:
+        _, criteria_builder, digest = _source_helpers()
+        criteria = criteria_builder(config)
+        rubric_sha256 = digest(criteria)
+    except (ImportError, KeyError, TypeError, ValueError):
+        return unavailable
+    judge_id = next(iter(judges))
+    routes = config.get("routes")
+    route = routes.get(judge_id, {}) if isinstance(routes, dict) else {}
+    route = route if isinstance(route, dict) else {}
+    return {"mode": "source_judge", "quality_label": "LLM-assessed pass rate", "judge_model_id": judge_id,
+            "judge_model": route.get("model_id") or judge_id, "criteria": criteria,
+            "rubric_sha256": rubric_sha256, "reference_requirement": "not_used"}
+
+
+def _trial(row: dict, case: dict | None = None, *, input_bundles: dict | None = None,
+           source_bundles: dict | None = None, assessment: dict | None = None, source_context=None) -> dict:
     result = row.get("result") or {}
     case = case or {}
     expected = case.get("expected")
@@ -183,6 +244,15 @@ def _trial(row: dict, case: dict | None = None, *, input_bundles: dict | None = 
         "expected_checks": expected,
         "reference_metadata": case.get("metadata") or {},
     }
+    if assessment and assessment["mode"] == "source_judge":
+        trial.update(assessment_mode="source_judge", expected_available=False, expected_answer=None, expected_checks=None,
+                     source_available=False, rubric_sha256=assessment["rubric_sha256"])
+        if source_context:
+            _, _, digest = _source_helpers()
+            source_sha256 = digest(source_context)
+            reference = "source-" + source_sha256
+            source_bundles.setdefault(reference, source_context)
+            trial.update(source_available=True, source_ref=reference, source_sha256=source_sha256)
     # Store each exact input history once per report, rather than twice per
     # attempt and again for every repeat/model. The raw report is never changed.
     # Keep unusual/nontext legacy records inline so no information is discarded.
@@ -227,8 +297,10 @@ def _usage_summary(trials: list[dict]) -> dict:
     return result
 
 
-def _prompt_evidence(raw: dict, config: dict | None, groups: list[dict]) -> list[dict]:
+def _prompt_evidence(raw: dict, config: dict | None, groups: list[dict], source_bundles: dict | None = None) -> list[dict]:
     """Describe saved prompt outcomes without changing grading or selection."""
+    assessment = _assessment(config)
+    source_mode = assessment["mode"] == "source_judge"
     by_id = {group["id"]: group for group in groups}
     original = by_id.get("target_original")
     evidence = []
@@ -240,7 +312,8 @@ def _prompt_evidence(raw: dict, config: dict | None, groups: list[dict]) -> list
                 "available": False, "issues": [], "required_check_count": 0,
                 "criteria": [], "usage": {"before": _usage_summary(original["trials"]),
                                             "after": _usage_summary(revised["trials"])},
-                "outcomes": None, "example": None, "examples": [], "prompt_diff": None}
+                "outcomes": None, "example": None, "examples": [], "prompt_diff": None,
+                "assessment_mode": assessment["mode"]}
         evidence.append(item)
         issues = item["issues"]
         if config is None:
@@ -317,7 +390,31 @@ def _prompt_evidence(raw: dict, config: dict | None, groups: list[dict]) -> list
                     isinstance(left, list) and any(value is None for value in left)):
                 issues.append("Matching input histories are unavailable for the paired attempts.")
                 break
-            if (not before.get("expected_available") or not after.get("expected_available") or
+            if source_mode:
+                if (not before.get("source_available") or not after.get("source_available") or
+                        before.get("source_ref") != after.get("source_ref") or
+                        before.get("rubric_sha256") != after.get("rubric_sha256")):
+                    issues.append("Matching verified source text and rubric are unavailable.")
+                    break
+                source_checks = [c["id"] for c in definitions if config.get("grading", {}).get(c["id"], {}).get("type") == "llm_source_rubric"]
+                for row in (before, after):
+                    sources = {source["source_id"]: source["text"] for source in (source_bundles or {}).get(row.get("source_ref"), [])}
+                    for ident in source_checks:
+                        check = (row.get("checks") if isinstance(row.get("checks"), dict) else {}).get(ident)
+                        if (not isinstance(check, dict) or check.get("error") or check.get("status") not in ("pass", "fail", "needs_review") or
+                                check.get("pass") is not (check["status"] == "pass") or
+                                check.get("source_sha256") != row["source_sha256"] or
+                                check.get("rubric_sha256") != assessment["rubric_sha256"]):
+                            issues.append("Source judgment, source digest or rubric digest is invalid: " + ident + ".")
+                            continue
+                        citations = check.get("evidence")
+                        if (not isinstance(check.get("reason"), str) or not check["reason"].strip() or
+                                not isinstance(citations, list) or (check["status"] != "needs_review" and not citations) or
+                                any(not isinstance(citation, dict) or not isinstance(citation.get("source_id"), str) or
+                                    citation["source_id"] not in sources or not isinstance(citation.get("quote"), str) or
+                                    not citation["quote"].strip() or citation["quote"] not in sources[citation["source_id"]] for citation in citations)):
+                            issues.append("Source judgment evidence does not match the frozen sources: " + ident + ".")
+            elif (not before.get("expected_available") or not after.get("expected_available") or
                     before.get("expected_answer") != after.get("expected_answer")):
                 issues.append("Matching frozen reference answers are unavailable.")
                 break
@@ -335,9 +432,13 @@ def _prompt_evidence(raw: dict, config: dict | None, groups: list[dict]) -> list
                 results = [(row["checks"] if isinstance(row["checks"], dict) else {}).get(ident)
                            for row in group["trials"]]
                 passed = sum(isinstance(c, dict) and c.get("pass") is True and not c.get("error") for c in results)
-                failed = sum(isinstance(c, dict) and c.get("pass") is False and not c.get("error") for c in results)
+                needs_review = sum(source_mode and isinstance(c, dict) and c.get("status") == "needs_review" and c.get("pass") is False and not c.get("error") for c in results)
+                failed = sum(isinstance(c, dict) and c.get("pass") is False and not c.get("error") and
+                             not (source_mode and c.get("status") == "needs_review") for c in results)
                 criterion[side] = {"passed": passed, "failed": failed,
-                                   "unknown": len(results) - passed - failed, "total": len(results)}
+                                   "unknown": len(results) - passed - failed - needs_review, "total": len(results)}
+                if source_mode:
+                    criterion[side]["needs_review"] = needs_review
             if not criterion["before"]["unknown"] and not criterion["after"]["unknown"]:
                 criterion["failure_change"] = criterion["before"]["failed"] - criterion["after"]["failed"]
             elif definition["required"]:
@@ -351,12 +452,17 @@ def _prompt_evidence(raw: dict, config: dict | None, groups: list[dict]) -> list
             return all(row["checks"][ident]["pass"] is True for ident in required)
         outcomes = {"attempts": len(pairs), "before_passes": 0, "after_passes": 0,
                     "improved": 0, "regressed": 0, "both_passed": 0, "both_failed": 0}
+        if source_mode:
+            outcomes.update(before_needs_review=0, after_needs_review=0)
         for (case_id, repeat), before, after in pairs:
             a, b = all_passed(before), all_passed(after)
             outcome = "both_passed" if a and b else "both_failed" if not a and not b else "improved" if b else "regressed"
             outcomes["before_passes"] += a
             outcomes["after_passes"] += b
             outcomes[outcome] += 1
+            if source_mode:
+                for side, row in (("before", before), ("after", after)):
+                    outcomes[side + "_needs_review"] += any(row["checks"][ident].get("status") == "needs_review" for ident in required)
             item["examples"].append({"case_id": case_id, "repeat": repeat,
                 "before_trial_id": before["id"], "after_trial_id": after["id"], "outcome": outcome})
         for side, group in (("before", original), ("after", revised)):
@@ -375,7 +481,8 @@ def _prompt_evidence(raw: dict, config: dict | None, groups: list[dict]) -> list
                 continue
             ident = criterion["id"]
             match = next((pair for pair in item["examples"] if pair["outcome"] == "improved" and
-                indexes[0][(pair["case_id"], pair["repeat"])]["checks"][ident]["pass"] is False), None)
+                indexes[0][(pair["case_id"], pair["repeat"])]["checks"][ident]["pass"] is False and
+                (not source_mode or indexes[0][(pair["case_id"], pair["repeat"])]["checks"][ident].get("status") != "needs_review")), None)
             if match:
                 item["example"] = dict(match, focus_check_id=ident,
                     selection_reason="Chosen to illustrate the required check with the largest reduction in failures. "
@@ -405,8 +512,18 @@ def _report(path: Path, index: int) -> dict:
     cases = {case["id"]: case for rows in (config or {}).get("datasets", {}).values()
              for case in rows if isinstance(case, dict) and "id" in case}
     cost_metric, cost_metric_source = _cost_metric(raw, config)
+    assessment = _assessment(config)
     groups = []
     input_bundles = {}
+    source_bundles, contexts = {}, {}
+    if assessment["mode"] == "source_judge":
+        context_builder, _, _ = _source_helpers()
+        for ident, case in cases.items():
+            try:
+                contexts[ident] = context_builder(case, policy=config.get("policy", ""),
+                    general_rules=(config.get("intake_context") or {}).get("quality", {}).get("rules", ""))
+            except (KeyError, TypeError, ValueError):
+                contexts[ident] = None
     for name, group in raw["holdout"].items():
         # Keep a declared but unfinished configuration visible as unscored.
         # Omitting it would make the remaining configurations look complete.
@@ -435,7 +552,9 @@ def _report(path: Path, index: int) -> dict:
             "model": ", ".join(models) or "Model identity unavailable",
             "score": group.get("score") or {},
             "cost_metrics": _cost_values(group.get("score") or {}),
-            "trials": [_trial(row, cases.get(row.get("case_id")), input_bundles=input_bundles) for row in rows],
+            "trials": [_trial(row, cases.get(row.get("case_id")), input_bundles=input_bundles,
+                              source_bundles=source_bundles, assessment=assessment,
+                              source_context=contexts.get(row.get("case_id"))) for row in rows],
         })
     historical = _is_bundled_recording(path, backend)
     return {
@@ -452,6 +571,7 @@ def _report(path: Path, index: int) -> dict:
         "cost_metric": cost_metric,
         "cost_metric_source": cost_metric_source,
         "model_costs": raw.get("model_costs") or {},
+        "assessment": assessment,
         # An absent ledger means unknown coverage, not zero unresolved attempts.
         "unresolved_attempts": raw.get("unresolved_attempts"),
         "grading_error_records": raw.get("grading_error_records"),
@@ -463,9 +583,10 @@ def _report(path: Path, index: int) -> dict:
         "reused_groups": {name: group["reused_from"] for name, group in raw["holdout"].items()
                           if isinstance(group, dict) and group.get("reused_from")},
         "groups": groups,
-        "prompt_evidence": _prompt_evidence(raw, config, groups),
+        "prompt_evidence": _prompt_evidence(raw, config, groups, source_bundles),
         "input_storage": "content-addressed-v1",
         "input_bundles": input_bundles,
+        "source_bundles": source_bundles,
     }
 
 

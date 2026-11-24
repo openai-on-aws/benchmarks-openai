@@ -29,6 +29,11 @@ export EVAL_PROJECT="$EVAL_WORKSPACE/invoice-study"
 "$EVAL_PYTHON" "$PLUGIN/scripts/workflow_eval.py" plan --project "$EVAL_PROJECT"
 ```
 
+If there are no expected answers, configure `quality.kind: "source_judge"` before
+`inspect`; use the [source-judging guide](source-judging.md) for the decision patch.
+An existing draft is reimported when its reference mode changes. Do not create
+empty expected-answer objects to make a request importable.
+
 The bundled synthetic OCR-text logs are under
 `engine/examples/log-replay/logs/`. The
 [support-ticket starter](../../../examples/support-ticket-triage/README.md)
@@ -65,8 +70,9 @@ keys in the connection's `models` object.
 
 - `prompt_location`: zero-based instruction-message index, or `"instructions"`
   for top-level Responses instructions. It identifies the preserved prompt.
-- `quality.kind`: `"json_equals"` for both starters.
-- `quality.reference_source`: `"supplied"` for explicit labels, or `"recorded"`
+- `quality.kind`: `"json_equals"` for both labeled starters, or `"source_judge"`
+  for source inputs without expected answers.
+- `quality.reference_source` (reference-based modes only): `"supplied"` for explicit labels, or `"recorded"`
   for historical output agreement.
 - `quality.fields`: `[""]` for whole-object equality, or agreed dotted paths,
   such as `["invoice_id", "total", "needs_review"]`.
@@ -74,16 +80,22 @@ keys in the connection's `models` object.
 - `quality.description`: the user's correctness criterion.
 - `quality.kind: "json_checks"`: named structured decision checks and an optional
   output schema; see [complex text studies](complex-text.md) for the contract.
-- `quality.reference_file`: optional mapping of case IDs to expected answers.
+- `quality.reference_file`: optional mapping of case IDs to expected answers in
+  reference-based modes; omit it for source judging.
+- `judge_model`: a separately chosen connection key for source judging. Use
+  `quality.checks` with named `id`, `rubric`, `description` and `required` fields;
+  add `quality.schema` for deterministic output validation. See [source judging](source-judging.md).
 - `quality.rules`: supplied general business rules, kept separate from
   case-specific expected answers.
-- `provenance`: `"synthetic"`, `"customer"` or `"public"`. Labels stay unreviewed until a scoped human review is recorded; see [label review](label-review.md).
+- `provenance`: `"synthetic"`, `"customer"` or `"public"`. Supplied labels stay unreviewed until a scoped human review is recorded; source-judged datasets use `not_provided` because expected answers are absent; see [label review](label-review.md).
 - `label_review_file`: optional human-completed review file tied to case inputs and expected-answer hashes.
 - `repetitions`, `concurrency`, `timeout_seconds`: propose and explain these
   settings; engine defaults are 3, 2 and 180 respectively.
-- `limits` and `optimizer_limits`: partial overrides for serialized request size,
+- `limits`, `optimizer_limits` and `judge_limits`: partial overrides for serialized request size,
   output-token allowance and provider request timeout. The replay path uses one
-  new model request per case. See [complex text studies](complex-text.md).
+  new application request per case; source judging makes a separate judge request
+  for each completed output, covering all named source criteria together. Judge
+  requests have their own envelope and cost. See [complex text studies](complex-text.md).
 - `budget_policy`: `"capped"` or `"unlimited"` according to actual authorization.
   An uncapped study still has case, concurrency, request and timeout limits.
 - `cost_metric`: `"cost_usd_per_session"` or `"cost_usd_per_success"`.
@@ -121,8 +133,8 @@ python3 "$PLUGIN/scripts/workflow_eval.py" dashboard \
   --project "$EVAL_PROJECT" --output "$EVAL_PROJECT/dashboard.html"
 ```
 
-AgentCore execution qualifies two routes before submission, adding two model
-calls. `results/decision.html` is the cloud report; `local/decision.html` is
+AgentCore execution qualifies the configured application routes before submission;
+qualification adds model calls recorded separately from the evaluation. `results/decision.html` is the cloud report; `local/decision.html` is
 the local report. Reports preserve usage, timing, checks and prompt evidence.
 The `dashboard` command combines the saved backend reports when their input
 fingerprints match. It also supports a single backend. Open `dashboard.html`

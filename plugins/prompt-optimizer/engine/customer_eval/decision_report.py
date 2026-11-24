@@ -86,6 +86,7 @@ def build(config, report):
                         'Each repeat is an attempt. Missing usage or pricing remains unknown; cost per success is unknown '
                         'with zero successful attempts. Campaign spend, including optimizer and judge calls, is reported separately.')
     all_cases = [c for rows in config['datasets'].values() for c in rows]
+    source_judged = any(r.get('type') == 'llm_source_rubric' for r in config.get('grading', {}).values())
     recorded = any(c.get('metadata', {}).get('reference_kind') == 'recorded_response' for c in all_cases)
     unreviewed = any(d.get('label_status') != 'human_reviewed' for d in config['document']['datasets'])
     reviewed_count = sum(c.get('metadata', {}).get('label_status') == 'human_reviewed' for c in all_cases)
@@ -93,7 +94,8 @@ def build(config, report):
                     'unreviewed_cases': len(all_cases) - reviewed_count,
                     'rejected_case_ids': [c['id'] for c in all_cases
                         if c.get('metadata', {}).get('label_review', {}).get('outcome') == 'rejected']}
-    metric = ('Agreement with recorded outputs' if recorded else
+    metric = ('LLM-assessed quality against source inputs' if source_judged else
+              'Agreement with recorded outputs' if recorded else
               'Reference checks passed (labels unreviewed)' if unreviewed else 'Required quality checks passed')
     required = [c['id'] for c in config['document']['checks'] if c['required']]
     rows, failures = [], []
@@ -121,7 +123,8 @@ def build(config, report):
             'passed_trials': passed, 'planned_trials': len(trials), 'check_pass_rate': score['accuracy'],
             'model_usd_per_trial': score['cost_usd_per_session'], 'model_usd_per_success': score.get('cost_usd_per_success'),
             'median_seconds': score['latency_p50_s'], 'p95_seconds': score['latency_p95_s'],
-            'failures_by_category': dict(counts), 'timing': score.get('timing_metrics')})
+            'failures_by_category': dict(counts), 'timing': score.get('timing_metrics'),
+            'source_judge_metrics': group.get('source_judge_metrics')})
     source = report['holdout']['source_original']['score']
     target = report['holdout']['target_original']['score']
     selected = report['holdout']['target_selected']['score']
@@ -177,7 +180,10 @@ def build(config, report):
             recommendation = 'The selected configuration is a candidate for a customer pilot after reference and failure review.'
     if recorded:
         reasons.append('Matching previous model responses does not establish correctness.')
-    if unreviewed:
+    if source_judged:
+        reasons.append('Quality is assessed by an LLM against the source inputs and fixed rubric. No expected answers were supplied, and human calibration has not been established by this run. Needs-review outcomes are not passes.')
+        recommendation = recommendation.replace('references', 'judge assessments').replace('reference and failure review', 'review of judge decisions and failures')
+    elif unreviewed:
         reasons.append((f'{reviewed_count} of {len(all_cases)} expected answers have recorded human review; '
                         'the remaining labels are unreviewed. This is not production accuracy.') if reviewed_count else
                        'Expected answers have not been independently reviewed; this is not production accuracy.')

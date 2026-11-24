@@ -81,11 +81,18 @@ def at(obj, path):
     return obj
 
 
-def mapped_row(raw, mapping):
-    if set(mapping) - {'request', 'response', 'id', 'api', 'expected', 'group'} or not {'request', 'response'} <= set(mapping):
-        raise ValueError('Mapping requires request/response paths; optional id, api, expected, group')
+def mapped_row(raw, mapping, *, reference_mode="standard"):
+    required = {'request'} if reference_mode == 'source_judge' else {'request', 'response'}
+    if set(mapping) - {'request', 'response', 'id', 'api', 'expected', 'group'} or not required <= set(mapping):
+        raise ValueError('Mapping requires ' + '/'.join(sorted(required)) + ' paths; optional id, api, expected, group')
     try:
-        row = {'request': at(raw, mapping['request']), 'response': at(raw, mapping['response'])}
+        row = {'request': at(raw, mapping['request'])}
+        if 'response' in mapping:
+            try:
+                row['response'] = at(raw, mapping['response'])
+            except (KeyError, IndexError, TypeError, ValueError):
+                if reference_mode != 'source_judge':
+                    raise
         for key in ('id', 'expected'):
             if key in mapping:
                 row[key] = at(raw, mapping[key])
@@ -102,20 +109,27 @@ _CAPTURE_FIELDS = {'model', 'messages', 'input', 'instructions', 'response_forma
                    'tools', 'metadata', 'user', 'stream_options'}
 
 
-def normalize(raw, *, mapping=None, prompt_location=None):
+def normalize(raw, *, mapping=None, prompt_location=None, reference_mode="standard"):
+    if reference_mode not in ("standard", "source_judge"):
+        raise ValueError("reference_mode must be standard or source_judge")
+    source_judge = reference_mode == "source_judge"
     if '__parse_error__' in raw:
         raise ImportIssue(str(raw['__parse_error__']))
-    row = mapped_row(raw, mapping) if mapping else deepcopy(raw)
-    manual = 'prompt' in row and 'response' not in row and 'expected' in row
+    row = mapped_row(raw, mapping, reference_mode=reference_mode) if mapping else deepcopy(raw)
+    if source_judge and 'expected' in row:
+        raise ImportIssue('source_judge_expected_answers_conflict')
+    manual = 'prompt' in row and 'response' not in row and ('expected' in row or source_judge)
     shape = upstream.classify(row).value
     if manual:
         if not isinstance(row.get('prompt'), str) or not isinstance(row.get('input'), str):
             raise ImportIssue('manual_example_needs_prompt_and_text_input')
         request = {'messages': [{'role': 'system', 'content': row['prompt']},
                                 {'role': 'user', 'content': row['input']}], **row.get('settings', {})}
-        golden = row['expected']
-        golden = golden if isinstance(golden, str) else json.dumps(golden, ensure_ascii=False)
-        response = {'choices': [{'finish_reason': 'stop', 'message': {'role': 'assistant', 'content': golden}}]}
+        response = None
+        if not source_judge:
+            golden = row['expected']
+            golden = golden if isinstance(golden, str) else json.dumps(golden, ensure_ascii=False)
+            response = {'choices': [{'finish_reason': 'stop', 'message': {'role': 'assistant', 'content': golden}}]}
         source_format = 'manual'
     else:
         request = row.get('request')
@@ -142,27 +156,28 @@ def normalize(raw, *, mapping=None, prompt_location=None):
                           else 'chat_completions')
     if isinstance(request, str):
         request = strict_json(request)
-    if isinstance(response, str):
+    if not source_judge and isinstance(response, str):
         response = strict_json(response)
-    if not isinstance(request, dict) or not isinstance(response, dict):
-        raise ImportIssue('missing_request_or_response')
+    if not isinstance(request, dict) or (not source_judge and not isinstance(response, dict)):
+        raise ImportIssue('missing_request' if source_judge else 'missing_request_or_response')
     # Do not silently discard controls such as stop, seed, tool_choice, remote history.
     if set(request) - _CAPTURE_FIELDS:
         raise ImportIssue('unsupported_request_setting')
     if request.get('tools'):
         raise ImportIssue('tool_calls_unsupported')
-    if response.get('error') or response.get('status', 'completed') != 'completed':
-        raise ImportIssue('incomplete_or_failed_response')
-    for c in response.get('choices', []):
-        if c.get('finish_reason') not in (None, 'stop'):
-            raise ImportIssue('incomplete_or_tool_response')
-        if c.get('message', {}).get('tool_calls') or c.get('message', {}).get('function_call'):
-            raise ImportIssue('tool_calls_unsupported')
-    if len(response.get('choices', [])) > 1:
-        raise ImportIssue('multiple_response_choices')
-    for item in response.get('output', []):
-        if item.get('type') not in ('message', 'reasoning'):
-            raise ImportIssue('unsupported_response_item')
+    if not source_judge:
+        if response.get('error') or response.get('status', 'completed') != 'completed':
+            raise ImportIssue('incomplete_or_failed_response')
+        for c in response.get('choices', []):
+            if c.get('finish_reason') not in (None, 'stop'):
+                raise ImportIssue('incomplete_or_tool_response')
+            if c.get('message', {}).get('tool_calls') or c.get('message', {}).get('function_call'):
+                raise ImportIssue('tool_calls_unsupported')
+        if len(response.get('choices', [])) > 1:
+            raise ImportIssue('multiple_response_choices')
+        for item in response.get('output', []):
+            if item.get('type') not in ('message', 'reasoning'):
+                raise ImportIssue('unsupported_response_item')
     is_responses = 'input' in request
     messages = request.get('input') if is_responses else request.get('messages')
     if isinstance(messages, str):
@@ -213,42 +228,49 @@ def normalize(raw, *, mapping=None, prompt_location=None):
         prompt = validate_replay(replay)
     except ValueError:
         raise ImportIssue('invalid_replay_or_missing_prompt')
-    # Reuse upstream response extraction and evaluability. Its canonicalized request
-    # is for detection only; the worker receives body above with all original roles.
-    canonical = {'id': str(row.get('id', row.get('request_id', fingerprint(raw)[:20]))),
-                 'messages': messages, 'model': request.get('model'), 'response': response}
-    if is_responses or response.get('object') == 'response' or 'output' in response:
-        canonical.update(call_type='responses', messages={'input': messages, 'instructions': body.get('instructions')})
-    sample, dropped, _ = upstream.normalize_row(upstream.RawRow(canonical, 'local', 0))
-    if dropped or sample is None:
-        raise ImportIssue(dropped.eval_block_reason.value if dropped else 'normalization_failed')
-    expected = {'reference': sample.golden.text}
-    if 'expected' in row:
-        answer = row['expected']
-        try:
-            expected['answer'] = strict_json(answer) if isinstance(answer, str) else answer
-        except ValueError:
-            expected['answer'] = answer
-    else:
-        try:
-            expected['answer'] = strict_json(sample.golden.text)
-        except ValueError:
-            pass
+    if not source_judge:
+        # Reuse upstream response extraction and evaluability. Its canonicalized request
+        # is for detection only; the worker receives body above with all original roles.
+        canonical = {'id': str(row.get('id', row.get('request_id', fingerprint(raw)[:20]))),
+                     'messages': messages, 'model': request.get('model'), 'response': response}
+        if is_responses or response.get('object') == 'response' or 'output' in response:
+            canonical.update(call_type='responses', messages={'input': messages, 'instructions': body.get('instructions')})
+        sample, dropped, _ = upstream.normalize_row(upstream.RawRow(canonical, 'local', 0))
+        if dropped or sample is None:
+            raise ImportIssue(dropped.eval_block_reason.value if dropped else 'normalization_failed')
+        expected = {'reference': sample.golden.text}
+        if 'expected' in row:
+            answer = row['expected']
+            try:
+                expected['answer'] = strict_json(answer) if isinstance(answer, str) else answer
+            except ValueError:
+                expected['answer'] = answer
+        else:
+            try:
+                expected['answer'] = strict_json(sample.golden.text)
+            except ValueError:
+                pass
     ident = str(row.get('id', row.get('request_id', fingerprint(raw)[:20])))
     case = {'id': ident, 'input': {'question': message_text(messages[-1])},
-            'turns': [message_text(messages[-1])], 'expected': expected, 'replay': replay,
+            'turns': [message_text(messages[-1])], 'replay': replay,
             'metadata': {'format': source_format, 'source_model': request.get('model'),
                          'source_sha256': fingerprint(raw), 'request_sha256': fingerprint(body),
-                         'prompt_group': fingerprint(prompt)[:16], 'label_status': 'unreviewed',
-                         'reference_kind': 'supplied_expected' if 'expected' in row else 'recorded_response',
+                         'prompt_group': fingerprint(prompt)[:16], 'label_status': 'not_provided' if source_judge else 'unreviewed',
+                         'reference_kind': 'source_judge' if source_judge else ('supplied_expected' if 'expected' in row else 'recorded_response'),
                          'intentional_changes': ['candidate model selected by run', 'store=false', 'stream=false'],
                          'captured_controls': {k: request[k] for k in ('model', 'store', 'stream') if k in request}}}
+    if source_judge:
+        case['metadata']['recorded_response_present'] = response is not None
+    else:
+        case['expected'] = expected
     if mapping and 'group' in mapping:
         case['metadata']['evaluation_group'] = at(raw, mapping['group'])
     return case
 
 
-def import_logs(paths, *, mapping=None, prompt_location=None):
+def import_logs(paths, *, mapping=None, prompt_location=None, reference_mode="standard"):
+    if reference_mode not in ("standard", "source_judge"):
+        raise ValueError("reference_mode must be standard or source_judge")
     cases, dropped, seen_ids, seen_requests = [], [], set(), {}
     sources = []
     found = 0
@@ -258,15 +280,15 @@ def import_logs(paths, *, mapping=None, prompt_location=None):
         for index, raw in records(p):
             found += 1
             try:
-                case = normalize(raw, mapping=mapping, prompt_location=prompt_location)
+                case = normalize(raw, mapping=mapping, prompt_location=prompt_location, reference_mode=reference_mode)
                 if case['id'] in seen_ids:
                     raise ImportIssue('duplicate_case_id')
                 request_hash = case['replay']['request_sha256']
                 if request_hash in seen_requests:
-                    reason = 'duplicate_request' if seen_requests[request_hash] == case['expected'] else 'conflicting_reference'
+                    reason = 'duplicate_request' if seen_requests[request_hash] == case.get('expected') else 'conflicting_reference'
                     raise ImportIssue(reason)
                 seen_ids.add(case['id'])
-                seen_requests[request_hash] = case['expected']
+                seen_requests[request_hash] = case.get('expected')
                 case['metadata'].update(source_file=p.name, source_path=str(p.resolve()), source_row=index)
                 cases.append(case)
             except (ValueError, TypeError, KeyError, IndexError, AttributeError) as exc:
@@ -276,7 +298,7 @@ def import_logs(paths, *, mapping=None, prompt_location=None):
                    'reconciles': found == len(cases) + len(dropped),
                    'formats': dict(Counter(c['metadata']['format'] for c in cases)),
                    'drop_reasons': dict(Counter(d['reason'] for d in dropped)),
-                   'excluded_records': dropped, 'sources': sources,
+                   'excluded_records': dropped, 'sources': sources, 'reference_mode': reference_mode,
                    'scope': 'Text request replay. No tool execution, raw PDF/image input or automatic ground truth.'}
 
 

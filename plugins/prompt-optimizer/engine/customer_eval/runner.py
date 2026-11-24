@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import sqlite3
 import threading
+import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
@@ -12,15 +13,16 @@ from pathlib import Path
 from hillclimb import run_hill_climb
 from optimizer import make_mutate_fn
 from .contract import cases, digest, trial_payload
-from .scoring import grade, summarize, turn_metrics
+from .scoring import grade, summarize, turn_metrics, source_judge_metrics
 from .transport import complete, reservation
 from .worker import isolated
 from .costs import run_costs
 from .feedback import development_feedback, mutation_evidence
+from .errors import EvaluationControlError
 
 
-class BudgetExceeded(RuntimeError): pass
-class InterruptedAttempt(RuntimeError): pass
+class BudgetExceeded(EvaluationControlError): pass
+class InterruptedAttempt(EvaluationControlError): pass
 
 
 class Store:
@@ -127,13 +129,14 @@ class Runner:
             raise ValueError('Simulation does not call LLM judges; use deterministic grading in the offline examples')
         route = self.config['routes'][model_id]
         ident = digest(['completion', purpose, model_id, text])
-        limits = dict(self.config['document']['runner'].get('optimizer_limits', self.limits)
-                      if purpose == 'optimizer' else self.limits, max_requests=1)
+        limits_key = 'optimizer_limits' if purpose == 'optimizer' else 'judge_limits'
+        limits = dict(self.config['document']['runner'].get(limits_key, self.limits), max_requests=1)
         def invoke():
             receipt = {}
+            started = time.monotonic()
             output, usage = complete(route, text, limits, receipt=receipt)
             return dict(receipt, text=output, usage=usage, model_id=model_id, purpose=purpose,
-                        request_text=text if purpose == 'optimizer' else None)
+                        request_text=text, completion_elapsed_ms=(time.monotonic() - started) * 1000)
         record = self.store.perform(ident, reservation(route, limits), invoke)
         return record['text']
 
@@ -205,7 +208,12 @@ class Runner:
             recovery = (lambda: self.cloud_pool().recover(payload)) if self.backend=='agentcore' else None
             result = self.store.perform(ident, amount, invoke, recover=recovery)
             check_id = digest(['grade', ident])
-            checks = self.store.perform(check_id, 0, lambda: grade(config, case, result, self.call),chargeable=False)
+            def derive_grade():
+                return grade(config, case, result, self.call)
+            # Grades are derived records. Recovery may recompute them from the
+            # saved application result; nested paid judge calls still require
+            # their own completed receipt and never replay uncertain attempts.
+            checks = self.store.perform(check_id, 0, derive_grade, recover=derive_grade, chargeable=False)
             return index, {'id': ident, 'case_id': case['id'], 'repeat': repeat, 'split': split,
                            'phase': phase, 'model_id': variant['model_id'], 'result': result, 'checks': checks}
 
@@ -231,8 +239,18 @@ class Runner:
             self.store.db.commit()
         cfg = self.config['document']['runner']
         prompt = self.config['prompt']
-        source_validation, target_validation = self.evaluate_group(
-            [(self.config['source'], prompt), (self.config['target'], prompt)], 'validation')
+        # A prompt-only study may deliberately choose the same model twice.
+        # Reuse its measured original, rather than charge for a duplicate baseline.
+        source, target = self.config['source'], self.config['target']
+        same_baseline = (self.config['routes'][source['model_id']] == self.config['routes'][target['model_id']]
+                         and {k: v for k, v in source.items() if k not in ('id', 'model_id')}
+                         == {k: v for k, v in target.items() if k not in ('id', 'model_id')})
+        if same_baseline:
+            target_validation = self.evaluate(target, prompt, 'validation')
+            source_validation = target_validation
+        else:
+            source_validation, target_validation = self.evaluate_group(
+                [(source, prompt), (target, prompt)], 'validation')
         comparisons = []
         development_evidence = {}
 
@@ -242,7 +260,7 @@ class Runner:
             feedback = [f"{r['case_id']} {key}: {check['reason']}" for r in development
                         for key, check in r['checks'].items() if r['result']['status'] == 'completed'
                         and not check['pass'] and not check.get('error')
-                        and check.get('failure_category') not in ('trace', 'grading')]
+                        and check.get('failure_category') not in ('trace', 'grading', 'needs_review')]
             validation = self.evaluate(self.config['target'], candidate, 'validation')
             # Validation chooses candidates. Only development feedback reaches mutation.
             return summarize(self.config, candidate, validation, feedback)
@@ -255,6 +273,7 @@ class Runner:
                       for p, rows, previous in zip(prompts, groups, [incumbent] + candidates)]
             comparisons.append({'generation': generation, 'scores': [asdict(s) for s in scores],
                                 'turn_quality': [turn_metrics(self.config, rows) for rows in groups],
+                                'source_judge_metrics': [source_judge_metrics(self.config, rows) for rows in groups],
                                 'trials': groups, 'design': 'Fresh matched tasks/repetitions, interleaved configuration order; p95 is descriptive, not a significance test.'})
             return scores[0], scores[1:]
 
@@ -326,8 +345,8 @@ class Runner:
                     'reason': 'Lowest-cost quality-eligible candidate retained for tradeoff reporting; not promoted over the incumbent.'}
         (self.store.directory / 'selected-prompt.json').write_text(json.dumps(frozen, indent=2))
         final = {}
-        configurations = [('source_original', self.config['source'], prompt),
-                          ('target_original', self.config['target'], prompt)]
+        configurations = [('target_original', target, prompt)] if same_baseline else [
+                          ('source_original', source, prompt), ('target_original', target, prompt)]
         if selected != prompt:
             configurations.append(('target_selected', self.config['target'], selected))
         elif challenger is not None:
@@ -335,7 +354,10 @@ class Runner:
         groups = self.evaluate_group([(v, p) for _, v, p in configurations], 'holdout')
         for (name, variant, candidate), rows in zip(configurations, groups):
             final[name] = {'score': asdict(summarize(self.config, candidate, rows)), 'trials': rows,
-                           'turn_quality': turn_metrics(self.config, rows)}
+                           'turn_quality': turn_metrics(self.config, rows),
+                           'source_judge_metrics': source_judge_metrics(self.config, rows)}
+        if same_baseline:
+            final['source_original'] = dict(final['target_original'], reused_from='target_original')
         if selected == prompt:
             final['target_selected'] = dict(final['target_original'], reused_from='target_original')
         records = [json.loads(row[0]) for row in self.store.db.execute('SELECT value FROM attempts WHERE state="complete"')]
@@ -347,6 +369,9 @@ class Runner:
                   'evaluation_status': 'needs_review' if unresolved or grading_errors else 'complete',
                   'unresolved_attempts': unresolved, 'grading_error_records': grading_errors,
                   'fingerprint': self.config['fingerprint'], 'selected_prompt': frozen,
+                  'identical_model_baseline_reused': same_baseline,
+                  'source_validation_source_judge_metrics': source_judge_metrics(self.config, source_validation),
+                  'target_validation_source_judge_metrics': source_judge_metrics(self.config, target_validation),
                   'source_validation': asdict(summarize(self.config, prompt, source_validation)),
                   'target_validation': asdict(summarize(self.config, prompt, target_validation)),
                   'source_validation_turn_quality': turn_metrics(self.config, source_validation),
@@ -355,6 +380,7 @@ class Runner:
                   'joint_comparisons': comparisons,
                   'development_feedback': list(development_evidence.values()),
                   'optimizer_requests': [r for r in records if r.get('purpose') == 'optimizer'],
+                  'judge_requests': [r for r in records if r.get('purpose') == 'judge'],
                   'model_costs': run_costs(self.config, records, self.backend == 'simulation',
                                           unresolved_attempts=len(unresolved)),
                   'reserved_model_spend_usd': self.store.reserved() if all(r['input_usd_per_million'] is not None and r['output_usd_per_million'] is not None for r in self.config['routes'].values()) else None,
@@ -370,7 +396,10 @@ class Runner:
         review_note = (f"Evaluation needs review: {grading_errors} grading records contain errors; "
                        f"{len(unresolved)} attempts have no completed receipt. Their usage remains unknown."
                        if unresolved or grading_errors else 'Evaluation complete.')
-        lines = ['# Customer evaluation report', '', report['claim'], '', review_note, '',
+        quality_scope = ('Quality is LLM-assessed against source inputs and the fixed rubric; no expected answers were supplied. Needs-review judgments are not passes.'
+                         if any(r.get('type') == 'llm_source_rubric' for r in self.config['grading'].values())
+                         else 'Quality is the pass rate on the configured required checks.')
+        lines = ['# Customer evaluation report', '', report['claim'], '', quality_scope, '', review_note, '',
                  f'| Holdout comparison | Required checks pass | p50 seconds | p95 seconds | {cost_label} | Eligible | Trials |', '|---|---:|---:|---:|---:|---|---:|']
         for name, value in final.items():
             s = value['score']

@@ -7,6 +7,7 @@ For long studies use the local coordinator with AgentCore workers. Reviewed
 holdout-only continuation is available in scripts/complete_holdout.py.
 """
 import json
+import math
 import os
 import re
 import sqlite3
@@ -19,9 +20,10 @@ from pathlib import Path
 import boto3
 from customer_eval.contract import digest
 from customer_eval.runner import Runner
+from customer_eval.errors import EvaluationControlError
 
 
-class CoordinatorPaused(RuntimeError): pass
+class CoordinatorPaused(EvaluationControlError): pass
 
 
 def read_study_input(body):
@@ -41,6 +43,63 @@ def deadline_guard(started, max_seconds, trial_seconds, *, clock=time.monotonic)
     """Stop at a checkpoint before the microVM's finite lifetime expires."""
     if clock()-started >= max_seconds-max(120,trial_seconds+30):
         raise CoordinatorPaused('Coordinator lifetime approaching; resume the durable checkpoint')
+
+
+
+def request_reserve_seconds(config, environ):
+    """Validate frozen request envelopes and reserve time for every active purpose.
+
+    Judge/optimizer completions run in the coordinator, independently of worker
+    trial timeouts. Existing deployment worker caps apply only to the application;
+    completions must fit the coordinator lifetime, not the worker's shorter cap.
+    """
+    runner = config['document']['runner']
+    execution = config['document']['execution']
+
+    def positive_int(value, name):
+        if type(value) is not int or value <= 0:
+            raise ValueError(name + ' must be a positive integer')
+        return value
+
+    def environment_limit(name, default):
+        try:
+            value = int(environ.get(name, default))
+        except (TypeError, ValueError) as exc:
+            raise ValueError(name + ' must be a positive integer') from exc
+        return positive_int(value, name)
+
+    allowed = {'max_requests', 'max_output_tokens', 'max_request_bytes', 'request_timeout_seconds'}
+    envelopes = {'application': runner.get('limits')}
+    for purpose in ('judge', 'optimizer'):
+        if purpose + '_limits' in runner:
+            envelopes[purpose] = runner[purpose + '_limits']
+    timeouts = {}
+    for purpose, envelope in envelopes.items():
+        if (not isinstance(envelope, dict) or set(envelope) - allowed or
+                not {'max_requests', 'max_output_tokens', 'max_request_bytes'} <= set(envelope)):
+            raise ValueError(purpose + ' request limits are incomplete or contain unsupported fields')
+        for field, value in envelope.items():
+            positive_int(value, purpose + '.' + field)
+        timeouts[purpose] = envelope.get('request_timeout_seconds', 60)
+    worker_timeout = execution['timeout_seconds']
+    if type(worker_timeout) not in (int, float) or not math.isfinite(worker_timeout) or worker_timeout <= 0:
+        raise ValueError('execution.timeout_seconds must be positive and finite')
+    if worker_timeout > environment_limit('EVAL_MAX_TRIAL_SECONDS', 300):
+        raise ValueError('Trial timeout exceeds EVAL_MAX_TRIAL_SECONDS')
+    if envelopes['application']['max_requests'] > environment_limit('EVAL_MAX_REQUESTS_PER_TRIAL', 20):
+        raise ValueError('Application request count exceeds EVAL_MAX_REQUESTS_PER_TRIAL')
+    if timeouts['application'] > worker_timeout:
+        raise ValueError('Application request timeout exceeds the worker trial timeout')
+    active_timeouts = [worker_timeout]
+    if any(check['method'] == 'llm_judge' for check in config['document']['checks']):
+        active_timeouts.append(timeouts.get('judge', timeouts['application']))
+    if config['document']['optimization']['enabled']:
+        active_timeouts.append(timeouts.get('optimizer', timeouts['application']))
+    reserve = max(active_timeouts)
+    lifetime = environment_limit('EVAL_COORDINATOR_MAX_SECONDS', 28800)
+    if max(120, reserve + 30) >= lifetime:
+        raise ValueError('Configured requests cannot fit within EVAL_COORDINATOR_MAX_SECONDS')
+    return reserve
 
 
 def start_job(payload, app):
@@ -66,6 +125,7 @@ def start_job(payload, app):
         raise ValueError('Job model budget exceeds the deployment limit')
     if config['document']['execution']['concurrency'] > int(os.environ.get('EVAL_MAX_CONCURRENCY', '4')):
         raise ValueError('Job concurrency exceeds the deployment limit')
+    dispatch_reserve = request_reserve_seconds(config, os.environ)
     from runtime.app import validate_route
     for route in config['routes'].values(): validate_route(route)
     key = f'{prefix}/jobs/{job_id}'
@@ -83,7 +143,7 @@ def start_job(payload, app):
                                 region=os.environ['AWS_REGION'])
                 runner.store.before_new_attempt = lambda: deadline_guard(started,
                     int(os.environ.get('EVAL_COORDINATOR_MAX_SECONDS','28800')),
-                    config['document']['execution']['timeout_seconds'])
+                    dispatch_reserve)
                 last_checkpoint = 0
                 def checkpoint():
                     nonlocal last_checkpoint
