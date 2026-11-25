@@ -332,6 +332,16 @@ def _core_scope(raw, config, name, group, assessment, contexts, comparison=None)
             quotes={source['source_id']:source['text'] for source in sources or []};source_sha=source_digest(sources) if sources else None
             for key in assessment['source_check_ids']:
                 grade=grades.get(key)
+                if result.get('status') != 'completed':
+                    # Execution placeholders are not source-judge decisions.
+                    # Keep the application/measurement failure above, but do
+                    # not invent missing hashes or bad citations for a judge
+                    # that could not assess an application answer.
+                    optional_unknown += 1
+                    need(not isinstance(grade,dict) or
+                         (grade.get('pass') is not True and grade.get('status') not in ('pass','fail','needs_review')),
+                         'A source assessment verdict contradicts the failed application.')
+                    continue
                 unknown=not isinstance(grade,dict) or bool(grade.get('error'))
                 if unknown:optional_unknown+=1
                 if not isinstance(grade,dict):continue

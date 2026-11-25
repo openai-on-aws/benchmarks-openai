@@ -1436,7 +1436,8 @@
       function evidenceIssues(r) {
         const issues = [];
         if (r.mode === "comparison_only" && !r.comparison_context?.complete) issues.push(...(r.comparison_context?.issues || ["Frozen comparison provenance is unavailable."]));
-        if (r.status !== "complete") issues.push("The run is not complete.");
+        if (r.status === "needs_review") issues.push("Some recorded results need review.");
+        else if (r.status !== "complete") issues.push("Run completion is not confirmed.");
         if (r.simulated) issues.push("These measurements are simulated.");
         if (!r.fingerprint) issues.push("The run fingerprint is missing.");
         if (r.frozen_input_status === "unverified") issues.push("The frozen input manifest could not be verified.");

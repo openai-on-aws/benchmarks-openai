@@ -373,7 +373,7 @@ process.stdout.write(JSON.stringify({table: element("comparison").innerHTML,
         self.save(value)
         partial = self.browser_probe(dashboard.build_data(self.root))
         self.assertIn('data-result="incomplete"', partial['insight'])
-        self.assertIn('The run is not complete.', partial['insight'])
+        self.assertIn('Run completion is not confirmed.', partial['insight'])
 
     def prompt_card(self, view, target):
         match = re.search(r'<section\b(?=[^>]*\bid="' + re.escape(target)
@@ -659,7 +659,7 @@ process.stdout.write(JSON.stringify({table: element("comparison").innerHTML,
             ('nonintegral pass count', lambda v: v['holdout']['target_selected']['score'].update(accuracy=.955), 'pass counts are unavailable'),
             ('unknown cost', lambda v: v['holdout']['target_selected']['score'].update(unpriced_requests=1), 'Comparable model costs are unavailable'),
             ('no successes', lambda v: v['holdout']['target_selected']['score'].update(accuracy=0, cost_usd_per_success=None), 'No successful results'),
-            ('paused', lambda v: v.update(evaluation_status='paused'), 'run is not complete'),
+            ('paused', lambda v: v.update(evaluation_status='paused'), 'completion is not confirmed'),
             ('unknown recovery', lambda v: v.pop('unresolved_attempts'), 'recovery coverage is unknown'),
             ('unresolved attempt', lambda v: v.update(unresolved_attempts=[{'id': 'lost'}]), 'attempts remain unresolved'),
             ('grading error', lambda v: v.update(grading_error_records=1), 'contains grading errors'),
@@ -756,7 +756,7 @@ process.stdout.write(JSON.stringify({table: element("comparison").innerHTML,
             ('unknown cost', lambda v: v['holdout']['target_challenger']['score'].update(unpriced_requests=1), 'Comparable model costs are unavailable'),
             ('incompatible time', lambda v: v['holdout']['target_challenger']['score'].update(latency_scope='worker'), 'measurement scope are unavailable'),
             ('partial latency', lambda v: v['holdout']['target_challenger']['score'].update(timing_metrics={'conversation_ms': {'observations': 9}}), 'does not cover every attempt'),
-            ('partial run', lambda v: v.update(evaluation_status='paused'), 'run is not complete'),
+            ('partial run', lambda v: v.update(evaluation_status='paused'), 'completion is not confirmed'),
             ('unresolved', lambda v: v.update(unresolved_attempts=[{'id': 'lost'}]), 'attempts remain unresolved'),
             ('grading error', lambda v: v.update(grading_error_records=1), 'contains grading errors'),
             ('execution error', lambda v: v['holdout']['target_challenger']['trials'][0]['result'].update(status='infrastructure_error'), 'execution or grading issues'),

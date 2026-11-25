@@ -93,6 +93,54 @@ class ComparisonOnlyDashboardTests(unittest.TestCase):
         self.assertIn('Parent + this cohort model cost',text)
         self.assertIn('Unknown',text);self.assertIn('Combined known priced portion',text)
 
+    def test_completed_cohort_application_error_is_not_a_source_judge_defect(self):
+        report,config,companions=fixture()
+        report.update(evaluation_status='needs_review', grading_error_records=0, unresolved_attempts=[])
+        report['model_costs']['unpriced_requests_or_incomplete_traces']=2
+        from customer_eval.scoring import summarize
+        for name in ('target_original','target_comparison'):
+            group=report['holdout'][name];row=group['trials'][0];result=row['result']
+            result.update(status='error',outputs=[],error='Provider HTTP 500')
+            result['timing']['conversation_ms']=None
+            call=result['route_calls'][0]
+            call.update(status='provider_error',http_status=500,usage=None)
+            call.pop('model_returned',None)
+            # The grader returns execution placeholders without calling a judge.
+            row['checks']={check['id']:{'pass':False,'reason':'execution did not complete'}
+                           for check in config['document']['checks']}
+            group['score']=vars(summarize(config,group['score']['prompt'],group['trials']))
+        data=self.build(report,config,companions);display=data['reports'][0]
+        self.assertEqual(display['status'],'needs_review')
+        self.assertTrue(display['comparison_context']['complete'])
+        for group in display['groups']:
+            if group['id']=='source_original':continue
+            scope=group['core_scope']
+            self.assertFalse(scope['complete'])
+            self.assertEqual(scope['optional_assessments_unavailable'],1)
+            self.assertIn('An application attempt did not complete with live evidence.',scope['issues'])
+            self.assertIn('Application usage or pricing is incomplete.',scope['issues'])
+            self.assertIsNone(group['score']['cost_usd_per_success'])
+            self.assertIsNone(group['score']['latency_p95_s'])
+            self.assertFalse(any('source/rubric' in issue or 'assessment has inconsistent status' in issue
+                                 or 'quotations' in issue for issue in scope['issues']),scope['issues'])
+        view=self.browser(data,'$("export").onclick();')
+        self.assertIn('Some recorded results need review.',view['insight'])
+        self.assertIn('Some results are missing or cannot be compared.',view['insight'])
+        self.assertNotIn('The run is not complete.',view['insight'])
+        self.assertNotIn('Run completion is not confirmed.',view['insight'])
+        self.assertNotIn('The selected prompt improved',view['insight'])
+        self.assertEqual(len(view['exported']['trials']),18)
+        failed=[row for row in view['exported']['trials'] if row['execution_status']=='error']
+        self.assertEqual(len(failed),2)
+        self.assertTrue(all(row['required_checks_outcome']!='passed' for row in failed))
+        # A purported definitive verdict for a failed application is still an
+        # integrity issue; only the execution placeholder gets the narrow skip.
+        row=report['holdout']['target_comparison']['trials'][0]
+        row['checks']['explanation'].update(status='pass',**{'pass':True})
+        changed=self.build(report,config,companions)
+        scoped=next(group['core_scope'] for group in changed['reports'][0]['groups'] if group['id']=='target_comparison')
+        self.assertIn('A source assessment verdict contradicts the failed application.',scoped['issues'])
+
     def test_missing_or_mismatched_provenance_blocks_factual_claims(self):
         for mutation in ('claim_missing','claim_wrong','late_precommit','parent_cost','selection','extra_arm','wrong_phase','reused_parent_trial','missing_trial'):
             with self.subTest(mutation=mutation):

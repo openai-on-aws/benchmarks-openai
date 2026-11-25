@@ -854,5 +854,5 @@
     "engine/tests/test_source_judge_intake.py",
     "engine/tests/test_source_policy.py"
   ],
-  "integration_version": "0.8.0"
+  "integration_version": "0.8.1"
 }
