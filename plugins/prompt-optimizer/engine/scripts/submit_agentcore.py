@@ -9,11 +9,22 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from customer_eval.contract import load
 
 
+def read_config(path, comparison_only=False):
+    if not comparison_only:
+        return load(path, live=True)
+    from customer_eval.frozen_comparison import validate
+    config = json.loads(Path(path).read_text())
+    validate(config)
+    return config
+
+
 def main():
     import boto3
     from botocore.config import Config
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--config', required=True)
+    parser.add_argument('--comparison-only', action='store_true',
+                        help='Use a reviewed frozen comparison JSON input; no search or selection')
     parser.add_argument('--runtime-arn', required=True)
     parser.add_argument('--region', required=True)
     parser.add_argument('--profile', required=True)
@@ -21,7 +32,7 @@ def main():
     parser.add_argument('--prefix', default='customer-evaluation')
     parser.add_argument('--receipt-dir', default='runs/cloud-submissions')
     args = parser.parse_args()
-    config = load(args.config, live=True)
+    config = read_config(args.config, args.comparison_only)
     session = boto3.Session(profile_name=args.profile, region_name=args.region)
     job_id = str(uuid.uuid4())
     key = args.prefix.strip('/') + '/inputs/' + job_id + '.json'

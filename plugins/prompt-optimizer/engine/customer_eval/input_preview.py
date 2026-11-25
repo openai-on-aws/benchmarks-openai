@@ -101,9 +101,12 @@ def write_preview(directory, cases, report, *, config=None):
                    'Candidate models receive the request bodies shown below; expected answers and grading rules are not included.',
                    'The optimizer receives the editable prompt, supplied general business rules and development-case feedback. Validation and holdout cases are withheld from it.',
                    'Runtime results and traces are saved in the same customer S3 prefix.'] }
-    if any(case['metadata'].get('reference_kind') == 'source_judge' for case in cases):
-        preview['data_flow'][1] = 'A live AgentCore run uploads the selected source requests, fixed rubric and configuration to your configured S3 bucket; no expected answers are supplied.'
-        preview['data_flow'].insert(3, 'The separately selected judge receives the full fixed source context and the candidate answer. Historical outputs are not expected answers; the editable prompt is excluded from source evidence. Judge decisions are assessments, not human-verified ground truth.')
+    has_source_judge = (any(rule.get('type') == 'llm_source_rubric' for rule in (config or {}).get('grading', {}).values())
+                        or any(case['metadata'].get('reference_kind') == 'source_judge' for case in cases))
+    if has_source_judge:
+        if not any('expected' in case for case in cases):
+            preview['data_flow'][1] = 'A live AgentCore run uploads the selected source requests, fixed rubric and configuration to your configured S3 bucket; no expected answers are supplied.'
+        preview['data_flow'].insert(3, 'The separately selected judge receives the full fixed source context, fixed rubric and candidate answer. Expected answers and the editable prompt are excluded from the judge request. Historical outputs are not expected answers. Judge decisions are assessments, not human-verified ground truth.')
     (directory / 'input-preview.json').write_text(json.dumps(preview, indent=2, ensure_ascii=False))
     lines = ['# Input preview', '', f"{report['accepted']} of {report['found']} records can be replayed; {report['dropped']} excluded.",
              'Excluded records remain outside the measured quality denominator; they are not counted as passing.', '',

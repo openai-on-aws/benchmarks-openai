@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 import base64
 import difflib
 import hashlib
+import importlib.util
 import json
 import math
 from pathlib import Path
@@ -20,6 +21,7 @@ LABELS = {
     "target_original": "New model · starting prompt",
     "target_selected": "New model · revised prompt",
     "target_challenger": "New model · candidate prompt (not chosen)",
+    "target_comparison": "New model · revised prompt for review",
 }
 COST_METRICS = ("cost_usd_per_session", "cost_usd_per_success")
 
@@ -46,14 +48,21 @@ def embedded_fonts() -> str:
 
 
 def discover_reports(project: Path) -> list[Path]:
-    """Read one explicit report.json or documented locations, never descendants."""
+    """Read one explicit report or documented locations, never descendants."""
     project = project.expanduser().resolve()
     if project.is_file():
-        if project.name != "report.json":
-            raise ValueError("Choose a report.json file or a directory containing saved report.json evidence.")
+        if project.name not in ("report.json","comparison-report.json"):
+            raise ValueError("Choose a report.json or comparison-report.json file, or a directory containing saved evidence.")
         return [project]
     if not project.is_dir():
         raise ValueError("Choose a directory containing saved report.json evidence.")
+    comparisons=[project/'comparison-report.json',project/'results/comparison-report.json']
+    comparisons=[path for path in comparisons if path.is_file()]
+    if comparisons:
+        ordinary=[project/'report.json',*[project/name/'report.json' for name in ('local','agentcore','results')]]
+        if len(comparisons)!=1 or any(path.is_file() for path in ordinary):
+            raise ValueError('Choose one explicit parent or comparison report; cohorts must remain separate.')
+        return [comparisons[0].resolve()]
     direct = project / "report.json"
     nested = [project / name / "report.json" for name in ("local", "agentcore", "results")]
     nested = [path for path in nested if path.is_file()]
@@ -230,6 +239,127 @@ def _assessment(config: dict | None) -> dict:
             "source_check_ids": [c["id"] for c in definitions if rules[c["id"]]["type"] == "llm_source_rubric"]}
 
 
+def _core_scope(raw, config, name, group, assessment, contexts, comparison=None):
+    """Verify a complete held-out reference comparison independently of optional work.
+
+    This does not reclassify campaign failures. Unknown operations outside these
+    exact planned application/grade IDs remain visible in the campaign status.
+    """
+    if assessment['mode'] != 'reference_and_source':
+        return None
+    issues, optional_unknown = [], 0
+    def need(ok, message):
+        if not ok and message not in issues: issues.append(message)
+    def close(a, b):
+        return a is None and b is None or (type(a) in (int, float) and type(b) in (int, float)
+            and math.isfinite(a) and math.isfinite(b) and math.isclose(a, b, rel_tol=1e-9, abs_tol=1e-12))
+    def digest(value):
+        return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=False, allow_nan=False).encode()).hexdigest()
+    try:
+        phase='standard'
+        if raw.get('mode')=='comparison_only':
+            need(isinstance(comparison,dict) and comparison.get('complete') is True,'Frozen comparison provenance is unavailable or inconsistent.')
+            if isinstance(comparison,dict):issues.extend(message for message in comparison.get('issues',[]) if message not in issues)
+            phase=config['comparison_only']['phase']
+        need(raw.get('simulated') is False, 'Live application evidence is required.')
+        need(raw.get('evaluation_status') in ('complete', 'needs_review'), 'The saved run has not finished evaluation.')
+        need(isinstance(raw.get('unresolved_attempts'), list), 'Campaign recovery coverage is unavailable.')
+        definitions = config['document']['checks'];required = assessment['required_check_ids']
+        repetitions = config['document']['execution']['repetitions']
+        need(type(repetitions) is int and repetitions > 0, 'The intended repeat count is unavailable.')
+        limit=config['document']['execution'].get('max_cases_per_dataset')
+        need(limit is None or type(limit) is int and limit > 0, 'The frozen case cap is invalid.')
+        if limit is not None and (type(limit) is not int or limit <= 0):raise ValueError('Invalid case cap')
+        cases = [case for dataset in config['splits']['holdout'] for case in config['datasets'][dataset][:limit]]
+        by_id = {case['id']: case for case in cases}
+        need(bool(cases) and len(by_id) == len(cases), 'The intended held-out case IDs are ambiguous.')
+        expected = {(case['id'], repeat) for case in cases for repeat in range(repetitions)}
+        rows = group.get('trials') or [];score = group.get('score') or {}
+        need(all(type(row.get('repeat')) is int and row['repeat'] >= 0 for row in rows), 'Recorded repeat indices must be nonnegative integers.')
+        need(len(rows) == len(expected) and {(row.get('case_id'), row.get('repeat')) for row in rows} == expected,
+             'The intended held-out cases and repeats are not complete.')
+        need(score.get('n_sessions') == len(expected), 'The score denominator differs from the intended held-out sample.')
+        variant = config['source'] if name == 'source_original' else config['target']
+        route = config['routes'][variant['model_id']]
+        prompt = score.get('prompt')
+        need(isinstance(prompt, str) and bool(prompt.strip()), 'The application prompt is unavailable.')
+        if name in ('source_original','target_original'):need(prompt == config['prompt'], 'The starting prompt differs from the frozen input.')
+        elif name == 'target_selected':need(prompt == raw.get('selected_prompt',{}).get('prompt'), 'The selected prompt differs from the saved selection.')
+        elif name == 'target_comparison':need(raw.get('mode')=='comparison_only' and prompt==config['comparison_only']['candidate_manifest']['prompt'],'The comparison prompt differs from the precommitted candidate.')
+        _, _, source_digest = _source_helpers()
+        from customer_eval.replay import fingerprint as request_fingerprint, request_body
+        from customer_eval.transport import constrain
+        from customer_eval.costs import trial_cost
+        from customer_eval.timing import summarize_timing
+        costs, successes, trial_ids, request_ids = [], [], [], []
+        for row in rows:
+            ident=row.get('id');trial_ids.append(ident);case=by_id.get(row.get('case_id'));result=row.get('result') or {};grades=row.get('checks') or {}
+            need(case is not None and 'expected' in case, 'A frozen reference answer is unavailable.')
+            if case is None:continue
+            need(row.get('split') == 'holdout' and row.get('phase','standard') == phase and row.get('model_id') == variant['model_id'], 'An attempt belongs to a different model, phase or split.')
+            need(ident == digest([config['fingerprint'],variant,prompt,case['id'],row.get('repeat'),'holdout',phase]) and result.get('trial_id') == ident,
+                 'Application receipts do not bind the exact frozen model, prompt, case and repeat.')
+            need(result.get('status') == 'completed' and result.get('simulated') is False, 'An application attempt did not complete with live evidence.')
+            calls=result.get('route_calls') or []
+            need(bool(calls) and all(c.get('status') == 'completed' and c.get('model_requested') == route['model_id'] and c.get('model_returned') == route['model_id'] for c in calls),
+                 'Application model/request receipts are incomplete or inconsistent.')
+            parameters=route.get('parameters') or {}
+            request_ids.extend(c.get('request_id') for c in calls)
+            if case.get('replay'):
+                captured=case['replay']['request_sha256']
+                need(request_fingerprint(case['replay']['request']) == captured and result.get('replay',{}).get('captured_request_sha256') == captured, 'The application source request does not match the frozen input.')
+                need(config['document']['runner'].get('mode')=='prompt' and config['document']['runner'].get('workload')=='none' and len(calls)==1, 'The replay trace is not a single prompt-mode request.')
+                effective=constrain(request_body(case['replay'],prompt,config.get('policy','')),dict(route,allowed_tool_names=[]),config['document']['runner']['limits'])
+                need(result.get('replay',{}).get('effective_request_sha256')==request_fingerprint(effective), 'The effective replay request does not match the frozen prompt and settings.')
+                # The request digest binds every setting. Relay summaries record
+                # only a subset, so check their evidence without requiring fields
+                # that the transport never recorded (e.g. temperature/top_p).
+                need(all(call.get('service_tier_requested')==effective.get('service_tier','default') and
+                         all(value==effective.get(key) for key,value in (call.get('effective_parameters') or {}).items()) and
+                         all((call.get('effective_parameters') or {}).get(key)==effective.get(key) for key in ('reasoning','text'))
+                         for call in calls), 'Recorded application settings differ from the effective request.')
+                need(all((call.get('effective_parameters') or {}).get('max_output_tokens') == effective['max_output_tokens'] for call in calls), 'Recorded output budgets differ from the effective request.')
+            else:
+                need([turn.get('user') for turn in result.get('turn_records',[])] == case.get('turns') and bool(case.get('turns')), 'The application input history does not match the frozen case.')
+                need(all(all((call.get('service_tier_requested')==(value if value is not None else 'default') if key=='service_tier' else
+                              key in (call.get('effective_parameters') or {}) and call['effective_parameters'][key]==value)
+                             for key,value in parameters.items()) for call in calls),
+                     'Recorded application settings are missing or differ from the frozen route.')
+            valid=all(isinstance(grades.get(key),dict) and type(grades[key].get('pass')) is bool and not grades[key].get('error') and grades[key].get('failure_category') not in ('grading','trace') for key in required)
+            need(valid, 'A required grade is missing or has a grading/trace error.')
+            successes.append(valid and all(grades[key]['pass'] for key in required))
+            sources=contexts.get(case['id']);need(bool(sources), 'The frozen source context is unavailable.')
+            quotes={source['source_id']:source['text'] for source in sources or []};source_sha=source_digest(sources) if sources else None
+            for key in assessment['source_check_ids']:
+                grade=grades.get(key)
+                unknown=not isinstance(grade,dict) or bool(grade.get('error'))
+                if unknown:optional_unknown+=1
+                if not isinstance(grade,dict):continue
+                for field,wanted in (('source_sha256',source_sha),('rubric_sha256',assessment['rubric_sha256'])):
+                    need((unknown and field not in grade) or grade.get(field)==wanted, 'A source/rubric fingerprint is inconsistent.')
+                if unknown:continue
+                need(grade.get('status') in ('pass','fail','needs_review') and grade.get('pass') is (grade.get('status')=='pass'), 'A source assessment has inconsistent status.')
+                citations=grade.get('evidence')
+                need(isinstance(citations,list) and (grade.get('status')=='needs_review' or bool(citations)) and all(isinstance(c,dict) and c.get('source_id') in quotes and isinstance(c.get('quote'),str) and c['quote'] and c['quote'] in quotes[c['source_id']] for c in citations or []), 'Source assessment quotations do not match the frozen evidence.')
+            cost=trial_cost(config,row);costs.append(cost)
+            need(cost['unpriced_requests']==0, 'Application usage or pricing is incomplete.')
+        need(len(set(trial_ids))==len(trial_ids), 'Application trial identities are duplicated.')
+        need(all(isinstance(x,str) and x for x in request_ids) and len(set(request_ids))==len(request_ids), 'Provider request identities are missing or duplicated.')
+        unresolved={x.get('id') for x in raw.get('unresolved_attempts',[]) if isinstance(x,dict)}
+        need(not unresolved.intersection(set(trial_ids)|{digest(['grade',x]) for x in trial_ids}), 'A compared application or required grade remains unresolved.')
+        if rows and len(rows)==len(expected):
+            need(close(score.get('accuracy'),sum(successes)/len(rows)), 'The required-check score does not match recorded grades.')
+            total=sum(c['known_cost_usd'] for c in costs)
+            need(score.get('unpriced_requests')==0 and close(score.get('measured_model_cost_usd'),total) and close(score.get('cost_usd_per_session'),total/len(rows)) and close(score.get('cost_usd_per_success'),total/sum(successes) if sum(successes) else None), 'Application cost summaries do not match complete usage receipts.')
+            scope=config['document']['runner'].get('measurement',{}).get('primary_latency','worker')
+            timing=summarize_timing(rows).get(scope+'_ms',{})
+            need(score.get('latency_scope')==scope and timing.get('observations')==len(rows) and close(score.get('latency_p50_s'),timing.get('p50_ms',0)/1000) and close(score.get('latency_p95_s'),timing.get('p95_ms',0)/1000), 'Application timing does not cover the intended sample or match the score.')
+    except (KeyError,TypeError,ValueError,AttributeError,ZeroDivisionError):
+        need(False, 'Complete frozen inputs, receipts and scoring metadata are required for this scoped comparison.')
+    return {'complete':not issues,'issues':issues,'optional_assessments_unavailable':optional_unknown,
+            'scope':'Held-out required reference checks and application measurements only. Campaign status and unpriced work are separate.'}
+
+
 def _trial(row: dict, case: dict | None = None, *, input_bundles: dict | None = None,
            source_bundles: dict | None = None, assessment: dict | None = None, source_context=None) -> dict:
     result = row.get("result") or {}
@@ -256,7 +386,7 @@ def _trial(row: dict, case: dict | None = None, *, input_bundles: dict | None = 
         "reference_metadata": case.get("metadata") or {},
     }
     if assessment and assessment["mode"] in ("source_judge", "reference_and_source"):
-        trial.update(assessment_mode=assessment["mode"], source_available=False, rubric_sha256=assessment["rubric_sha256"])
+        trial.update(assessment_mode=assessment["mode"], required_check_ids=assessment.get("required_check_ids", []), source_available=False, rubric_sha256=assessment["rubric_sha256"])
         if assessment["mode"] == "source_judge":
             trial.update(expected_available=False, expected_answer=None, expected_checks=None)
         if source_context:
@@ -316,7 +446,7 @@ def _prompt_evidence(raw: dict, config: dict | None, groups: list[dict], source_
     by_id = {group["id"]: group for group in groups}
     original = by_id.get("target_original")
     evidence = []
-    for after_id in ("target_selected", "target_challenger"):
+    for after_id in ("target_selected", "target_challenger", "target_comparison"):
         revised = by_id.get(after_id)
         if original is None or revised is None:
             continue
@@ -346,11 +476,18 @@ def _prompt_evidence(raw: dict, config: dict | None, groups: list[dict], source_
         if not required:
             issues.append("No required evaluation checks were declared.")
             continue
-        if raw.get("evaluation_status") != "complete" or raw.get("simulated") is not False:
+        scoped = assessment["mode"] == "reference_and_source" and all(g.get("core_scope", {}).get("complete") for g in (original,revised))
+        item["core_scope_complete"] = scoped
+        if assessment["mode"] == "reference_and_source":
+            for group in (original,revised):
+                issues.extend(group.get("core_scope", {}).get("issues", ["Verified core comparison metadata is unavailable."]))
+        if scoped:
+            item["warnings"] = ["Required reference checks and application measurements are complete. Campaign status and optional assessments are reported separately."]
+        if not scoped and (raw.get("evaluation_status") != "complete" or raw.get("simulated") is not False):
             issues.append("This is not a completed live evaluation.")
-        if not isinstance(raw.get("unresolved_attempts"), list) or raw["unresolved_attempts"]:
+        if not scoped and (not isinstance(raw.get("unresolved_attempts"), list) or raw["unresolved_attempts"]):
             issues.append("Some attempts are unresolved or their recovery coverage is unknown.")
-        if type(raw.get("grading_error_records")) is not int or raw["grading_error_records"] != 0:
+        if not scoped and (type(raw.get("grading_error_records")) is not int or raw["grading_error_records"] != 0):
             issues.append("Grading error coverage is incomplete.")
         if original["model"] != revised["model"] or original["model"] == "Model identity unavailable":
             issues.append("The two prompts do not have the same verified model identity.")
@@ -416,6 +553,8 @@ def _prompt_evidence(raw: dict, config: dict | None, groups: list[dict], source_
                     sources = {source["source_id"]: source["text"] for source in (source_bundles or {}).get(row.get("source_ref"), [])}
                     for ident in source_checks:
                         check = (row.get("checks") if isinstance(row.get("checks"), dict) else {}).get(ident)
+                        if scoped and ident not in required and (not isinstance(check, dict) or check.get("error")):
+                            continue  # The verified core scope checks any supplied source/rubric fingerprints.
                         if (not isinstance(check, dict) or check.get("error") or check.get("status") not in ("pass", "fail", "needs_review") or
                                 check.get("pass") is not (check["status"] == "pass") or
                                 check.get("source_sha256") != row["source_sha256"] or
@@ -548,6 +687,11 @@ def _report(path: Path, index: int) -> dict:
         raise ValueError("A saved report must declare whether its measurements are simulated.")
     backend = str(raw.get("backend") or "unknown")
     config, frozen_status = _frozen_input(path, raw)
+    comparison=None
+    if raw.get('mode')=='comparison_only':
+        spec=importlib.util.spec_from_file_location('saved_comparison_evidence',Path(__file__).with_name('comparison_evidence.py'))
+        module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+        comparison=module.inspect_comparison(path.parent,raw,config)
     cases = {case["id"]: case for rows in (config or {}).get("datasets", {}).values()
              for case in rows if isinstance(case, dict) and "id" in case}
     cost_metric, cost_metric_source = _cost_metric(raw, config)
@@ -590,6 +734,7 @@ def _report(path: Path, index: int) -> dict:
             "label": LABELS.get(name, name.replace("_", " ")),
             "model": ", ".join(models) or "Model identity unavailable",
             "score": group.get("score") or {},
+            "core_scope": _core_scope(raw, config, name, group, assessment, contexts, comparison) if config is not None else None,
             "cost_metrics": _cost_values(group.get("score") or {}),
             "trials": [_trial(row, cases.get(row.get("case_id")), input_bundles=input_bundles,
                               source_bundles=source_bundles, assessment=assessment,
@@ -598,6 +743,8 @@ def _report(path: Path, index: int) -> dict:
     historical = _is_bundled_recording(path, backend)
     return {
         "id": f"report-{index}",
+        "mode": raw.get('mode'),
+        "comparison_context": comparison,
         "backend": backend,
         "fingerprint": raw.get("fingerprint"),
         "simulated": raw["simulated"],

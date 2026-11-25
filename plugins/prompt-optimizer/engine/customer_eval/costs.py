@@ -63,6 +63,10 @@ def run_costs(config, records, simulated=False, *, unresolved_attempts=0):
             cost = trial_cost(config, {'result': record})
             totals['agent'] += cost['known_cost_usd']
             unknown += cost['unpriced_requests']
+        elif record.get('status') == 'provider_error' and record.get('purpose') in ('judge', 'optimizer'):
+            # A returned HTTP error is a known failure, not a usage/billing receipt.
+            # It is terminal in Store, but its spend remains unknown.
+            unknown += 1
         elif 'usage' in record and 'text' in record:
             value = price_usage(config['routes'].get(record.get('model_id'), {}), record['usage'])
             if value is None:

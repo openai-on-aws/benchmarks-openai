@@ -61,7 +61,7 @@ def parser() -> argparse.ArgumentParser:
     demo = commands.add_parser("demo", help="Copy the recorded invoice dashboard; no model or AWS calls")
     demo.add_argument("--output", required=True, help="New directory for the recorded report")
     dashboard = commands.add_parser("dashboard", help="Render an interactive dashboard from saved evidence; no model or AWS calls")
-    dashboard.add_argument("--project", required=True, help="Directory containing saved local/AgentCore reports, or a single report.json")
+    dashboard.add_argument("--project", required=True, help="Directory containing saved reports, or one report.json or comparison-report.json")
     dashboard.add_argument("--output", required=True, help="HTML file outside the installed plugin")
     dashboard.add_argument("--title", help="Display title for this comparison")
     dashboard.add_argument("--force", action="store_true", help="Replace an existing dashboard HTML file")
@@ -205,6 +205,8 @@ def main(argv=None) -> int:
                 same_baseline = (config['routes'][source['model_id']] == config['routes'][target['model_id']]
                     and {k:v for k,v in source.items() if k not in ('id','model_id')}
                     == {k:v for k,v in target.items() if k not in ('id','model_id')})
+                has_source_judge = any(r.get('type') == 'llm_source_rubric' for r in config['grading'].values())
+                mixed = config['document']['runner'].get('grading_reference_mode') == 'references_with_source_judges'
                 value = {
                     "fingerprint": config["fingerprint"],
                     "prompt_optimization": config["document"]["optimization"]["enabled"],
@@ -217,9 +219,10 @@ def main(argv=None) -> int:
                     ),
                     "agentcore_route_checks": 2,
                     "identical_model_baseline_reused": same_baseline,
-                    "judging": {"method": "source_judge" if any(r.get('type') == 'llm_source_rubric' for r in config['grading'].values()) else "configured_checks",
+                    "judging": {"method": "reference_and_source" if mixed else "source_judge" if has_source_judge else "configured_checks",
                                 "models": sorted({c['judge_model_id'] for c in config['document']['checks'] if c['method'] == 'llm_judge'}),
-                                "call_note": "Source judging makes one grouped request per unique source/output/rubric combination. Identical requests reuse saved verdicts. Judge and optimizer calls add separate cost and time."},
+                                "call_note": ("Source judging makes one grouped request per unique source/output/rubric combination. Identical requests reuse saved verdicts. Judge and optimizer calls add separate cost and time."
+                                              if has_source_judge else "No LLM source-judge calls are configured.")},
                     "budget_policy": config["document"]["runner"].get("budget_policy", "capped"),
                     "model_budget_usd": config["document"]["execution"]["budget_usd"],
                     "calls_made": 0,

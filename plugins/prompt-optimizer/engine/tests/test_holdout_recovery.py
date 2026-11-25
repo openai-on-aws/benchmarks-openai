@@ -8,11 +8,49 @@ from customer_eval.runner import Runner,Store
 from customer_eval.scoring import grade
 from customer_eval.simulation import execute
 from customer_eval.costs import trial_cost
-from scripts.complete_holdout import prepare,recovery_runner_class,HoldoutReady
+from scripts.complete_holdout import prepare,recovery_runner_class,HoldoutReady,require_deterministic_grading
 
 
 @pytest.fixture
 def cfg():return load(ROOT/'examples/customer-support/input.yaml')
+
+
+@pytest.mark.parametrize('rule_type', ['llm_rubric', 'llm_source_rubric'])
+def test_recovery_rejects_llm_grading_before_reading_checkpoint_or_creating_output(cfg,tmp_path,rule_type):
+    cfg['grading']['optional_explanation']={'type':rule_type}
+    output=tmp_path/'must-not-exist'
+    with pytest.raises(ValueError,match='requires deterministic graders'):
+        prepare(cfg,tmp_path/'absent-checkpoint.sqlite',output,cfg['prompt'],digest,grade,[])
+    assert not output.exists()
+
+
+def test_recovery_accepts_deterministic_reference_grading(cfg):
+    cfg['grading']['matched_groups']={'type':'json_unordered_equals'}
+    require_deterministic_grading(cfg)
+
+
+@pytest.mark.parametrize('rule_type', ['llm_rubric', 'llm_source_rubric'])
+def test_cli_rejects_llm_grading_before_prepare_or_runner(cfg,tmp_path,monkeypatch,rule_type):
+    import sys
+    from customer_eval.contract import implementation_fingerprint
+    from scripts import complete_holdout
+    cfg['grading']['optional_explanation']={'type':rule_type}
+    cfg['implementation_fingerprint']=implementation_fingerprint()
+    cfg['fingerprint']=digest({k:v for k,v in cfg.items() if k!='fingerprint'})
+    config_path=tmp_path/'config.json';config_path.write_text(json.dumps(cfg))
+    prompt_path=tmp_path/'selected.txt';prompt_path.write_text(cfg['prompt'])
+    output=tmp_path/'must-not-exist'
+    monkeypatch.setattr(complete_holdout,'prepare',lambda *a,**kw:pytest.fail('must not prepare recovery'))
+    import customer_eval.runner
+    monkeypatch.setattr(customer_eval.runner,'Runner',lambda *a,**kw:pytest.fail('must not construct runner'))
+    monkeypatch.setattr(sys,'argv',['complete_holdout.py',
+        '--config',str(config_path),'--checkpoint',str(tmp_path/'absent.sqlite'),
+        '--output',str(output),'--selected-prompt',str(prompt_path),
+        '--source-snapshot',str(ROOT),'--runtime-arn','arn:unused',
+        '--profile','unused','--region','us-east-1','--live'])
+    with pytest.raises(ValueError,match='requires deterministic graders'):
+        complete_holdout.main()
+    assert not output.exists()
 
 
 def interrupted(cfg,tmp_path,split='holdout'):

@@ -1,5 +1,7 @@
 """Reference correctness stays separate from optional source judgments."""
 import copy
+import hashlib
+import json
 import importlib.util
 from pathlib import Path
 import unittest
@@ -10,7 +12,7 @@ spec.loader.exec_module(support)
 dashboard = support.dashboard
 
 
-def fixtures():
+def fixtures(max_cases_per_dataset=None, route_parameters=None):
     report, config = support.support.fixtures()
     config.setdefault('routes', {})['judge'] = {'model_id': 'us.openai.gpt-6.2-astra'}
     config['policy'] = 'Fixed source business policy.'
@@ -39,6 +41,39 @@ def fixtures():
                 'source_sha256': digest(sources), 'rubric_sha256': digest(criteria(config))}
     report['optimizer_requests'] = [{'model_requested': 'us.openai.gpt-6.2-astra', 'effective_parameters': {'reasoning': {'effort': 'high'}}}]
     report['judge_requests'] = [{'model_requested': 'us.openai.gpt-6.2-astra', 'effective_parameters': {'reasoning': {'effort': 'high'}}}] * 2
+    # A mixed comparison declares its intended sample and binds saved receipts to it.
+    config['document']['execution']={'repetitions':2,'max_cases_per_dataset':max_cases_per_dataset}
+    config['document']['success_criteria']=[]
+    config['document']['runner'].update(mode='prompt',workload='none',limits={'max_requests':1,'max_output_tokens':4096,'max_request_bytes':100000})
+    config['document']['runner']['measurement']={'primary_latency':'conversation'}
+    config['source']={'id':'source-original','model_id':'source'}
+    config['target']={'id':'target-original','model_id':'target'}
+    for alias,model in [('source','model-astra'),('target','model-sol')]:
+        config['routes'][alias]={'model_id':model,'input_usd_per_million':10.,'output_usd_per_million':100.,'parameters':{'reasoning':{'effort':'high'},'service_tier':'default'}}
+        config['routes'][alias]['parameters'].update(route_parameters or {})
+    from customer_eval.replay import fingerprint as request_fingerprint,request_body
+    from customer_eval.transport import constrain
+    fixed_policy=config['policy'];config['policy']=''
+    for case in config['datasets']['heldout']:
+        request={'input':[{'role':'system','content':fixed_policy},{'role':'developer','content':config['prompt']},{'role':'user','content':case['turns'][0]}]}
+        case['replay']={'version':1,'request':request,'request_sha256':request_fingerprint(request),'prompt_location':1}
+    config['fingerprint']=hashlib.sha256(json.dumps(config,sort_keys=True,separators=(',',':'),ensure_ascii=False).encode()).hexdigest()
+    from customer_eval.scoring import summarize
+    for name,group in report['holdout'].items():
+        variant=config['source'] if name=='source_original' else config['target']
+        prompt=group['score']['prompt']
+        allowed={c['id'] for c in config['datasets']['heldout'][:max_cases_per_dataset]}
+        group['trials']=[row for row in group['trials'] if row['case_id'] in allowed]
+        for row in group['trials']:
+            ident=hashlib.sha256(json.dumps([config['fingerprint'],variant,prompt,row['case_id'],row['repeat'],'holdout','standard'],sort_keys=True,separators=(',',':'),ensure_ascii=False).encode()).hexdigest()
+            row.update(id=ident,split='holdout',phase='standard')
+            case=cases[row['case_id']];effective=constrain(request_body(case['replay'],prompt),dict(config['routes'][variant['model_id']],allowed_tool_names=[]),config['document']['runner']['limits'])
+            row['result']['route_calls']=row['result']['route_calls'][:1]
+            row['result'].update(trial_id=ident,simulated=False,replay={'captured_request_sha256':case['replay']['request_sha256'],'effective_request_sha256':request_fingerprint(effective)})
+            sources=builder(case,policy=config['policy']);row['checks']['explanation']['source_sha256']=digest(sources)
+            for index,call in enumerate(row['result']['route_calls']):
+                call.update(request_id=ident+'-'+str(index),effective_parameters={key:effective.get(key) for key in ('reasoning','text','max_output_tokens')},service_tier_requested=effective.get('service_tier','default'))
+        group['score']=vars(summarize(config,prompt,group['trials']))
     return report, config
 
 

@@ -87,6 +87,8 @@ def build(config, report):
                         'with zero successful attempts. Campaign spend, including optimizer and judge calls, is reported separately.')
     all_cases = [c for rows in config['datasets'].values() for c in rows]
     source_judged = any(r.get('type') == 'llm_source_rubric' for r in config.get('grading', {}).values())
+    mixed = config['document']['runner'].get('grading_reference_mode') == 'references_with_source_judges'
+    source_only = source_judged and not mixed
     recorded = any(c.get('metadata', {}).get('reference_kind') == 'recorded_response' for c in all_cases)
     unreviewed = any(d.get('label_status') != 'human_reviewed' for d in config['document']['datasets'])
     reviewed_count = sum(c.get('metadata', {}).get('label_status') == 'human_reviewed' for c in all_cases)
@@ -94,11 +96,11 @@ def build(config, report):
                     'unreviewed_cases': len(all_cases) - reviewed_count,
                     'rejected_case_ids': [c['id'] for c in all_cases
                         if c.get('metadata', {}).get('label_review', {}).get('outcome') == 'rejected']}
-    metric = ('LLM-assessed quality against source inputs' if source_judged else
+    metric = ('LLM-assessed quality against source inputs' if source_only else
               'Agreement with recorded outputs' if recorded else
               'Reference checks passed (labels unreviewed)' if unreviewed else 'Required quality checks passed')
     required = [c['id'] for c in config['document']['checks'] if c['required']]
-    rows, failures = [], []
+    rows, required_failures, optional_failures = [], [], []
     for name, group in report['holdout'].items():
         if group.get('reused_from'):
             continue
@@ -106,16 +108,19 @@ def build(config, report):
         trials = group['trials']
         variant = config['source'] if name.startswith('source') else config['target']
         model = config['routes'][variant['model_id']]['model_id'] or 'Unresolved (simulation)'
-        counts = Counter()
+        counts, required_counts, optional_counts = Counter(), Counter(), Counter()
         for row in trials:
             for check_id, check in row['checks'].items():
                 if not check['pass']:
                     category = ('execution' if row['result']['status'] != 'completed' else
                                 'grading' if check.get('error') else check.get('failure_category') or 'behavior')
                     counts[category] += 1
-                    if len(failures) < 24:
-                        failures.append({'configuration': name, 'case_id': row['case_id'], 'repeat': row['repeat'],
-                            'check': check_id, 'category': category, 'reason': check['reason'],
+                    is_required = check_id in required
+                    (required_counts if is_required else optional_counts)[category] += 1
+                    examples = required_failures if is_required else optional_failures
+                    if len(examples) < 24:
+                        examples.append({'configuration': name, 'case_id': row['case_id'], 'repeat': row['repeat'],
+                            'check': check_id, 'required': is_required, 'category': category, 'reason': check['reason'],
                             'differences': check.get('differences', []),
                             'actual_excerpt': str(row['result'].get('outputs', []))[:900]})
         passed = sum(r['result']['status'] == 'completed' and all(r['checks'][c]['pass'] for c in required) for r in trials)
@@ -123,7 +128,9 @@ def build(config, report):
             'passed_trials': passed, 'planned_trials': len(trials), 'check_pass_rate': score['accuracy'],
             'model_usd_per_trial': score['cost_usd_per_session'], 'model_usd_per_success': score.get('cost_usd_per_success'),
             'median_seconds': score['latency_p50_s'], 'p95_seconds': score['latency_p95_s'],
-            'failures_by_category': dict(counts), 'timing': score.get('timing_metrics'),
+            'failures_by_category': dict(counts),
+            'required_failures_by_category': dict(required_counts),
+            'optional_failures_by_category': dict(optional_counts), 'timing': score.get('timing_metrics'),
             'source_judge_metrics': group.get('source_judge_metrics')})
     source = report['holdout']['source_original']['score']
     target = report['holdout']['target_original']['score']
@@ -180,10 +187,12 @@ def build(config, report):
             recommendation = 'The selected configuration is a candidate for a customer pilot after reference and failure review.'
     if recorded:
         reasons.append('Matching previous model responses does not establish correctness.')
-    if source_judged:
+    if source_only:
         reasons.append('Quality is assessed by an LLM against the source inputs and fixed rubric. No expected answers were supplied, and human calibration has not been established by this run. Needs-review outcomes are not passes.')
         recommendation = recommendation.replace('references', 'judge assessments').replace('reference and failure review', 'review of judge decisions and failures')
-    elif unreviewed:
+    if mixed:
+        reasons.append('Required checks compare outputs with references. Optional LLM assessments against source inputs are reported separately and do not determine the required-check pass rate. This run does not establish human calibration of those assessments.')
+    if unreviewed and not source_only:
         reasons.append((f'{reviewed_count} of {len(all_cases)} expected answers have recorded human review; '
                         'the remaining labels are unreviewed. This is not production accuracy.') if reviewed_count else
                        'Expected answers have not been independently reviewed; this is not production accuracy.')
@@ -220,7 +229,7 @@ def build(config, report):
             'explanation': prompt_explanation,
             'reason': report['selected_prompt']['reason'], 'target_original': target, 'target_selected': selected,
             'candidates': candidates, 'scope': 'Same target model and held-out cases; only the editable prompt changes. Candidate selection used validation.'},
-        'holdout': rows, 'failure_examples': failures,
+        'holdout': rows, 'failure_examples': (required_failures + optional_failures)[:24],
         'input_context': config.get('intake_context'),
         'models': {k: {'model': r['model_id'], 'parameters': r['parameters'], 'endpoint': r['base_url'],
                       'pricing_source': r.get('pricing_source'), 'pricing_verified_at': r.get('pricing_verified_at')}
@@ -293,9 +302,14 @@ def write(config, report, directory, qualification=None):
     candidate_table += '</table>'
     if qualification:
         lines += ['Campaign plus qualification model cost: $' + number(decision['campaign_plus_qualification_model_cost_usd'], 6) + '.']
-    lines += ['', '## Failed examples', '']
-    lines += ['- ' + f"{r['configuration']} / {r['case_id']} / {r['check']}: {r['reason']}" for r in decision['failure_examples']]
-    if not decision['failure_examples']:
+    required_count = sum(sum(r['required_failures_by_category'].values()) for r in decision['holdout'])
+    optional_count = sum(sum(r['optional_failures_by_category'].values()) for r in decision['holdout'])
+    review_summary = (f'{required_count} failed required checks; {optional_count} optional checks needing review. '
+                      'Optional checks do not affect the required-check pass rate. Examples show required failures first; up to 24 are listed.')
+    lines += ['', '## Checks needing review', '', review_summary, '']
+    lines += ['- ' + ('Required check: ' if r['required'] else 'Optional check: ') +
+              f"{r['configuration']} / {r['case_id']} / {r['check']}: {r['reason']}" for r in decision['failure_examples']]
+    if not required_count:
         lines += ['No failed required checks were observed in the final held-out sample.']
     lines += ['', '## Limits of this result', ''] + ['- ' + x for x in decision['limitations']]
     (directory / 'decision.md').write_text('\n'.join(lines) + '\n')
@@ -317,9 +331,12 @@ def write(config, report, directory, qualification=None):
         body += '<details><summary>' + escape(c['id'].replace('-', ' ').capitalize() + ' — ' + outcome) + '</summary><p>' + escape(facts) + '</p><p>' + escape('; '.join(reasons)) + '</p><pre>' + escape(c['prompt']) + '</pre></details>'
     body += '<h2>Cost and timing</h2><pre>' + escape(json.dumps({k: v for k, v in decision.items() if k in
         ('model_costs', 'qualification_model_cost_usd', 'campaign_plus_qualification_model_cost_usd')}, indent=2)) + '</pre><p>' + escape(report['cost_note']) + '</p><p>' + escape(report['latency_scope']) + '</p>'
-    body += '<h2>Failed examples</h2>'
+    body += '<h2>Checks needing review</h2><p>' + escape(review_summary) + '</p>'
+    if not required_count:
+        body += '<p>No failed required checks were observed in the final held-out sample.</p>'
     for failure in decision['failure_examples']:
-        body += '<details><summary>' + escape(failure['case_id'] + ' / ' + failure['check']) + '</summary><pre>' + escape(json.dumps(failure, indent=2, ensure_ascii=False)) + '</pre></details>'
+        label = 'Required check: ' if failure['required'] else 'Optional check: '
+        body += '<details><summary>' + escape(label + failure['case_id'] + ' / ' + failure['check']) + '</summary><pre>' + escape(json.dumps(failure, indent=2, ensure_ascii=False)) + '</pre></details>'
     body += '<h2>Limits of this result</h2><ul>' + ''.join('<li>' + escape(x) + '</li>' for x in decision['limitations']) + '</ul>'
     (directory / 'decision.html').write_text(html_document('Model and prompt comparison', body))
     return decision

@@ -9,7 +9,14 @@ from pathlib import Path
 import argparse,hashlib,json,re,sqlite3,sys
 
 
+def require_deterministic_grading(config):
+    if any(rule['type'] in ('llm_rubric', 'llm_source_rubric')
+           for rule in config['grading'].values()):
+        raise ValueError('This recovery path requires deterministic graders')
+
+
 def prepare(config, checkpoint, directory, selected_prompt, digest, grade, accepted_uncertain):
+    require_deterministic_grading(config)
     directory=Path(directory)
     if directory.exists():raise ValueError('Recovery output must be a new directory; preserve earlier attempts')
     source=sqlite3.connect('file:'+str(Path(checkpoint).resolve())+'?mode=ro',uri=True)
@@ -109,7 +116,7 @@ def main():
     cfg=json.loads(Path(args.config).read_text());selected=Path(args.selected_prompt).read_text().strip()
     assert digest({k:v for k,v in cfg.items() if k!='fingerprint'})==cfg['fingerprint']
     assert implementation_fingerprint()==cfg['implementation_fingerprint'],'Use the exact measured source snapshot'
-    if any(v['type']=='llm_rubric' for v in cfg['grading'].values()):raise ValueError('This recovery path requires deterministic graders')
+    require_deterministic_grading(cfg)
     audit=prepare(cfg,args.checkpoint,args.output,selected,digest,grade,args.accept_uncertain)
     cls=recovery_runner_class(Runner,digest)
     runner=cls(cfg,args.output,backend='agentcore',runtime_arn=args.runtime_arn,profile=args.profile,region=args.region)

@@ -128,7 +128,25 @@ def start_job(payload, app):
     dispatch_reserve = request_reserve_seconds(config, os.environ)
     from runtime.app import validate_route
     for route in config['routes'].values(): validate_route(route)
+    parent_report = None
+    if 'comparison_only' in config:
+        from customer_eval.frozen_comparison import read_parent, validate
+        spec = validate(config)
+        if spec['parent_job_id'] == job_id:
+            raise ValueError('Comparison-only work requires a new job ID')
+        parent_report = read_parent(config, s3, bucket, prefix, read_study_input)
     key = f'{prefix}/jobs/{job_id}'
+    if parent_report is not None:
+        # A repeated submission cannot create a second paid cohort under a new
+        # job UUID or rebuilt implementation. An interrupted claim requires
+        # inspection, never auto-retry.
+        from customer_eval.frozen_comparison import claim_fingerprint
+        cohort = claim_fingerprint(config)
+        s3.put_object(Bucket=bucket, Key=f'{prefix}/comparison-claims/{cohort}.json', IfNoneMatch='*',
+                      Body=json.dumps({'job_id': job_id, 'fingerprint': fingerprint,
+                                       'cohort_fingerprint': cohort,
+                                       'parent_job_id': config['comparison_only']['parent_job_id']}).encode(),
+                      ContentType='application/json')
     # Unique job claim: duplicate submissions never start a second set of paid trials.
     s3.put_object(Bucket=bucket, Key=key + '/status.json', IfNoneMatch='*',
                   Body=json.dumps({'status': 'accepted', 'fingerprint': fingerprint}).encode(), ContentType='application/json')
@@ -159,17 +177,26 @@ def start_job(payload, app):
                                       'updated_at':datetime.now(timezone.utc).isoformat()}).encode())
                     last_checkpoint = time.monotonic()
                 runner.store.checkpoint = checkpoint
-                try: report = runner.run()
+                try:
+                    if parent_report is None:
+                        report = runner.run()
+                    else:
+                        from customer_eval.frozen_comparison import run as run_comparison
+                        report = run_comparison(runner, parent_report)
                 finally:
                     runner.store.checkpoint_event = 'final'
                     checkpoint()
-                for filename in ('report.json', 'report.md', 'selected-prompt.json',
+                filenames = ('report.json', 'report.md', 'selected-prompt.json',
                                  'decision.json', 'decision.md', 'decision.html', 'original-prompt.txt',
-                                 'selected-prompt.txt', 'prompt.diff'):
+                                 'selected-prompt.txt', 'prompt.diff')
+                if parent_report is not None:
+                    from customer_eval.frozen_comparison import FILES
+                    filenames = FILES
+                for filename in filenames:
                     s3.upload_file(str(Path(directory) / filename), bucket, key + '/' + filename)
                 for candidate in (Path(directory) / 'candidate-prompts').glob('*.txt'):
                     s3.upload_file(str(candidate), bucket, key + '/candidate-prompts/' + candidate.name)
-                state = {'status': 'completed', 'fingerprint': fingerprint, 'report_key': key + '/report.json',
+                state = {'status': 'completed', 'fingerprint': fingerprint, 'report_key': key + '/' + filenames[0],
                          'reserved_model_spend_usd': report['reserved_model_spend_usd']}
         except CoordinatorPaused:
             state = {'status':'paused','fingerprint':fingerprint,

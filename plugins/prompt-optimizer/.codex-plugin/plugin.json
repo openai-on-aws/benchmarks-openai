@@ -1,6 +1,6 @@
 {
   "name": "prompt-optimizer",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Compare models or optimize prompts from customer text logs, locally or in AgentCore, with quality, cost and latency evidence.",
   "author": {
     "name": "OpenAI on AWS",

@@ -64,8 +64,17 @@ def main():
     config=restore(s3,receipt,args.output,confirmed_stopped=args.confirm_cloud_stopped)
     runner=Runner(config,args.output,backend='agentcore',runtime_arn=receipt['runtime_arn'],
                   profile=receipt['profile'],region=receipt['region'])
-    runner.run()
-    print(str((Path(args.output)/'report.md').resolve()))
+    if 'comparison_only' in config:
+        from customer_eval.frozen_comparison import read_parent, run as run_comparison
+        from runtime.coordinator import read_study_input
+        prefix = receipt['status_key'].rsplit('/jobs/', 1)[0]
+        parent = read_parent(config, s3, receipt['bucket'], prefix, read_study_input)
+        run_comparison(runner, parent)
+        report_name = 'comparison-report.md'
+    else:
+        runner.run()
+        report_name = 'report.md'
+    print(str((Path(args.output)/report_name).resolve()))
 
 
 if __name__=='__main__':main()

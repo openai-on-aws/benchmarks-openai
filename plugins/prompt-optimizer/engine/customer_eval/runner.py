@@ -9,6 +9,7 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
 from pathlib import Path
+from urllib.error import HTTPError
 
 from hillclimb import run_hill_climb
 from optimizer import make_mutate_fn
@@ -18,7 +19,7 @@ from .transport import complete, reservation
 from .worker import isolated
 from .costs import run_costs
 from .feedback import development_feedback, mutation_evidence
-from .errors import EvaluationControlError
+from .errors import EvaluationControlError, RecordedProviderError
 
 
 class BudgetExceeded(EvaluationControlError): pass
@@ -134,10 +135,23 @@ class Runner:
         def invoke():
             receipt = {}
             started = time.monotonic()
-            output, usage = complete(route, text, limits, receipt=receipt)
+            try:
+                output, usage = complete(route, text, limits, receipt=receipt)
+            except HTTPError as exc:
+                # Only transport's confirmed HTTP outcome can close the durable
+                # attempt. Timeouts, lost responses and control stops stay pending.
+                status = receipt.get('http_status')
+                if (receipt.get('status') != 'provider_error' or type(status) is not int
+                        or not 300 <= status <= 599 or status != exc.code):
+                    raise
+                return dict(receipt, usage=None, model_id=model_id, purpose=purpose,
+                            request_text=text, error_type='HTTPError',
+                            completion_elapsed_ms=(time.monotonic() - started) * 1000)
             return dict(receipt, text=output, usage=usage, model_id=model_id, purpose=purpose,
                         request_text=text, completion_elapsed_ms=(time.monotonic() - started) * 1000)
         record = self.store.perform(ident, reservation(route, limits), invoke)
+        if record.get('status') == 'provider_error':
+            raise RecordedProviderError(record['http_status'], ident) from None
         return record['text']
 
     def execute(self, payload):
@@ -396,7 +410,9 @@ class Runner:
         review_note = (f"Evaluation needs review: {grading_errors} grading records contain errors; "
                        f"{len(unresolved)} attempts have no completed receipt. Their usage remains unknown."
                        if unresolved or grading_errors else 'Evaluation complete.')
-        quality_scope = ('Quality is LLM-assessed against source inputs and the fixed rubric; no expected answers were supplied. Needs-review judgments are not passes.'
+        quality_scope = ('Quality is the pass rate on required reference checks. Optional source-based assessments are reported separately; they do not determine this pass rate. Reference answers retain their recorded review status.'
+                         if cfg.get('grading_reference_mode') == 'references_with_source_judges'
+                         else 'Quality is LLM-assessed against source inputs and the fixed rubric; no expected answers were supplied. Needs-review judgments are not passes.'
                          if any(r.get('type') == 'llm_source_rubric' for r in self.config['grading'].values())
                          else 'Quality is the pass rate on the configured required checks.')
         lines = ['# Customer evaluation report', '', report['claim'], '', quality_scope, '', review_note, '',

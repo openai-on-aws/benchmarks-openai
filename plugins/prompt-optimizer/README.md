@@ -312,6 +312,16 @@ to build. It reads a single report directory, or the `local/`, `agentcore/`
 and `results/` report locations within a project. Combined reports must have
 matching input fingerprints and one report per backend.
 
+A separately authorized, precommitted comparison can be opened by passing its
+`comparison-report.json` explicitly. Keep its `run-input.json`, `parent-report.json`,
+`comparison-precommit.json`, `comparison-precommit-receipt.json`, and
+`comparison-claim.json` beside it. The dashboard verifies those saved artifacts
+before describing the comparison as complete. Its third arm is labeled **Revised
+prompt for review**; it does not change the parent study's selected prompt.
+Parent and new-cohort costs remain separate. These are new attempts on the same
+held-out cases, not a newly unseen dataset. Do not combine the parent and follow-up
+directories as if they were different backends of one run.
+
 The results summary compares source and target with the original prompt, and
 compares the original and selected prompts on the target model when both were
 evaluated. Each backend gets its own summary with pass counts, the selected cost
