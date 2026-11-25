@@ -60,6 +60,40 @@ infrastructure and never creates it. Choose local-only while access is being
 arranged, or keep a draft for both backends. Adding cloud configuration to an
 already prepared local study requires a new project revision.
 
+### Reuse infrastructure without changing the study
+
+"Reuse our AgentCore environment" selects deployment reuse. It does not select
+an old job, its results or its paid-run authorization. Import only the needed
+connection/resource facts, verify their current validity and keep the new study
+in its own project. An identical input file does not make two evaluations
+equivalent: grading/adoption rules, split assignment, repetitions, selected
+prompt and runtime/model settings can differ.
+
+If a customer explicitly asks to review an old run, inspect that run and preserve
+its original scope. If they ask to resume it, verify its frozen configuration and
+durable receipt before continuing. If they want new criteria applied to saved
+answers, label the operation retrospective regrading; it does not supply new
+application latency/cost measurements or a new held-out test. Ask which task is
+intended only when the request is ambiguous.
+
+### Complete and reconcile intake
+
+After inspecting inputs, continue with unresolved quality/adoption decisions,
+model and optional optimizer/judge roles, execution scope and budget. Present
+proposals progressively and keep them separate from confirmed answers. A request
+for analysis at this stage can be answered with case coverage and concrete grading
+examples; it does not require finding an older benchmark or submitting inference.
+
+Before `prepare`, configure the agreed decisions and read back `project.json`
+and readiness. After `prepare`, inspect the frozen `plan` before any paid calls.
+Verify that split counts, repetitions, concurrency, limits, grading rules and model
+roles match what the customer agreed. Resolve discrepancies
+instead of leaving the report on one plan and the runner on its defaults. Keep
+unknowns pending even if structural validation accepts a default. Qualification
+and `run --live` make paid model calls and require current study authorization.
+Record manual review requirements separately from machine-enforced selection;
+an optional source check alone cannot implement an adoption veto.
+
 The `answers.json` patch records only known choices. Relative file references in
 that JSON resolve against the answer file’s directory and are saved as absolute
 paths, so resuming from another working directory is safe. For a fixed-prompt study
