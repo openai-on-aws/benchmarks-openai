@@ -370,6 +370,255 @@ def _core_scope(raw, config, name, group, assessment, contexts, comparison=None)
             'scope':'Held-out required reference checks and application measurements only. Campaign status and unpriced work are separate.'}
 
 
+def _verification_setup_message(detail):
+    return (detail + ' Render verified matched metrics with the workspace Python 3.12 virtual environment, '
+            'with this plugin\'s requirements installed: /path/to/workspace/.venv/bin/python -m pip install -r '
+            + str(PLUGIN_ROOT / 'requirements.txt') + '. Use that same interpreter for workflow_eval.py dashboard. '
+            'Opening an already-rendered HTML dashboard needs no Python dependencies.')
+
+
+def _required_grades_match_outputs(raw, config, case, result, grades):
+    """Recheck deterministic criteria and replay saved source-judge evidence only.
+
+    There is no model transport here. A source judgment is usable only if a
+    recorded judge request contains these exact sources, criteria and output.
+    """
+    from customer_eval.scoring import grade
+    from customer_eval.source_grading import grade_source
+    required = [c for c in config['document']['checks'] if c['required']]
+    deterministic = [c for c in required if config['grading'][c['id']]['type'] not in ('llm_source_rubric', 'llm_rubric', 'turn_semantic')]
+    if any(config['grading'][c['id']]['type'] == 'json_schema' for c in deterministic):
+        # Import before grade(), whose grader-error envelope deliberately hides
+        # exceptions. A local missing dependency is setup, not bad saved evidence.
+        from jsonschema import Draft202012Validator
+    def no_judge(*_):
+        raise ValueError('A saved deterministic check attempted to invoke a judge')
+    local = dict(config, document=dict(config['document'], checks=deterministic))
+    checked = grade(local, case, result, no_judge)
+    if any(checked[c['id']].get('error') or checked[c['id']].get('pass') is not grades.get(c['id'], {}).get('pass') for c in deterministic):
+        return False
+    source_checks = [c for c in required if config['grading'][c['id']]['type'] == 'llm_source_rubric']
+    if any(config['grading'][c['id']]['type'] in ('llm_rubric', 'turn_semantic') for c in required):
+        # These legacy grade records have no exact request/output binding in
+        # this view yet. Preserve the original score; do not invent verification.
+        return False
+    if source_checks:
+        def saved_source_judge(model_id, request_text):
+            route = config['routes'][model_id]
+            for receipt in raw.get('judge_requests') or []:
+                if not (isinstance(receipt, dict) and receipt.get('status') == 'completed' and
+                        receipt.get('purpose') == 'judge' and receipt.get('model_id') == model_id and
+                        receipt.get('model_requested') == receipt.get('model_returned') == route['model_id'] and
+                        receipt.get('request_text') == request_text and isinstance(receipt.get('text'), str)):
+                    continue
+                try:
+                    values = json.loads(receipt['text'])['checks']
+                    if all(all(values[c['id']].get(key) == grades.get(c['id'], {}).get(key) for key in ('status', 'reason', 'evidence')) for c in source_checks):
+                        return receipt['text']
+                except (KeyError, TypeError, ValueError):
+                    continue
+            raise ValueError('No saved judge request/response binds this output and grade')
+        source = grade_source(config, case, result, saved_source_judge)
+        if any(source[c['id']].get('error') or source[c['id']].get('pass') is not grades.get(c['id'], {}).get('pass') for c in source_checks):
+            return False
+    return True
+
+
+def _observed_answers(raw, config, name, group, assessment, contexts, comparison=None):
+    """Describe returned answers without replacing planned-attempt scores.
+
+    Invalid identity or grading evidence invalidates the view. Missing usage or
+    timing is coverage, not a free/instant answer. Private measurements feed one
+    common case/repeat intersection across every displayed arm below.
+    """
+    issues = []
+    out = dict(valid=False, issues=issues, scope='Returned application answers, including incorrect answers. Failed and missing attempts remain outside these descriptive averages and in the original run totals.',
+               planned_attempts=None, observed_attempts=len(group.get('trials') or []),
+               returned_answers=0, correct_answers=0, incorrect_answers=0,
+               application_failures=0, missing_attempts=None, fully_priced_answers=0,
+               known_model_cost_usd=None, mean_model_cost_usd_per_returned_answer=None,
+               cost_complete=False, timed_answers=0, p50_conversation_ms=None,
+               p95_conversation_ms=None, timing_complete=False, token_covered_answers=0,
+               token_totals=None, _measurements=[], _planned_pairs=[], _request_ids=[])
+    def need(ok, message):
+        if not ok and message not in issues: issues.append(message)
+    def digest(value):
+        return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=False, allow_nan=False).encode()).hexdigest()
+    def finite(value):
+        return type(value) in (int, float) and math.isfinite(value) and value >= 0
+    try:
+        need(isinstance(config, dict), 'Matching frozen inputs are unavailable.')
+        if not isinstance(config, dict): return out
+        if sys.version_info[:2] != (3, 12):
+            need(False, _verification_setup_message('This renderer is using Python ' + '.'.join(map(str, sys.version_info[:3])) + '.'))
+            return out
+        need(raw.get('simulated') is False, 'Live application evidence is required.')
+        need(raw.get('evaluation_status') in ('complete', 'needs_review'), 'Run completion is not confirmed.')
+        need(isinstance(raw.get('unresolved_attempts'), list), 'Campaign recovery coverage is unavailable.')
+        need(assessment['mode'] != 'unverified_source_judge', 'The assessment configuration is unverified.')
+        phase = config['comparison_only']['phase'] if raw.get('mode') == 'comparison_only' else 'standard'
+        if raw.get('mode') == 'comparison_only':
+            need(isinstance(comparison, dict) and comparison.get('complete') is True, 'Frozen comparison provenance is unavailable or inconsistent.')
+        execution = config['document']['execution']; repetitions = execution['repetitions']; limit = execution.get('max_cases_per_dataset')
+        if type(repetitions) is not int or repetitions < 1 or not (limit is None or type(limit) is int and limit > 0):
+            raise ValueError('Invalid frozen repeat count or case cap')
+        cases = [c for dataset in config['splits']['holdout'] for c in config['datasets'][dataset][:limit]]
+        by_id = {c['id']: c for c in cases}
+        need(bool(cases) and len(by_id) == len(cases), 'Frozen held-out case identities are ambiguous.')
+        expected = {(c['id'], repeat) for c in cases for repeat in range(repetitions)}
+        out['_planned_pairs'] = sorted(expected); out['planned_attempts'] = len(expected)
+        rows = group.get('trials') or []; pairs = [(r.get('case_id'), r.get('repeat')) for r in rows]
+        need(all(type(r.get('repeat')) is int and (r.get('case_id'), r['repeat']) in expected for r in rows), 'An attempt is outside the frozen cases and repeats.')
+        need(len(set(pairs)) == len(pairs), 'Case/repeat identities are duplicated.')
+        out['missing_attempts'] = len(expected - set(pairs))
+        required = [c['id'] for c in config['document']['checks'] if c['required']]
+        need(bool(required) and len(set(required)) == len(required), 'Required grading criteria are unavailable or duplicated.')
+        variant = config['source'] if name == 'source_original' else config['target']
+        route = config['routes'][variant['model_id']]; prompt = (group.get('score') or {}).get('prompt')
+        need(isinstance(prompt, str) and bool(prompt.strip()), 'The application prompt is unavailable.')
+        if name in ('source_original', 'target_original'):
+            need(prompt == config['prompt'], 'The starting prompt differs from the frozen input.')
+        elif name == 'target_selected':
+            need(prompt == raw.get('selected_prompt', {}).get('prompt'), 'The revised prompt differs from the saved selection.')
+        elif name == 'target_comparison':
+            need(raw.get('mode') == 'comparison_only' and prompt == config['comparison_only']['candidate_manifest']['prompt'], 'The comparison prompt differs from the precommitted candidate.')
+        elif name != 'target_challenger':
+            need(False, 'The saved arm has no recognized frozen variant.')
+        _source_helpers()
+        from customer_eval.replay import fingerprint, request_body
+        from customer_eval.transport import constrain
+        from customer_eval.costs import price_usage
+        from customer_eval.timing import distribution
+        request_ids, trial_ids, measurements = [], [], []
+        unresolved = {x.get('id') for x in raw.get('unresolved_attempts', []) if isinstance(x, dict)}
+        for row in rows:
+            ident = row.get('id'); trial_ids.append(ident); case = by_id.get(row.get('case_id'))
+            result = row.get('result') or {}; calls = result.get('route_calls') or []; grades = row.get('checks') or {}
+            if case is None: continue
+            need(row.get('split') == 'holdout' and row.get('phase', 'standard') == phase and row.get('model_id') == variant['model_id'], 'An attempt belongs to a different model, phase or split.')
+            need(ident == digest([config['fingerprint'], variant, prompt, case['id'], row.get('repeat'), 'holdout', phase]) and result.get('trial_id') == ident, 'Application receipts do not bind the frozen model, prompt, case and repeat.')
+            need(result.get('simulated') is False, 'An application receipt is not live evidence.')
+            need(ident not in unresolved and digest(['grade', ident]) not in unresolved, 'A compared application or required grade remains unresolved.')
+            status = result.get('status')
+            if status != 'completed':
+                need(status in ('error', 'timeout', 'worker_error', 'infrastructure_error', 'failed'), 'An application status is not a completed answer or terminal failure.')
+                out['application_failures'] += 1
+                need(all(c.get('model_requested') == route['model_id'] and c.get('model_returned', route['model_id']) in (None, route['model_id']) for c in calls), 'A failed request belongs to a different model.')
+                # A failed request may have no receipt at all. When a receipt
+                # exists, validate its evidence without inventing a return,
+                # usage, model_returned field or successful completion time.
+                out['_request_ids'].extend(c['request_id'] for c in calls if isinstance(c.get('request_id'), str) and c['request_id'])
+                if case.get('replay'):
+                    captured = case['replay']['request_sha256']
+                    need(fingerprint(case['replay']['request']) == captured, 'A failed request has inconsistent frozen source evidence.')
+                    effective = constrain(request_body(case['replay'], prompt, config.get('policy', '')), dict(route, allowed_tool_names=[]), config['document']['runner']['limits'])
+                    if result.get('replay') is not None:
+                        need(result['replay'].get('captured_request_sha256') == captured and result['replay'].get('effective_request_sha256') == fingerprint(effective), 'A failed request differs from the frozen source, prompt or settings.')
+                    need(all(('service_tier_requested' not in c or c['service_tier_requested'] == effective.get('service_tier', 'default')) and all(v == effective.get(k) for k, v in (c.get('effective_parameters') or {}).items()) for c in calls), 'A failed request has inconsistent recorded settings.')
+                else:
+                    turns = result.get('turn_records') or []
+                    need([t.get('user') for t in turns] == (case.get('turns') or [])[:len(turns)], 'A failed application input history differs from the frozen case.')
+                continue
+            need(bool(calls) and all(c.get('status') == 'completed' and c.get('model_requested') == route['model_id'] and c.get('model_returned') == route['model_id'] for c in calls), 'Returned application model receipts are incomplete or inconsistent.')
+            request_ids.extend(c.get('request_id') for c in calls)
+            out['_request_ids'].extend(c.get('request_id') for c in calls)
+            outputs = result.get('outputs'); turns = result.get('turn_records') or []
+            need(isinstance(outputs, list) and bool(outputs) and all(isinstance(x, str) and x.strip() for x in outputs), 'A completed application has no usable returned output.')
+            need([t.get('output') for t in turns] == outputs, 'Returned outputs differ from the recorded answer history.')
+            if case.get('replay'):
+                captured = case['replay']['request_sha256']
+                need(fingerprint(case['replay']['request']) == captured and result.get('replay', {}).get('captured_request_sha256') == captured, 'The source request differs from the frozen input.')
+                need(config['document']['runner'].get('mode') == 'prompt' and config['document']['runner'].get('workload') == 'none' and len(calls) == 1 and len(outputs or []) == 1, 'Replay requires one prompt-mode request and one answer.')
+                effective = constrain(request_body(case['replay'], prompt, config.get('policy', '')), dict(route, allowed_tool_names=[]), config['document']['runner']['limits'])
+                need(result.get('replay', {}).get('effective_request_sha256') == fingerprint(effective), 'The effective request differs from the frozen prompt and settings.')
+                need(all(c.get('service_tier_requested') == effective.get('service_tier', 'default') and
+                         all(v == effective.get(k) for k, v in (c.get('effective_parameters') or {}).items()) and
+                         all((c.get('effective_parameters') or {}).get(k) == effective.get(k) for k in ('reasoning', 'text', 'max_output_tokens')) for c in calls), 'Recorded request settings differ from the frozen effective request.')
+            else:
+                need(bool(case.get('turns')) and [t.get('user') for t in turns] == case['turns'], 'The application input history differs from the frozen case.')
+                need(all(all(c.get('service_tier_requested') == (v if v is not None else 'default') if k == 'service_tier' else k in (c.get('effective_parameters') or {}) and c['effective_parameters'][k] == v for k, v in (route.get('parameters') or {}).items()) for c in calls), 'Recorded settings are missing or differ from the frozen route.')
+            valid_grades = all(isinstance(grades.get(k), dict) and type(grades[k].get('pass')) is bool and not grades[k].get('error') and grades[k].get('failure_category') not in ('grading', 'trace') for k in required)
+            need(valid_grades, 'A required grade is missing or has a grading/trace error.')
+            need(valid_grades and _required_grades_match_outputs(raw, config, case, result, grades), 'Required grades could not be verified against the frozen inputs and actual returned output.')
+            for key in required:
+                rule = config['grading'][key]; grade = grades.get(key) or {}
+                if rule['type'] == 'llm_source_rubric':
+                    sources = contexts.get(case['id']); _, _, source_digest = _source_helpers()
+                    quotes = {s['source_id']: s['text'] for s in sources or []}; citations = grade.get('evidence')
+                    need(bool(sources) and grade.get('source_sha256') == source_digest(sources) and grade.get('rubric_sha256') == assessment.get('rubric_sha256'), 'A required source judgment has mismatched frozen evidence.')
+                    need(grade.get('status') in ('pass', 'fail', 'needs_review') and grade.get('pass') is (grade.get('status') == 'pass') and isinstance(citations, list) and (grade.get('status') == 'needs_review' or bool(citations)) and all(isinstance(c, dict) and c.get('source_id') in quotes and isinstance(c.get('quote'), str) and c['quote'] and c['quote'] in quotes[c['source_id']] for c in citations or []), 'A required source judgment has invalid status or citations.')
+                elif rule['type'] not in ('json_schema',) and 'expected' not in case:
+                    need(False, 'A required reference answer is unavailable.')
+            values = [price_usage(route, c.get('usage')) for c in calls]
+            fully_priced = bool(calls) and all(v is not None for v in values)
+            token_values = []
+            for call in calls:
+                usage = call.get('usage') or {}; details = usage.get('input_tokens_details') or {}
+                counters = [usage.get('input_tokens'), usage.get('output_tokens'), details.get('cached_tokens', 0), details.get('cache_write_tokens', 0)]
+                if all(type(x) is int and x >= 0 for x in counters) and counters[2] + counters[3] <= counters[0]:
+                    i, o, r, w = counters
+                    token_values.append(dict(input=i, uncached_input=i-r-w, cache_read=r, cache_write=w, output=o))
+            tokens = {k: sum(t[k] for t in token_values) for k in ('input', 'uncached_input', 'cache_read', 'cache_write', 'output')} if calls and len(token_values) == len(calls) else None
+            timing = result.get('timing') or {}; elapsed = timing.get('conversation_ms'); proof = None
+            if turns and all(type(t.get('started_ns')) is int and type(t.get('answered_ns')) is int and 0 <= t['started_ns'] <= t['answered_ns'] for t in turns) and all(a['answered_ns'] <= b['started_ns'] for a, b in zip(turns, turns[1:])):
+                proof = (turns[-1]['answered_ns'] - turns[0]['started_ns']) / 1e6
+            timed = finite(elapsed) and proof is not None and math.isclose(elapsed, proof, rel_tol=1e-9, abs_tol=1e-6)
+            measurements.append(dict(pair=(case['id'], row['repeat']), correct=valid_grades and all(grades[k]['pass'] for k in required),
+                                     cost=sum(v for v in values if v is not None) if any(v is not None for v in values) else None, fully_priced=fully_priced,
+                                     conversation_ms=elapsed if timed else None, tokens=tokens))
+        need(len(set(trial_ids)) == len(trial_ids), 'Application trial identities are duplicated.')
+        need(all(isinstance(x, str) and x for x in request_ids) and len(set(request_ids)) == len(request_ids), 'Returned provider request identities are missing or duplicated.')
+        out['returned_answers'] = len(measurements); out['correct_answers'] = sum(m['correct'] for m in measurements)
+        out['incorrect_answers'] = len(measurements) - out['correct_answers']; out['fully_priced_answers'] = sum(m['fully_priced'] for m in measurements)
+        known = [m['cost'] for m in measurements if m['cost'] is not None]
+        out['known_model_cost_usd'] = sum(known) if known else None
+        out['cost_complete'] = bool(measurements) and out['fully_priced_answers'] == len(measurements)
+        if out['cost_complete']: out['mean_model_cost_usd_per_returned_answer'] = out['known_model_cost_usd'] / len(measurements)
+        times = distribution([m['conversation_ms'] for m in measurements], len(measurements)); out['timed_answers'] = times['observations']
+        out['timing_complete'] = bool(measurements) and times['observations'] == len(measurements)
+        if out['timing_complete']: out.update(p50_conversation_ms=times['p50_ms'], p95_conversation_ms=times['p95_ms'])
+        covered = [m['tokens'] for m in measurements if m['tokens'] is not None]; out['token_covered_answers'] = len(covered)
+        if covered: out['token_totals'] = {k: sum(t[k] for t in covered) for k in covered[0]}
+        out['valid'] = not issues; out['_measurements'] = measurements if not issues else []
+    except ImportError as exc:
+        need(False, _verification_setup_message('A verification dependency is unavailable: ' + (getattr(exc, 'name', None) or 'engine dependency') + '.'))
+    except (KeyError, TypeError, ValueError, AttributeError, ZeroDivisionError, OverflowError):
+        need(False, 'Frozen identities, request receipts and required grading evidence could not be verified.')
+    return out
+
+
+def _common_observed_answers(groups):
+    """Use the same case/repeat set for quality, price, tokens and time in every arm."""
+    issues, planned, eligible, request_ids = [], [], [], []
+    for group in groups:
+        view = group['observed_answers']
+        planned.append(set(view.pop('_planned_pairs', [])))
+        records = view.pop('_measurements', [])
+        request_ids.extend(view.pop('_request_ids', []))
+        eligible.append({m['pair']: m for m in records if m['fully_priced'] and m['tokens'] is not None and m['conversation_ms'] is not None})
+        if not view['valid']: issues.extend(f"{group['label']}: {issue}" for issue in view['issues'])
+    if len(groups) < 2: issues.append('At least two distinct measured arms are required.')
+    if len(set(request_ids)) != len(request_ids): issues.append('Provider request identities are duplicated across compared attempts.')
+    if not planned or not planned[0] or any(p != planned[0] for p in planned): issues.append('The arms do not share one frozen case/repeat plan.')
+    common = set.intersection(*(set(e) for e in eligible)) if eligible and not issues else set()
+    if not common: issues.append('No common returned answers have complete pricing and conversation timing evidence.')
+    from statistics import median
+    for group, rows in zip(groups, eligible):
+        selected = [rows[pair] for pair in sorted(common)]
+        times = sorted(m['conversation_ms'] for m in selected)
+        timing = {'p50_ms': median(times) if times else None, 'p95_ms': times[math.ceil(.95*len(times))-1] if times else None}
+        total = sum(m['cost'] for m in selected) if selected else None
+        group['common_observed_answers'] = dict(valid=not issues, issues=list(issues), count=len(selected), correct_answers=sum(m['correct'] for m in selected),
+            known_model_cost_usd=total, mean_model_cost_usd_per_returned_answer=total/len(selected) if selected else None,
+            p50_conversation_ms=timing['p50_ms'], p95_conversation_ms=timing['p95_ms'],
+            token_totals={k: sum(m['tokens'][k] for m in selected) for k in selected[0]['tokens']} if selected else None,
+            excluded_returned_answers=group['observed_answers']['returned_answers']-len(selected))
+    return dict(valid=not issues, issues=issues, count=len(common), planned_pairs=len(planned[0]) if planned else None,
+                excluded_pairs=len(planned[0]-common) if planned else None,
+                case_repeats=[dict(case_id=case, repeat=repeat) for case, repeat in sorted(common)],
+                scope='The same case/repeat pairs returned answers with complete usage, frozen prices and conversation timing in every displayed arm. Incorrect returned answers are included. This descriptive subset does not replace all-attempt scores, unknown failed-call charges or prompt selection.')
+
+
 def _trial(row: dict, case: dict | None = None, *, input_bundles: dict | None = None,
            source_bundles: dict | None = None, assessment: dict | None = None, source_context=None) -> dict:
     result = row.get("result") or {}
@@ -745,11 +994,13 @@ def _report(path: Path, index: int) -> dict:
             "model": ", ".join(models) or "Model identity unavailable",
             "score": group.get("score") or {},
             "core_scope": _core_scope(raw, config, name, group, assessment, contexts, comparison) if config is not None else None,
+            "observed_answers": _observed_answers(raw, config, name, group, assessment, contexts, comparison),
             "cost_metrics": _cost_values(group.get("score") or {}),
             "trials": [_trial(row, cases.get(row.get("case_id")), input_bundles=input_bundles,
                               source_bundles=source_bundles, assessment=assessment,
                               source_context=contexts.get(row.get("case_id"))) for row in rows],
         })
+    common_observed = _common_observed_answers(groups)
     historical = _is_bundled_recording(path, backend)
     return {
         "id": f"report-{index}",
@@ -780,6 +1031,7 @@ def _report(path: Path, index: int) -> dict:
         "reused_groups": {name: group["reused_from"] for name, group in raw["holdout"].items()
                           if isinstance(group, dict) and group.get("reused_from")},
         "groups": groups,
+        "common_observed_answers": common_observed,
         "prompt_evidence": _prompt_evidence(raw, config, groups, source_bundles),
         "input_storage": "content-addressed-v1",
         "input_bundles": input_bundles,

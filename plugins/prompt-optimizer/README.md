@@ -306,9 +306,14 @@ and Squid Ink accents, and embedded Open Sans from AWS's Cloudscape design
 system. Headings use OpenAI Sans if it is installed locally; Open Sans is the
 offline fallback. [Typography sources and font licences](scripts/fonts/README.md).
 
-The dashboard renders saved `report.json`
-data in the browser, works offline and needs only Python's standard library
-to build. It reads a single report directory, or the `local/`, `agentcore/`
+An already-rendered HTML dashboard opens offline in a browser without Python
+or installed dependencies. To render verified matched metrics from saved
+`report.json` evidence, use the workspace Python 3.12 virtual environment with
+this plugin's `requirements.txt` installed. The renderer rechecks required
+grades locally; it makes no model or AWS calls. If that environment is missing,
+the dashboard explains the setup needed and leaves the verified comparison
+unavailable. The recorded demo still needs only Python's standard library.
+The renderer reads a single report directory, or the `local/`, `agentcore/`
 and `results/` report locations within a project. Combined reports must have
 matching input fingerprints and one report per backend.
 
@@ -321,6 +326,19 @@ prompt for review**; it does not change the parent study's selected prompt.
 Parent and new-cohort costs remain separate. These are new attempts on the same
 held-out cases, not a newly unseen dataset. Do not combine the parent and follow-up
 directories as if they were different backends of one run.
+
+When some application attempts fail, the dashboard can also compare the same
+completed case/repeat pairs across every configuration. This view shows model
+cost per returned answer, conversation time and cache reads/writes on that shared
+set. Accuracy and application failures still use all planned attempts. Incorrect
+returned answers are included in the measured set; it is not a success-only
+sample. Coverage and exclusions are shown beside the measurements.
+
+Matched returned-answer measurements do not fill missing usage, replace the
+saved cost-per-success decision, or choose a prompt. Full-run accounting remains
+available, including failed requests and unknown charges. Different cache mixes
+remain visible and must be considered before attributing a cost difference to
+the prompt alone.
 
 The results summary compares source and target with the original prompt, and
 compares the original and selected prompts on the target model when both were

@@ -22,7 +22,8 @@ def require_study_python():
             "then use that environment's Python to install "
             f"-r {PLUGIN_ROOT / 'requirements.txt'} and rerun this command. "
             "Keep the pinned dependency versions unchanged. "
-            "The recorded demo and saved dashboard do not require engine dependencies."
+            "The recorded demo and opening an already-rendered HTML dashboard do not require engine dependencies. "
+            "Rendering verified matched metrics requires this Python 3.12 environment and the plugin requirements."
         )
 
 

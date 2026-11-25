@@ -423,6 +423,12 @@
       }
       .chart-execution { margin: 0 0 10px; font-size: 13px; font-weight: 650; }
       .chart-panel + .chart-panel { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
+      .observed-results { margin-bottom: 24px; overflow: hidden; }
+      .observed-results .observed-body { padding: 0 24px 22px; }
+      .observed-results .observed-chart { max-width: 820px; margin: 22px auto 0; }
+      .observed-results .observed-chart svg { width: 100%; height: auto; display: block; }
+      .observed-results .coverage-note { margin: 14px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+      .full-run-details > summary { font-size: 14px; font-weight: 650; padding: 17px 0; }
       .summary-table { border-collapse: collapse; width: 100%; font-size: 12px; }
       .summary-table th, .summary-table td { padding: 8px 4px; text-align: left; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
       .summary-table td { font-variant-numeric: tabular-nums; }
@@ -1019,6 +1025,9 @@
         <section class="view" id="overview" aria-label="Overview">
           <div class="dataset-note" id="dataset-notice"></div>
           <div class="kpis" id="kpis"></div>
+          <div id="observed-results" hidden></div>
+          <details id="full-run-details" class="full-run-details" open>
+          <summary id="full-run-summary" hidden>Full-run accounting and saved prompt selection</summary>
           <div id="prompt-evidence"></div>
           <div class="workspace-grid">
             <div class="card">
@@ -1084,6 +1093,7 @@
               quality still determines what those rates mean.
             </div>
           </div>
+          </details>
         </section>
         <section class="view" id="explorer" aria-label="Test cases" hidden>
           <div class="filter-row">
@@ -1570,7 +1580,7 @@
         root.querySelectorAll("[data-return-overview]").forEach((button) => {
           button.onclick = () => {
             showView("overview");
-            $("insight").scrollIntoView({block: "start"});
+            $(observedPrimaryActive() ? "observed-results" : "insight").scrollIntoView({block: "start"});
             $("overview-tab").focus({preventScroll: true});
           };
         });
@@ -1725,6 +1735,80 @@
           $("dataset-details").scrollIntoView({block: "start"});
         };
       }
+      function observedPrimaryActive() {
+        return groups().some((g) => !number(g.score?.cost_usd_per_success) ||
+          !number(g.score?.latency_p50_s) || !number(g.score?.latency_p95_s));
+      }
+      function matchedMeasurements(g) {
+        const common = g.report.common_observed_answers, values = g.common_observed_answers;
+        return g.observed_answers?.valid === true && common?.valid === true && values?.valid === true &&
+          Number.isInteger(common.count) && common.count > 0 && values.count === common.count
+          ? values : null;
+      }
+      function observedPromptName(g) {
+        return ({source_original: "Original prompt", target_original: "Original prompt",
+          target_selected: "Selected prompt", target_challenger: "Candidate prompt for review",
+          target_comparison: "Revised prompt for review"})[g.id] || g.label || g.id;
+      }
+      function observedChart(gs) {
+        const points = gs.filter((g) => {
+          const m = matchedMeasurements(g);
+          return m && number(m.mean_model_cost_usd_per_returned_answer) &&
+            number(m.p95_conversation_ms) && m.p95_conversation_ms >= 0;
+        });
+        const absent = gs.filter((g) => !points.includes(g));
+        const missing = absent.length ? `<p class="coverage-note"><strong>Measurements unavailable:</strong> ${absent.map((g) => `${esc(modelLabel(g.model))} · ${esc(observedPromptName(g))}`).join("; ")}. These configurations remain in the table above.</p>` : "";
+        if (!points.length) return '<p class="coverage-note">No verified common set with recorded price and timing is available.</p>' + missing;
+        const w=760, L=65, R=315, T=42, B=50, labelX=470;
+        const wrap=(value) => String(value).match(/.{1,25}(?:\s|$)|.{1,25}/g)?.map((line) => line.trim()) || [""];
+        const labels=[...points].sort((a,b) => matchedMeasurements(b).mean_model_cost_usd_per_returned_answer - matchedMeasurements(a).mean_model_cost_usd_per_returned_answer)
+          .map((g) => ({g,lines:[...wrap(modelLabel(g.model)),...wrap(observedPromptName(g))]}));
+        labels.forEach((label) => label.height=Math.max(58,label.lines.length*16+18));
+        const labelHeight=labels.reduce((sum,label) => sum+label.height,0), h=Math.max(320,T+labelHeight+B);
+        const xmax=Math.max(...points.map((g) => matchedMeasurements(g).p95_conversation_ms/1000),.01)*1.2;
+        const ymax=Math.max(...points.map((g) => matchedMeasurements(g).mean_model_cost_usd_per_returned_answer*1000),.01)*1.2;
+        const x=(v) => L+(w-L-R)*v/xmax, y=(v) => h-B-(h-T-B)*v/ymax;
+        let svg=`<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Measured returned answers: model cost in USD per 1,000 returned answers against p95 conversation time. Every point uses the same matched cases and repeats."><text x="${L}" y="19" fill="var(--muted)" font-size="12">Model inference USD / 1,000 returned answers</text>`;
+        for(let i=0;i<=4;i++) {
+          const xv=xmax*i/4,yv=ymax*i/4;
+          svg+=`<path d="M${L} ${y(yv)}H${w-R}" stroke="var(--line)" stroke-dasharray="3 5"/><text x="${L-10}" y="${y(yv)+4}" text-anchor="end" font-size="11" fill="var(--muted)">$${yv.toFixed(1)}</text><text x="${x(xv)}" y="${h-B+21}" text-anchor="middle" font-size="11" fill="var(--muted)">${xv.toFixed(1)}s</text>`;
+        }
+        let top=T+(h-T-B-labelHeight)/2;
+        for(const label of labels) {
+          const g=label.g,m=matchedMeasurements(g),xx=x(m.p95_conversation_ms/1000),yy=y(m.mean_model_cost_usd_per_returned_answer*1000), center=top+label.height/2;
+          const title=`${modelLabel(g.model)} · ${observedPromptName(g)}: ${money(m.mean_model_cost_usd_per_returned_answer*1000,3)} per 1,000 returned answers; ${money(m.mean_model_cost_usd_per_returned_answer,6)} per returned answer; p95 ${fixed(m.p95_conversation_ms/1000,3)} seconds; ${m.count} matched returned answers. Excludes failed attempts, judging, optimization and infrastructure.`;
+          svg+=`<g data-observed-point-key="${esc(g.key)}"><title>${esc(title)}</title><path d="M${xx+8} ${yy}L${labelX-10} ${center}" fill="none" stroke="${color(g)}" opacity=".55"/><circle cx="${xx}" cy="${yy}" r="12" fill="${color(g)}" opacity=".1"/><circle cx="${xx}" cy="${yy}" r="5" fill="${color(g)}"/><text x="${labelX}" y="${center-(label.lines.length-1)*8+4}" font-size="12" fill="var(--ink)">${label.lines.map((line,i) => `<tspan x="${labelX}" dy="${i?16:0}" font-weight="${i===0?650:400}">${esc(line)}</tspan>`).join("")}</text></g>`;
+          top+=label.height;
+        }
+        return svg+`<text x="${w-R}" y="${h-6}" text-anchor="end" font-size="11" fill="var(--muted)">p95 conversation time (seconds)</text></svg>`+missing;
+      }
+      function renderObservedResults() {
+        const active=observedPrimaryActive(), root=$("observed-results");
+        root.hidden=!active;
+        $("full-run-summary").hidden=!active;
+        if(state.observedPrimary!==active) {
+          $("full-run-details").open=!active;
+          state.observedPrimary=active;
+        }
+        if(!active) {root.innerHTML="";return;}
+        root.innerHTML=reports().map((r) => {
+          const gs=groups().filter((g) => g.report.id===r.id), common=r.common_observed_answers;
+          const validCommon=common?.valid===true && Number.isInteger(common.count) && common.count>0;
+          const planned=[...new Set(gs.map((g) => g.observed_answers?.planned_attempts).filter(Number.isInteger))];
+          const coverage=validCommon ? `${common.count} matched returned answers per configuration${planned.length===1 ? `; reliability uses ${planned[0]} attempts each` : "; reliability uses all planned attempts in each row"}.` : "A verified common set of returned answers is unavailable.";
+          const rows=gs.map((g) => {
+            const o=g.observed_answers,m=matchedMeasurements(g),valid=o?.valid===true;
+            const count=(key) => valid && Number.isInteger(o[key]) ? o[key] : "Unknown";
+            const tokens=m?.token_totals,tokenBase=tokens?.input;
+            const cache=(key) => number(tokenBase) && tokenBase>0 && number(tokens?.[key]) ? (100*tokens[key]/tokenBase).toFixed(1)+"%" : "Unknown";
+            const issues=[...(o?.issues || []),...(g.common_observed_answers?.issues || [])];
+            const metricsKnown=m && number(m.mean_model_cost_usd_per_returned_answer) && number(m.p50_conversation_ms) && number(m.p95_conversation_ms);
+            return `<tr data-observed-row="${esc(g.key)}"><td class="name"><span class="swatch" style="background:${color(g)}"></span>${promptLink(r,g.id,modelLabel(g.model)+" · "+observedPromptName(g))}</td><td>${count("correct_answers")} / ${count("planned_attempts")}<small>${esc(qualityLabel(r,"Required checks passed"))} · all attempts</small></td><td>${count("returned_answers")} / ${count("planned_attempts")}<small>${m ? `${m.count} in matched set` : "Matched set unavailable"}</small></td><td>${count("application_failures")}<small>Application failures</small></td><td>${m ? money(m.mean_model_cost_usd_per_returned_answer,6) : "Unknown"}<small>${m ? money(m.known_model_cost_usd,5)+" for "+m.count+" matched returns" : "Measured cost unavailable"}</small></td><td>${m && number(m.p50_conversation_ms) && number(m.p95_conversation_ms) ? fixed(m.p50_conversation_ms/1000,3)+" / "+fixed(m.p95_conversation_ms/1000,3)+" s" : "Unknown"}<small>Matched returns only</small></td><td>${cache("cache_read")} / ${cache("cache_write")}<small>Share of matched input tokens</small>${!metricsKnown ? `<small>${esc(issues.length ? issues.join(" ") : "Verified price or timing is unavailable.")}</small>` : ""}</td></tr>`;
+          }).join("");
+          return `<section class="card observed-results"><div class="panel-head table-head"><div><p class="eyebrow">Execution location: ${esc(backendLabel(r.backend))}</p><h2>Compare model and prompt results</h2><p class="sub"><strong>Measured returned answers.</strong> ${esc(coverage)}</p></div></div><div class="table-wrap"><table class="table"><thead><tr><th>Model and prompt</th><th>Checks passed / attempts</th><th>Answers returned / attempts</th><th>Application errors</th><th>Model $ / returned answer</th><th>Median / p95 time</th><th>Cache read / write</th></tr></thead><tbody>${rows}</tbody></table></div><div class="observed-body"><p class="coverage-note">Cost, timing and cache mix use only the same case-and-repeat pairs with a returned answer, recorded usage and conversation time in every configuration. Incorrect returned answers stay included. Failed requests and other unmatched attempts are excluded from these averages; they remain in the reliability counts and full-run accounting.</p>${!validCommon ? `<p class="coverage-note">${esc((common?.issues || ["Matched measurement evidence was not recorded."]).join(" "))}</p>` : ""}<div class="observed-chart">${observedChart(gs)}</div><p class="coverage-note">Model inference only. Judge, optimizer, AgentCore Runtime, Gateway, storage, logging and human review costs are excluded. Cache percentages describe the recorded input-token mix, not a cache-neutral estimate. These observations do not select a winner or change the saved prompt selection. Full-run costs remain unknown where failed requests have no usage.</p></div></section>`;
+        }).join("");
+        bindPromptNavigation(root);
+      }
       function renderSummary() {
         renderDatasetNotice();
         renderPromptEvidence();
@@ -1776,7 +1860,9 @@
           .join("");
         const bad = reports().filter((r) => evidenceIssues(r).length);
         $("status-notice").innerHTML = bad.length
-          ? '<div class="notice">Some selected evidence is simulated, incomplete, missing integrity metadata or has unresolved issues. Inspect Run details before comparing results.</div>'
+          ? observedPrimaryActive()
+            ? '<div class="notice">Full-run measurements have gaps or issues to review. The comparison below keeps all attempt counts visible and uses the same verified returned answers for measured cost and time. Full-run accounting remains available below and in Run details.</div>'
+            : '<div class="notice">Some selected evidence is simulated, incomplete, missing integrity metadata or has unresolved issues. Inspect Run details before comparing results.</div>'
           : "";
         renderInsights();
         $("comparison").innerHTML =
@@ -1788,6 +1874,7 @@
             .join("") ||
           '<tr><td colspan="6">No holdout configurations available.</td></tr>';
         renderChart(gs);
+        renderObservedResults();
       }
       function promptLabel(g) {
         return ({source_original: "Starting prompt", target_original: "Starting prompt",
@@ -2044,6 +2131,15 @@
                   fingerprints: [
                     ...new Set(reports().map((r) => r.fingerprint)),
                   ],
+                  primary_chart_basis: observedPrimaryActive() ? "common matched returned answers" : "full-run configured cost measure",
+                  measured_returned_answers: observedPrimaryActive() ? reports().map((r) => ({
+                    report: r.id, common: r.common_observed_answers || null,
+                    configurations: groups().filter((g) => g.report.id === r.id).map((g) => ({
+                      configuration: g.id, model: g.model, prompt: observedPromptName(g),
+                      all_attempts: g.observed_answers || null,
+                      matched: g.common_observed_answers || null,
+                    })),
+                  })) : [],
                   chart_cost_metric: state.costMetric,
                   cost_metric_conflict: D.cost_metric_conflict,
                   comparison_metrics: groups()

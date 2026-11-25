@@ -209,15 +209,19 @@ report. For local evidence, add `--backend local`. Never submit a second job
 because a request timed out; inspect saved receipts and checkpoints first.
 Use the same local output directory to resume completed work.
 
-Render the saved results through the same entrypoint:
+Render the saved results through the same entrypoint using the workspace Python
+3.12 environment with the plugin requirements installed. Verified matched metrics
+recheck grades locally, including JSON Schema checks; an older or incomplete
+Python environment leaves those metrics unavailable with setup instructions.
 
 ```bash
-python3 /absolute/plugin/scripts/workflow_eval.py dashboard \
+/absolute/workspace/.venv/bin/python /absolute/plugin/scripts/workflow_eval.py dashboard \
   --project /absolute/workspace/my-study \
   --output /absolute/workspace/my-study/dashboard.html
 ```
 
-Open the dashboard and link the underlying `decision.html` and machine-readable
+Opening the generated HTML requires no Python dependencies. Open the dashboard
+and link the underlying `decision.html` and machine-readable
 evidence. It can combine local and downloaded AgentCore reports from the same
 frozen study, rejects incompatible fingerprints, and does not call AWS or models.
 It is a snapshot: retrieve results first, then rebuild with `--force` to refresh
